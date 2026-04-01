@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-sudo dnf clean all ; sudo dnf dsync --allowerasing -x kernel-desktop
-
-flatpak update
