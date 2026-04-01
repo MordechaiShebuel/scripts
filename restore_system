@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Open Mandriva
+sudo dnf in zsh steam flatpak vivaldi gimp obs-studio git dvd+rw-tools lib64dvdnav4 lib64dvdread lib64dvdcss vlc
+
+sudo chsh -s $(which zsh) mbuel
+
+# Artix
+#update first
+sudo pacman -Syu
+
+# Enable lib32 in config
+# Artix [lib32] and Arch [multilib]
+
+sudo pacman -S fastfetch libdvdcss libdvdnav libdvdread vlc flatpak steam git obs-studio gimp
