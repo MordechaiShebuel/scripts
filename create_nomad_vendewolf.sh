@@ -91,24 +91,14 @@ if [ ! -s install_nomad.sh ]; then
     exit 1
 fi
 
-# 6. Modify the installer to remove systemd/Docker service dependencies
-echo "→ Patching install_nomad.sh to work without systemd"
-cp install_nomad.sh install_nomad.sh.original
+# 6. Replace the entire ensure_docker_installed function with a clean Podman version
+python patch_nomad.py
 
-sed -i 's|sudo systemctl start docker|echo "Skipping systemctl start docker (using Podman)"|g' install_nomad.sh
-sed -i 's|sudo systemctl restart docker|echo "Skipping systemctl restart docker"|g' install_nomad.sh
-sed -i 's|systemctl is-active --quiet docker|true # Podman socket is used instead|g' install_nomad.sh
-sed -i 's|systemctl is-active docker|true # Podman socket is used instead|g' install_nomad.sh
-
-# Also patch any docker compose → podman-compose (in case it uses the old syntax)
-sed -i 's|docker compose|podman-compose|g' install_nomad.sh
-sed -i 's|docker-compose|podman-compose|g' install_nomad.sh
-
-echo "   Installer patched successfully"
+echo "Function patched out"
 
 # 7. Run the modified installer
 echo "→ Running the modified Project N.O.M.A.D. installer"
-sudo bash install_nomad.sh
+sudo bash patched_install_nomad.sh
 
 # 8. Create OpenRC service for the stack
 echo "→ Creating OpenRC service for Project N.O.M.A.D."
@@ -140,6 +130,8 @@ EOF'
 sudo chmod +x /etc/init.d/project-nomad
 sudo rc-update add project-nomad default
 
+IFS=$'\n' ip_array=($(ip addr show eth0 | awk '/inet/ {print $2}' | cut -d/ -f1))
+
 echo "=== Setup completed! ==="
 echo ""
 echo "Next steps:"
@@ -154,6 +146,6 @@ echo "   rc-service project-nomad status"
 echo "   rc-service project-nomad restart"
 echo "   rc-service podman-socket status"
 echo ""
-echo "The dashboard should be available at http://YOUR_IP:8080 (check compose.yml for the exact port)"
+echo "The dashboard should be available at http://$"ip_array[1]":8080 (check compose.yml for the exact port)"
 echo ""
 echo "If you see errors during the first start, paste them here and we’ll adjust the compose file or OpenRC service."

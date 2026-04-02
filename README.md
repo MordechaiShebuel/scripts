@@ -26,3 +26,4 @@ https://github.com/Crosstalk-Solutions/project-nomad?tab=readme-ov-file
     - Script assumes your ISP router's WAN is `192.168.1.1` if your is different you will need to change it.
     - You may also need to adjust the `ethx` values in the script before running it. (instructions are in the script)
     - Vibe coded with Grok
+    - Testing revealed that the Program kept trying to install docker, I'm trying to stick to a more secure libre stack, podman, Xlibre, OpenRC. I created a Python patch program that just simply removed the call to install docker.

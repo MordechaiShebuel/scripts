@@ -1,1 +1,5 @@
 DO_NOT_COMMIT
+*.kate-swp
+install_nomad.sh
+patched_install_nomad.sh
+patch
