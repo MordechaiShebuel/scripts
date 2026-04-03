@@ -1,7 +1,8 @@
 #!/bin/bash
+# Version 5
 set -euo pipefail
 
-echo "=== Project N.O.M.A.D. - Podman + OpenRC Setup (Systemd-free) ==="
+echo "=== Project N.O.M.A.D. - Podman + OpenRC Setup with Dedicated Bridge ==="
 
 # 1. Setup aliases
 echo "→ Setting up docker → podman alias"
@@ -26,32 +27,28 @@ source "$PROFILE" 2>/dev/null || true
 # 2. Check and install requirements
 echo "→ Checking podman, curl and git"
 NEEDS_INSTALL=()
-if ! command -v git >/dev/null 2>&1; then
-    NEEDS_INSTALL+=("git")
-fi
-if ! command -v podman >/dev/null 2>&1; then
-    NEEDS_INSTALL+=("podman")
-fi
-if ! command -v curl >/dev/null 2>&1; then
-    NEEDS_INSTALL+=("curl")
-fi
+for pkg in git podman curl; do
+    if ! command -v "$pkg" >/dev/null 2>&1; then
+        NEEDS_INSTALL+=("$pkg")
+    fi
+done
 
 if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
     echo "   Installing: ${NEEDS_INSTALL[*]}"
     sudo apt update
     sudo apt install -y "${NEEDS_INSTALL[@]}"
 else
-    echo "   ✅ podman and curl are already installed"
+    echo "   ✅ Requirements already installed"
 fi
 
-# Install podman-compose (needed for the stack)
+# Install podman-compose
 if ! command -v podman-compose >/dev/null 2>&1; then
     echo "   Installing podman-compose"
     sudo apt install -y python3-pip
     pip3 install --break-system-packages podman-compose
 fi
 
-# 3. Setup Podman socket (OpenRC)
+# 3. Setup Podman socket
 echo "→ Setting up Podman socket service"
 sudo mkdir -p /etc/init.d
 
@@ -77,12 +74,46 @@ EOF'
 
 sudo chmod +x /etc/init.d/podman-socket
 sudo rc-update add podman-socket default
-sudo rc-service podman-socket restart || echo "   ⚠️ Podman socket started (check with rc-service podman-socket status)"
+sudo rc-service podman-socket restart || echo "   ⚠️ Podman socket started (check manually if needed)"
 
-# 4 & 5. Remove old script + download fresh install_nomad.sh
+# 4. Create dedicated bridge for Project N.O.M.A.D. (bridged networking)
+echo "→ Creating dedicated bridge br-nomad for the stack (own IP on LAN)"
+sudo apt install -y bridge-utils
+
+# Detect main interface (first one with IP, skipping lo)
+MAIN_IFACE=$(ip -4 addr show | awk '/inet/ && !/127.0.0.1/ {print $NF; exit}')
+
+if [ -z "$MAIN_IFACE" ]; then
+    echo "⚠️ Could not detect main network interface. Using eth0 as fallback."
+    MAIN_IFACE="eth0"
+fi
+
+echo "   Main interface detected: $MAIN_IFACE"
+
+# Create bridge config (persistent via /etc/network/interfaces)
+sudo bash -c "cat >> /etc/network/interfaces << EOF
+
+# Bridge for Project N.O.M.A.D. - assign static IP here (e.g. 10.0.0.50/24)
+auto br-nomad
+iface br-nomad inet static
+    address 10.0.0.3/24          # <<< CHANGE THIS TO YOUR DESIRED STATIC IP
+    gateway 10.0.0.1              # Your router
+    bridge_ports none             # We attach containers via podman network / compose
+    bridge_stp off
+    bridge_fd 0
+    up ip link set br-nomad up
+EOF"
+
+sudo ip link add br-nomad type bridge 2>/dev/null || true
+sudo ip link set br-nomad up 2>/dev/null || true
+
+sudo rc-update add networking default
+sudo rc-service networking restart || echo "   Networking restarted"
+
+# 5. Download + patch installer (your python patch_nomad.py)
 echo "→ Downloading fresh install_nomad.sh"
 cd /tmp
-rm -f install_nomad.sh
+rm -f install_nomad.sh patched_install_nomad.sh
 
 curl -fsSL https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/refs/heads/main/install/install_nomad.sh -o install_nomad.sh
 
@@ -91,16 +122,15 @@ if [ ! -s install_nomad.sh ]; then
     exit 1
 fi
 
-# 6. Replace the entire ensure_docker_installed function with a clean Podman version
-python patch_nomad.py
+python3 patch_nomad.py   # python patch script (assumes it creates patched_install_nomad.sh)
 
-echo "Function patched out"
+echo "   Installer patched"
 
-# 7. Run the modified installer
+# 6. Run the modified installer
 echo "→ Running the modified Project N.O.M.A.D. installer"
 sudo bash patched_install_nomad.sh
 
-# 8. Create OpenRC service for the stack
+# 7. Create OpenRC service for the stack
 echo "→ Creating OpenRC service for Project N.O.M.A.D."
 sudo bash -c 'cat > /etc/init.d/project-nomad << "EOF"
 #!/sbin/openrc-run
@@ -123,29 +153,38 @@ start_pre() {
 
 stop() {
     cd /opt/project-nomad
-    /usr/local/bin/podman-compose -f compose.yml down
+    /usr/local/bin/podman-compose -f compose.yml down || true
 }
 EOF'
 
 sudo chmod +x /etc/init.d/project-nomad
 sudo rc-update add project-nomad default
 
-IFS=$'\n' ip_array=($(ip addr show eth0 | awk '/inet/ {print $2}' | cut -d/ -f1))
+# Get bridge IP for display
+BRIDGE_IP=$(ip -4 addr show br-nomad 2>/dev/null | awk '/inet/ {print $2}' | cut -d/ -f1 | head -n1)
 
 echo "=== Setup completed! ==="
 echo ""
+echo "Bridge Status:"
+echo "   Bridge: br-nomad"
+echo "   IP:     ${BRIDGE_IP:-Not yet assigned (edit /etc/network/interfaces)}"
+echo ""
 echo "Next steps:"
-echo "1. cd /opt/project-nomad"
-echo "2. Review/edit compose.yml (set strong APP_KEY, correct URLs, passwords, etc.)"
-echo "3. Test the stack:   sudo rc-service project-nomad start"
-echo "   or manually:     podman-compose -f /opt/project-nomad/compose.yml up -d"
+echo "1. Edit the bridge IP if needed:"
+echo "   sudo nano /etc/network/interfaces   # change address 10.0.0.50/24"
+echo "   sudo rc-service networking restart"
+echo ""
+echo "2. cd /opt/project-nomad"
+echo "3. Review/edit compose.yml (set strong APP_KEY, correct URLs, passwords, etc.)"
+echo "   → Consider adding networks: section with external bridge if possible"
+echo ""
+echo "4. Test the stack:   sudo rc-service project-nomad start"
+echo ""
+echo "Dashboard should be reachable at: http://${BRIDGE_IP:-YOUR_BRIDGE_IP}:8080"
 echo ""
 echo "Useful commands:"
 echo "   podman ps"
 echo "   rc-service project-nomad status"
-echo "   rc-service project-nomad restart"
 echo "   rc-service podman-socket status"
 echo ""
-echo "The dashboard should be available at http://$"ip_array[1]":8080 (check compose.yml for the exact port)"
-echo ""
-echo "If you see errors during the first start, paste them here and we’ll adjust the compose file or OpenRC service."
+echo "If the compose file needs bridge network configuration or you get port/IP issues, paste the error."

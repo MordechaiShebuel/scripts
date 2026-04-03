@@ -1,168 +1,174 @@
 #!/bin/bash
 # =============================================================================
-# Vendefoul Wolf (Devuan + OpenRC) Router Setup Script
-# This script turns a fresh Vendefoul OpenRC server into a full router with:
-#   • Pi-hole for network-wide DNS-based ad/tracker blocking
-#   • Internal LAN using 10.x.x.x addresses (10.0.0.0/24)
-#   • WAN interface connected via DHCP to upstream router at 192.168.1.1
+# Vendefoul OpenRC + OPNsense VM Setup - Combined Safe Script
+# eth0          = WAN (connected to 192.168.1.1)
+# enx803f5d048742 = LAN (internal 10.x.x.x network)
+#
+# Download + checksum check happens FIRST on original network.
+# Bridges and VM creation only happen if checksum is valid.
 # =============================================================================
-# Run as root on a fresh Vendefoul Wolf server installation.
-# BEFORE RUNNING:
-#   1. Identify your two Ethernet ports:
-#      - Run: ip -brief link show
-#      - WAN port = the one physically connected to 192.168.1.1
-#      - LAN port = the one for your internal network
-#   2. Edit the variables below if your interface names differ from eth0/eth1.
-# =============================================================================
+# Version 5.4
 
 set -euo pipefail
 
-# ========================== CONFIGURATION ==========================
-WAN_INTERFACE="eth0"          # WAN port (connects to 192.168.1.1) - uses DHCP
-LAN_INTERFACE="eth1"          # LAN port (serves internal clients)
-LAN_IP="10.0.0.1"             # Router's IP on the internal network
-LAN_SUBNET="10.0.0.0/24"      # Internal subnet (10.x.x.x addresses)
-LAN_NETMASK="255.255.255.0"   # Subnet mask for 10.0.0.0/24
+echo "=== Vendefoul OPNsense Router Setup (Safe Combined Version) ==="
 
-# Optional: change these if you prefer a different 10.x.x.x range
-# e.g. LAN_IP="10.42.0.1"  LAN_SUBNET="10.42.0.0/24"
-# ==================================================================
+OPNVersion="26.1.2"
+OPNVariant="nano"
+OPNImage="OPNsense-${OPNVersion}-${OPNVariant}-amd64.img"
+WAN_IF="eth0"
+LAN_IF="enx803f5d048742"
+IMAGE_DIR="/var/lib/libvirt/images"
+BZ2_FILE="${IMAGE_DIR}/${OPNImage}.bz2"
+IMG_FILE="${IMAGE_DIR}/${OPNImage}"
 
-echo "=== Vendefoul OpenRC Router Setup Starting ==="
-echo "WAN interface (to 192.168.1.1): $WAN_INTERFACE"
-echo "LAN interface (internal 10.x.x.x): $LAN_INTERFACE"
-echo "Internal router IP: $LAN_IP"
-echo ""
+EXPECTED_SHA256="24ae4c3f178bcc53475ab0b2ec50a7b06e9541f5080c156e5aa967c12a8d343e"
 
-# 1. Update system
-echo "1. Updating package lists and upgrading system..."
+# 0. Clean up prior attempts
+echo "0. Removing BZ2 or image files of prior install attempts"
+mkdir -p "$IMAGE_DIR"
+cd "$IMAGE_DIR"
+
+rm -rf $BZ2_FILE
+rm -rf $IMG_FILE
+
+# 1. Install required packages (if not already present)
+echo "1. Installing KVM/libvirt and tools..."
 apt-get update -qq
-apt-get upgrade -y -qq
+apt-get install -y -qq qemu-kvm libvirt-daemon-system libvirt-clients virtinst bridge-utils curl net-tools isc-dhcp-client
 
-# 2. Install required packages
-echo "2. Installing dependencies (iptables-persistent, curl, etc.)..."
-apt-get install -y -qq \
-    curl \
-    iptables-persistent \
-    net-tools \
-    dnsutils \
-    whiptail
+rc-update add libvirtd default
+rc-service libvirtd start || true
 
-# 3. Backup and configure /etc/network/interfaces (Devuan/OpenRC style)
-echo "3. Configuring network interfaces..."
+# 2. Download OPNsense image (on original network)
+
+if [ ! -f "$IMG_FILE" ]; then
+    echo "2. Downloading OPNsense 26.1.2 Nano image (~520 MB)..."
+    curl -L --retry 10 --retry-delay 20 --continue-at - --max-time 3600 \
+         -o "$BZ2_FILE" \
+         "https://pkg.opnsense.org/releases/26.1.2/${OPNImage}.bz2"
+else
+    echo "2. Image already decompressed — skipping download."
+fi
+
+# 3. Verify checksum of the .bz2 file
+echo "3. Verifying SHA256 checksum of downloaded file..."
+if [ -f "$BZ2_FILE" ]; then
+    ACTUAL_SHA256=$(sha256sum "$BZ2_FILE" | awk '{print $1}')
+
+    if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+        echo "❌ CHECKSUM MISMATCH!"
+        echo "Expected:  $EXPECTED_SHA256"
+        echo "Actual:    $ACTUAL_SHA256"
+        echo ""
+        echo "The download is corrupted or incomplete."
+        echo "Please run this script again — it will resume the download."
+        exit 1
+    else
+        echo "✅ Checksum verification passed!"
+    fi
+else
+    echo "❌ .bz2 file not found after download."
+    exit 1
+fi
+
+# 4. Decompress if needed
+if [ ! -f "$IMG_FILE" ]; then
+    echo "4. Decompressing image..."
+    bunzip2 -v -f "$BZ2_FILE"
+fi
+
+# 5. Set up bridges (only if we reached here = checksum OK)
+# 5. Set up bridges (only if we reached here = checksum OK)
+echo "5. Configuring Linux bridges..."
 cp /etc/network/interfaces /etc/network/interfaces.bak 2>/dev/null || true
 
+# Write the config ONCE with eth0 explicitly set to manual
 cat > /etc/network/interfaces <<EOF
-# Vendefoul OpenRC Router - auto-generated by setup script
-# Loopback
-auto lo
-iface lo inet loopback
+# Physical WAN
+auto $WAN_IF
+iface $WAN_IF inet manual
 
-# WAN - connects to upstream router at 192.168.1.1 (DHCP client)
-auto $WAN_INTERFACE
-iface $WAN_INTERFACE inet dhcp
+# Bridge WAN (Gets the IP)
+auto br-wan
+iface br-wan inet dhcp
+    bridge_ports $WAN_IF
+    bridge_stp off
+    bridge_fd 0
 
-# LAN - internal 10.x.x.x network (static)
-auto $LAN_INTERFACE
-iface $LAN_INTERFACE inet static
-    address $LAN_IP
-    netmask $LAN_NETMASK
-    # No gateway on LAN side
+# Physical LAN
+auto $LAN_IF
+iface $LAN_IF inet manual
+
+# Bridge LAN
+auto br-lan
+iface br-lan inet manual
+    bridge_ports $LAN_IF
+    bridge_stp off
+    bridge_fd 0
 EOF
 
-# Ensure networking service is enabled (OpenRC)
-rc-update add networking default 2>/dev/null || true
+echo "   Cleaning up physical interface IPs..."
+# Flush the physical interfaces to ensure they don't hold onto old IPs
+ip addr flush dev "$WAN_IF" || true
+ip addr flush dev "$LAN_IF" || true
 
-# Bring interfaces up
-echo "   Bringing interfaces up..."
-ifdown --force "$WAN_INTERFACE" "$LAN_INTERFACE" 2>/dev/null || true
-ifup "$WAN_INTERFACE" "$LAN_INTERFACE"
+echo "   Bringing bridges up..."
+# Force restart the networking service or just the specific interfaces
+ifdown --force br-wan br-lan "$WAN_IF" "$LAN_IF" 2>/dev/null || true
+ifup br-wan br-lan "$WAN_IF" "$LAN_IF"
 
-echo "   Waiting for WAN DHCP lease from 192.168.1.1..."
-sleep 5
-ip addr show "$WAN_INTERFACE" | grep -q "inet " || echo "   WARNING: WAN did not receive IP. Check cable/connection."
+echo "   Waiting for DHCP lease on br-wan..."
+for i in {1..25}; do
+    if ip addr show br-wan | grep -q "inet "; then
+        echo "   ✅ br-wan has IP: $(ip addr show br-wan | grep -oP '(?<=inet\s)\d+(\.\d+){3}')"
+        break
+    fi
+    sleep 3
+done
 
-# 4. Enable IP forwarding (required for routing)
-echo "4. Enabling IP forwarding..."
-echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/99-router.conf
-sysctl -p /etc/sysctl.d/99-router.conf
+# Final check: Ensure the physical WAN hasn't snuck an IP back on
+if ip addr show "$WAN_IF" | grep -q "inet "; then
+    echo "   ⚠️ Warning: $WAN_IF still has an IP. Flushing again..."
+    ip addr flush dev "$WAN_IF"
+fi
 
-# 5. Set up iptables NAT + forwarding + firewall (router rules)
-echo "5. Setting up NAT, forwarding, and basic firewall..."
-# Flush existing rules
-iptables -F
-iptables -t nat -F
-iptables -t mangle -F
 
-# NAT masquerade for outbound traffic
-iptables -t nat -A POSTROUTING -o "$WAN_INTERFACE" -j MASQUERADE
+# 6. Enable IP forwarding
+echo "6. Enabling IP forwarding..."
+echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/99-forwarding.conf
+sysctl -p /etc/sysctl.d/99-forwarding.conf
 
-# Allow forwarding LAN -> WAN
-iptables -A FORWARD -i "$LAN_INTERFACE" -o "$WAN_INTERFACE" -j ACCEPT
+# 6.5 Convert image
+sudo qemu-img convert -f raw -O qcow2 "OPNsense-${OPNVersion}-nano-amd64.img" opnsense.qcow2
+sudo qemu-img resize opnsense.qcow2 8G # you may choose another disk size, 8G is the minimum
+sudo rm -rf $IMG_FILE
 
-# Allow established/related connections back
-iptables -A FORWARD -i "$WAN_INTERFACE" -o "$LAN_INTERFACE" -m state --state RELATED,ESTABLISHED -j ACCEPT
-
-# Drop everything else (basic security)
-iptables -A FORWARD -j DROP
-
-# Save rules persistently (iptables-persistent / netfilter-persistent)
-netfilter-persistent save
-
-# Enable the persistent service on boot (OpenRC)
-rc-update add netfilter-persistent default 2>/dev/null || true
-
-# 6. Install Pi-hole (DNS blocking)
-echo "6. Installing Pi-hole for network-wide DNS ad-blocking..."
-echo ""
-echo "   Pi-hole installer will now run. You will be prompted:"
-echo "     • Select interface → choose $LAN_INTERFACE"
-echo "     • Upstream DNS provider → recommended: Cloudflare (1.1.1.1) or Quad9"
-echo "     • Install web admin interface → Yes"
-echo "     • Web password → set one (remember it!)"
-echo ""
-read -p "Press Enter to continue with Pi-hole installation..."
-
-# Run official installer (works on Devuan/OpenRC with minor adaptations)
-curl -sSL https://install.pi-hole.net | bash
-
-# 7. Final touches
-echo "7. Final configuration and service enabling..."
-# Ensure Pi-hole services start at boot (OpenRC)
-rc-update add lighttpd default 2>/dev/null || true
-rc-update add pihole-FTL default 2>/dev/null || true
-
-# Restart services
-rc-service networking restart
-rc-service netfilter-persistent restart
-rc-service lighttpd restart 2>/dev/null || true
-rc-service pihole-FTL restart 2>/dev/null || true
+# 7. Create the OPNsense VM
+echo "7. Creating OPNsense VM (2 vCPU, 4 GB RAM)..."
+virt-install \
+  --name opnsense \
+  --os-variant freebsd14.0 \
+  --memory 4096 \
+  --vcpus 2 \
+  --disk path="${IMAGE_DIR}/opnsense.qcow2",format=raw,bus=virtio \
+  --network bridge=br-wan,model=virtio \
+  --network bridge=br-lan,model=virtio \
+  --graphics none \
+  --console pty,target_type=serial \
+  --boot hd \
+  --import \
+  --autostart || echo "   VM already exists (safe to continue)"
 
 echo ""
 echo "=== SETUP COMPLETE! ==="
 echo ""
-echo "Router is now ready:"
-echo "   • WAN: $WAN_INTERFACE connected to 192.168.1.1 (DHCP)"
-echo "   • LAN: $LAN_INTERFACE at $LAN_IP / $LAN_NETMASK (10.x.x.x range)"
-echo "   • NAT + routing enabled and persistent"
-echo "   • Pi-hole installed for DNS ad-blocking"
+echo "Next steps:"
+echo "   virsh start opnsense"
+echo "   virsh console opnsense     (exit console with Ctrl + ])"
 echo ""
-echo "NEXT STEPS (highly recommended):"
-echo "1. Connect a client to the LAN port"
-echo "2. Access Pi-hole web admin: http://$LAN_IP/admin"
-echo "   - Log in with the password you set"
-echo "3. In Pi-hole dashboard → Settings → DHCP:"
-echo "   - Enable DHCP server"
-echo "   - Range: 10.0.0.100 to 10.0.0.250 (or any 10.x.x.x range you prefer)"
-echo "   - Router (gateway) IP: $LAN_IP"
-echo "   - DNS server: $LAN_IP"
-echo "4. Save and apply. Clients will now get 10.x.x.x IPs, use this router as gateway,"
-echo "   and get automatic DNS blocking via Pi-hole."
+echo "In the OPNsense installer:"
+echo "   • First NIC  → WAN (DHCP from 192.168.1.1)"
+echo "   • Second NIC → LAN"
+echo "   • Set LAN IP: 10.0.0.1 / 24"
 echo ""
-echo "Optional:"
-echo "   • Change Pi-hole upstream DNS in web UI if desired"
-echo "   • SSH into router and run: pihole -up  (to update Pi-hole later)"
-echo "   • Check status: rc-service pihole-FTL status"
-echo ""
-echo "Your Vendefoul OpenRC server is now a fully functional router with Pi-hole!"
-echo "Enjoy ad-free browsing across your entire network."

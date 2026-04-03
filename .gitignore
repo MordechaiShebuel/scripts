@@ -3,3 +3,5 @@ DO_NOT_COMMIT
 install_nomad.sh
 patched_install_nomad.sh
 patch
+OPNsense-26.1.2-vga-amd64.img.bz2
+OPNsense-26.1.2-vga-amd64.img

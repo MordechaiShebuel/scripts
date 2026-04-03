@@ -1,15 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# Plex Media Server Installation Script for Vendefoul Wolf Linux (Devuan + OpenRC)
-#
-# This script:
-#   1. Downloads and sets up the official Plex repository + installs Plex Media Server
-#   2. Installs Plex and configures it to run as the 'plex' user
-#   3. Creates a proper OpenRC init script (/etc/init.d/plexmediaserver)
-#   4. Enables the service on boot (default runlevel)
-#   5. Ensures /home/media/* is readable by the Plex user
-#
-# Run as root:  sudo ./install-plex-vendefoul.sh
+# Plex Media Server Installation Script for Vendefoul Wolf (Devuan + OpenRC)
+# Tailored for server at 10.0.0.3 running NOMAD + other services
 # =============================================================================
 
 set -euo pipefail
@@ -19,10 +11,10 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-echo "🚀 Starting Plex Media Server installation for Vendefoul Wolf (OpenRC)..."
+echo "🚀 Starting Plex Media Server installation on 10.0.0.3 (Vendefoul Wolf + OpenRC)..."
 
 # ----------------------------------------------------------------------------
-# 1. Add official Plex Debian repository (works perfectly on Devuan)
+# 1. Add official Plex repository
 # ----------------------------------------------------------------------------
 echo "📥 Adding Plex GPG key and repository..."
 curl -fsSL https://downloads.plex.tv/plex-keys/PlexSign.key | \
@@ -37,70 +29,46 @@ apt-get update -qq
 # ----------------------------------------------------------------------------
 # 2. Install Plex Media Server
 # ----------------------------------------------------------------------------
-echo "📦 Installing Plex Media Server (this will also create the 'plex' user)..."
+echo "📦 Installing Plex Media Server..."
 apt-get install -y plexmediaserver
 
-# The package creates /etc/default/plexmediaserver and /usr/sbin/start_pms automatically
-
 # ----------------------------------------------------------------------------
-# 3. Create OpenRC-compatible init script (SysV style, fully supported by OpenRC)
+# 3. Create OpenRC init script
 # ----------------------------------------------------------------------------
-echo "🔧 Creating OpenRC init script at /etc/init.d/plexmediaserver..."
+echo "🔧 Creating /etc/init.d/plexmediaserver..."
 
 cat > /etc/init.d/plexmediaserver << 'EOF'
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          plexmediaserver
-# Required-Start:    $remote_fs $syslog $networking
+# Required-Start:    $remote_fs $syslog $network
 # Required-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Plex Media Server
-# Description:       Plex Media Server for Linux
-#                    More information at https://www.plex.tv
-# Author:            Original by Cedric Quillevere, rewamped by Christian Svedin
-#                    Adapted for Vendefoul Wolf / OpenRC
-# Version:           1.2
 ### END INIT INFO
 
-# Read configuration variable file if it is present
 [ -r /etc/default/plexmediaserver ] && . /etc/default/plexmediaserver
 
-# Plex package should have installed this
-test -f "/usr/lib/plexmediaserver/start.sh" || test -f "/usr/sbin/start_pms" || exit 0
-
-plex_running=$(ps ax | grep "[P]lex Media Server" | awk '{print $1}' | wc -l)
+test -f "/usr/sbin/start_pms" || exit 0
 
 case "$1" in
     start)
-        if [ "$plex_running" -gt 0 ]; then
-            echo "Plex Media Server is already running."
-            exit 0
-        fi
         echo -n "Starting Plex Media Server: "
         su -l "$PLEX_MEDIA_SERVER_USER" -c "/usr/sbin/start_pms" >/dev/null 2>&1 &
-        sleep 2
         echo "done"
         ;;
     stop)
-        if [ "$plex_running" -eq 0 ]; then
-            echo "Plex Media Server is not running."
-            exit 0
-        fi
         echo -n "Stopping Plex Media Server: "
-        # Kill main process and plugins
         pkill -f "Plex Media Server" 2>/dev/null || true
         pkill -f "Plex DLNA Server" 2>/dev/null || true
-        sleep 2
         echo "done"
         ;;
     restart)
-        "$0" stop
-        sleep 2
-        "$0" start
+        $0 stop && sleep 2 && $0 start
         ;;
     status)
-        if [ "$plex_running" -gt 0 ]; then
+        if pgrep -f "Plex Media Server" > /dev/null; then
             echo "Plex Media Server is running."
         else
             echo "Plex Media Server is not running."
@@ -116,55 +84,57 @@ exit 0
 EOF
 
 chmod +x /etc/init.d/plexmediaserver
-
-# ----------------------------------------------------------------------------
-# 4. Enable service on boot (OpenRC)
-# ----------------------------------------------------------------------------
-echo "🔄 Enabling Plex service at boot..."
 rc-update add plexmediaserver default
 
 # ----------------------------------------------------------------------------
-# 5. Ensure /home/media/* is usable as media source
+# 4. Media folder permissions (/home/media)
 # ----------------------------------------------------------------------------
-if [ -d "/home/media" ]; then
-    echo "📂 Setting permissions so Plex can read /home/media/* ..."
-    # Make directories traversable and files readable by everyone (standard for media servers)
-    find /home/media -type d -exec chmod 755 {} + 2>/dev/null || true
-    find /home/media -type f -exec chmod 644 {} + 2>/dev/null || true
-    # Also give group read/execute if you prefer (optional)
-    chgrp -R plex /home/media 2>/dev/null || true
-    chmod -R g+rx /home/media 2>/dev/null || true
-    echo "✅ /home/media permissions updated."
+echo "📂 Setting permissions for /home/media..."
+mkdir -p /home/media
+find /home/media -type d -exec chmod 755 {} + 2>/dev/null || true
+find /home/media -type f -exec chmod 644 {} + 2>/dev/null || true
+chgrp -R plex /home/media 2>/dev/null || true
+chmod -R g+rx /home/media 2>/dev/null || true
+
+# ----------------------------------------------------------------------------
+# 5. Configure Plex to prefer the correct network interface (10.0.0.3)
+# ----------------------------------------------------------------------------
+echo "🌐 Configuring Plex network binding for 10.0.0.3..."
+
+PLEX_PREFS="/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Preferences.xml"
+
+# Wait a moment for Plex to create the Preferences.xml on first start
+sleep 3
+
+if [ -f "$PLEX_PREFS" ]; then
+    # Force Plex to listen on all interfaces but prefer the main LAN IP
+    sed -i 's|Preferences|Preferences PreferredNetworkInterface="eth0"|' "$PLEX_PREFS" 2>/dev/null || true
+    # Alternative: set CustomServerAccessURLs if needed (e.g., for remote access)
+    # sed -i 's|/>| CustomServerAccessURLs="http://10.0.0.3:32400" />|' "$PLEX_PREFS" 2>/dev/null || true
 else
-    echo "⚠️  /home/media directory not found. Create it and place your media files there."
-    mkdir -p /home/media 2>/dev/null || true
-    chmod 755 /home/media
+    echo "⚠️  Preferences.xml not found yet (normal on fresh install). It will be created after first start."
 fi
 
 # ----------------------------------------------------------------------------
-# 6. Start the service now
+# 6. Start the service
 # ----------------------------------------------------------------------------
 echo "▶️  Starting Plex Media Server..."
-rc-service plexmediaserver start || echo "⚠️  Service start had warnings (normal on first run)."
+rc-service plexmediaserver start || echo "⚠️  Service start had warnings (common on first run)."
 
-# ----------------------------------------------------------------------------
-# Final instructions
-# ----------------------------------------------------------------------------
 echo ""
-echo "🎉 Plex Media Server is now installed and running on Vendefoul Wolf with OpenRC!"
+echo "✅ Plex Media Server is installed and configured on your 10.0.0.3 server!"
 echo ""
-echo "📍 Access the Plex web UI at: http://$(hostname -I | awk '{print $1}'):32400/web"
-echo "   (or http://localhost:32400/web if accessing from the same machine)"
+echo "🌐 Access Plex Web UI at:"
+echo "   http://10.0.0.3:32400/web"
+echo "   or http://$(hostname):32400/web"
 echo ""
-echo "Next steps:"
-echo "   1. Open the link above in a browser and sign in with your Plex account."
-echo "   2. Claim the server when prompted."
-echo "   3. When adding libraries, use the path: /home/media"
-echo "      (Plex will scan all subfolders like /home/media/Movies, /home/media/TV, etc.)"
+echo "📂 In Plex setup → Add Library, use folder: /home/media"
 echo ""
-echo "Useful commands:"
+echo "🔧 Useful commands:"
 echo "   sudo rc-service plexmediaserver start|stop|restart|status"
-echo "   sudo rc-update del plexmediaserver default   # to disable at boot"
+echo "   sudo rc-update show | grep plex"
 echo ""
-echo "Updates: Just run 'apt-get update && apt-get upgrade plexmediaserver' in the future."
+echo "Note: Since this is a multi-service host (NOMAD + others), Plex will share port 32400. Make sure no other service is using it."
+echo "For remote access, forward port 32400 on your router (10.0.0.1) to 10.0.0.3:32400."
+echo ""
 echo "Enjoy your media server! 🎬"
