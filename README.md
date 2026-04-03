@@ -27,6 +27,13 @@ The readme is organized in the matter you should run them. You'll want to setup 
     - select option 8 (shell) type `pluginctl -s dhcpd status` should report, `program is running`
         - this seems to be the issue, need to dig in here.
 - Run `sudo brctl show` are `eth0` and `enx..` in completely different bridge groups?
+- Resolution:
+    - Make sure gateway is setup to point to 192.168.1.1 (Modem / IP Router)
+        - Make sure it is default, priority 1
+    - Disable IPV6 under WAN settings
+    - power off everything, including IP Modem/Router
+    - Connect cables to devices to use new LAN
+    - Power on, devices are on new subnet, through OPNSense router
 
 ## create_piihole_vendewolf.sh
 - This should be ran immediately after installing OPNSense virtual router. 
