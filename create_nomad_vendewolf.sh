@@ -93,7 +93,7 @@ echo "   Main interface detected: $MAIN_IFACE"
 # Create bridge config (persistent via /etc/network/interfaces)
 sudo bash -c "cat >> /etc/network/interfaces << EOF
 
-# Bridge for Project N.O.M.A.D. - assign static IP here (e.g. 10.0.0.50/24)
+# Bridge for Project N.O.M.A.D. - assign static IP here (e.g. 10.0.0.3/24)
 auto br-nomad
 iface br-nomad inet static
     address 10.0.0.3/24          # <<< CHANGE THIS TO YOUR DESIRED STATIC IP
@@ -167,7 +167,7 @@ echo "=== Setup completed! ==="
 echo ""
 echo "Bridge Status:"
 echo "   Bridge: br-nomad"
-echo "   IP:     ${BRIDGE_IP:-Not yet assigned (edit /etc/network/interfaces)}"
+echo "   IP:     ${BRIDGE_IP}:-Not yet assigned (edit /etc/network/interfaces)"
 echo ""
 echo "Next steps:"
 echo "1. Edit the bridge IP if needed:"
@@ -180,7 +180,7 @@ echo "   → Consider adding networks: section with external bridge if possible"
 echo ""
 echo "4. Test the stack:   sudo rc-service project-nomad start"
 echo ""
-echo "Dashboard should be reachable at: http://${BRIDGE_IP:-YOUR_BRIDGE_IP}:8080"
+echo "Dashboard should be reachable at: http://${BRIDGE_IP}:8080"
 echo ""
 echo "Useful commands:"
 echo "   podman ps"

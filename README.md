@@ -34,10 +34,25 @@ The readme is organized in the matter you should run them. You'll want to setup 
     - power off everything, including IP Modem/Router
     - Connect cables to devices to use new LAN
     - Power on, devices are on new subnet, through OPNSense router
+    
+## update_dns_blocking_opnsense.sh
+- Created to replace create_piihole_vendewolf.sh
+- downloads list of tracking / poison dns services and blocks them at the router level. 
+- This isn't even really necessary, OPNSense FW includes large list of DNS level tracking and ad blockers you can just select and enable.
+
+## create_jellyfin_vendewolf.sh
+- This is a media server, that is free and does not share your metadata with third parties.
+    - Have not tested yet
+
+## create_plex_vendewolf.sh
+- Abandoned script, decided to try Jellyfin instead of this service.
+    - Plex sends metadata from your server to their customers
+    - Plex charges money for certain features.
 
 ## create_piihole_vendewolf.sh
 - This should be ran immediately after installing OPNSense virtual router. 
     - Setups up a bridge to the router IP address (10.0.0.1) to make a PIIHOLE server at 10.0.0.2
+- I'm discontinuing development on this, Grok was leading me down a rabbit trail that is unnecessary for OPNSense. 
     
 ## create_nomad_vendewolf.sh
 https://github.com/Crosstalk-Solutions/project-nomad?tab=readme-ov-file
@@ -50,6 +65,7 @@ https://github.com/Crosstalk-Solutions/project-nomad?tab=readme-ov-file
     chmod +x create-nomad-openrc.sh
     sudo ./create-nomad-openrc.sh
     ```
+- Set aside work on this to get the OPNSense router up first.
     
 ## flatpak_conversion.sh
 - Created this after it was revealed that the Flathub team was working on implementing Age Verification
