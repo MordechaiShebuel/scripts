@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-pkg_list=("zsh steam vivaldi gimp obs-studio git vlc curl vlc-plugins*")
+pkg_list=("zsh steam gimp obs-studio git vlc curl vlc-plugins*")
 linux=$(uname -r)
 
 if [[ "$linux" == *"omlx"* ]]; then
@@ -20,11 +20,12 @@ fi
 
 if [[ "$linux" == *"artix"* ]]; then
     # Artix
-    #update first
+    #update first - enable multilib for Steam
     ./update.sh
+    ./enable_multilib.sh
 
     # Linux specific packages
-    pkg_list=("$pkg_list[@]" "libdvdcss" "libdvdnav" "libdvdread")
+    pkg_list=("$pkg_list[@]" "libdvdcss" "libdvdnav" "libdvdread" "pamac" "trizen")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
