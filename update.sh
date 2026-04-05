@@ -12,7 +12,7 @@ if [[ "$linux" == *"artix"* ]]; then
     sudo pacman -Syu
 fi
 
-if [[ "$linux" == *"vendefoul"* ]]; then
+if [[ "$linux" == *"deb13"* ]]; then
     ## vendefoul
     sudo apt-get update && sudo apt-get upgrade
 fi

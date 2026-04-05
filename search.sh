@@ -25,7 +25,7 @@ if [[ "$linux" == *"artix"* ]]; then
     pamac search "$search_term"
 fi
 
-if [[ "$linux" == *"vendefoul"* ]]; then
+if [[ "$linux" == *"deb13"* ]]; then
     # Vendewolf
     ./update.sh
 
