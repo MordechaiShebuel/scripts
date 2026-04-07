@@ -25,7 +25,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ./enable_multilib.sh
 
     # Linux specific packages
-    pkg_list=("$pkg_list[@]" "libdvdcss" "libdvdnav" "libdvdread" "pamac" "trizen")
+    pkg_list=("$pkg_list[@]" "libdvdcss" "libdvdnav" "libdvdread" "pamac" "trizen" "fakeroot")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -41,7 +41,7 @@ if [[ "$linux" == *"deb13"* ]]; then
     ./update.sh
 
         # Linux specific packages
-    pkg_list=("$pkg_list[@]" "libdvd*" "podman" "podman-composes")
+    pkg_list=("$pkg_list[@]" "podman" "podman-compose")
 
     for pkg in ${pkg_list[@]}; do
         sudo apt-get install -y "${pkg}"
