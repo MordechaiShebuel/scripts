@@ -49,5 +49,5 @@ def ensure_root():
 def check_required_apps(apps):
     for app in apps:
         if shutil.which(app) is None:
-            cmd = f'pacman -S {app}'
+            cmd = f'./install.sh {app}'
             run(cmd)
