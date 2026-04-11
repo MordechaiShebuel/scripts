@@ -32,6 +32,8 @@ if [[ "$linux" == *"artix"* ]]; then
     for pkg in ${pkg_list[@]}; do
         sudo pacman -S "${pkg}"
     done
+
+    sudo python install_nym.py
 fi
 
 if [[ "$linux" == *"deb13"* ]]; then

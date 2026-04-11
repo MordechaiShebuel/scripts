@@ -13,10 +13,9 @@ Flags:
 import os
 import sys
 import shutil
-import subprocess
 import tempfile
 from pathlib import Path
-from utils import run, push_rollback, rollback_all
+from utils import run, push_rollback, rollback_all, atomic_write, safe_mkdir, ensure_root, check_required_apps
 
 # --- Defaults (can be overridden via env) ---
 IMAGE = os.environ.get("IMAGE", "docker.io/jellyfin/jellyfin:latest")
@@ -60,43 +59,15 @@ start_pre() {
 
 ROLLBACK_STACK = []
 
-def ensure_root():
-    if os.geteuid() != 0:
-        print("Run as root or via sudo.", file=sys.stderr)
-        sys.exit(1)
-
-def check_podman(binpath):
-    if not binpath.exists() or not os.access(str(binpath), os.X_OK):
-        print(f"podman not found at {binpath}. Install podman first.", file=sys.stderr)
-        sys.exit(1)
-
-def safe_mkdir(p: Path):
-    created = []
-    if not p.exists():
-        p.mkdir(parents=True, exist_ok=True)
-        created.append(p)
-    return created
-
-def atomic_write(path: Path, data: str, mode=0o755):
-    td = Path(tempfile.mkstemp(dir=str(path.parent))[1])
-    try:
-        td.write_text(data)
-        os.chmod(str(td), mode)
-        os.replace(str(td), str(path))
-    finally:
-        if td.exists():
-            try:
-                td.unlink()
-            except Exception:
-                pass
-
 def main():
     test_machine = False
     if "--test-machine" in sys.argv:
         test_machine = True
 
+    required_apps = ['podman', 'podman-compose']
+
     ensure_root()
-    check_podman(PODMAN_BIN)
+    check_required_apps(required_apps)
 
     # If test_machine requested, init/start podman machine
     if test_machine:
@@ -174,7 +145,7 @@ def main():
             shutil.copy2(str(INIT_PATH), str(backup_path))
             ROLLBACK_STACK = push_rollback(lambda: os.replace(str(backup_path), str(INIT_PATH)) if backup_path.exists() else None, ROLLBACK_STACK)
         else:
-            ROLLBACK_STACK = (lambda: INIT_PATH.unlink() if INIT_PATH.exists() else None, ROLLBACK_STACK)
+            ROLLBACK_STACK = push_rollback(lambda: INIT_PATH.unlink() if INIT_PATH.exists() else None, ROLLBACK_STACK)
 
         atomic_write(INIT_PATH, INIT_SCRIPT, mode=0o755)
         print(f"OpenRC service script written to {INIT_PATH}")
