@@ -51,3 +51,23 @@ def check_required_apps(apps):
         if shutil.which(app) is None:
             cmd = f'./install.sh {app}'
             run(cmd)
+
+def setup_test_machine(ROLLBACK_STACK, test_machine=False):
+    # If test_machine requested, init/start podman machine
+    if test_machine:
+        try:
+            run(['podman', "machine", "init"])
+        except subprocess.CalledProcessError:
+            # ignore if already exists
+            pass
+        run(['podman', "machine", "start"])
+        # running podman commands will use the machine automatically in many setups;
+        # if not, user can use `podman machine ssh` manually for full isolation.
+
+        # For rollback: stop machine if we started it here.
+        def stop_machine():
+            try:
+                run(['podman', "machine", "stop"])
+            except Exception:
+                pass
+        ROLLBACK_STACK = push_rollback(stop_machine, ROLLBACK_STACK)

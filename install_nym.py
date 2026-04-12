@@ -90,8 +90,15 @@ def start_service():
     run(cmd)
 
 def main():
-    print("Download and install Nym, get service running for nym-vpnd on OpenRC")
+
     required_apps = ['trizen']
+
+    test_machine = False
+    if "--test-machine" in sys.argv:
+        required_apps.append('podman', 'podman-compose')
+        test_machine = True
+
+    print("Download and install Nym, get service running for nym-vpnd on OpenRC")
 
     ensure_root()
     check_required_apps(required_apps)

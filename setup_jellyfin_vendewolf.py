@@ -15,7 +15,7 @@ import sys
 import shutil
 import tempfile
 from pathlib import Path
-from utils import run, push_rollback, rollback_all, atomic_write, safe_mkdir, ensure_root, check_required_apps
+from utils import run, push_rollback, rollback_all, atomic_write, safe_mkdir, ensure_root, check_required_apps, setup_test_machine
 
 # --- Defaults (can be overridden via env) ---
 IMAGE = os.environ.get("IMAGE", "docker.io/jellyfin/jellyfin:latest")
@@ -70,23 +70,7 @@ def main():
     check_required_apps(required_apps)
 
     # If test_machine requested, init/start podman machine
-    if test_machine:
-        try:
-            run([str(PODMAN_BIN), "machine", "init"])
-        except subprocess.CalledProcessError:
-            # ignore if already exists
-            pass
-        run([str(PODMAN_BIN), "machine", "start"])
-        # running podman commands will use the machine automatically in many setups;
-        # if not, user can use `podman machine ssh` manually for full isolation.
-
-        # For rollback: stop machine if we started it here.
-        def stop_machine():
-            try:
-                run([str(PODMAN_BIN), "machine", "stop"])
-            except Exception:
-                pass
-        ROLLBACK_STACK = push_rollback(stop_machine, ROLLBACK_STACK)
+    setup_test_maching(ROLLBACK_STACK, test_machine)
 
     created_paths = []
     try:

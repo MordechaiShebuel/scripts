@@ -25,7 +25,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ./enable_multilib.sh
 
     # Linux specific packages
-    pkg_list=("$pkg_list[@]" "libdvdcss" "libdvdnav" "libdvdread" "pamac" "trizen" "fakeroot")
+    pkg_list=("$pkg_list[@]" "libdvdcss" "libdvdnav" "libdvdread" "pamac" "trizen" "fakeroot" "bibletime" "signal-desktop" "telegram-desktop" "vivaldi")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -33,7 +33,15 @@ if [[ "$linux" == *"artix"* ]]; then
         sudo pacman -S "${pkg}"
     done
 
+    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "firedragon-bin" "zen-browser-bin" "brave-bin")
+
+    for pkg in ${aur_pkg_list[@]}; do
+        trizen -S "${pkg}"
+    done
+
     sudo python install_nym.py
+
+
 fi
 
 if [[ "$linux" == *"deb13"* ]]; then

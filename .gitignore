@@ -1,4 +1,4 @@
-DO_NOT_COMMIT
+~/.ignore/
 *.kate-swp
 install_nomad.sh
 patched_install_nomad.sh
