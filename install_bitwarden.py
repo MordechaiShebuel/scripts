@@ -151,8 +151,9 @@ def main():
     try:
         create_dedicated_user()
         setup_namespaces()
-        setup_rc()
-        start_service()
+        set_permissions()
+        generate_token()
+        env_fix()
     except Exception as e:
         print("Error encountered during install:", str(e), file=sys.stderr)
         print("Rolling back changes...", file=sys.stderr)

@@ -28,7 +28,7 @@ def setup_rc():
     "description=\"NymVPN daemon\""
     "command=\"/usr/bin/nym-vpnd\""
     "command_args=\"-v run-as-service\""
-    "pidfile=\"/run/\$\{RC_SVCNAME\}.pid\""
+    "pidfile=\"/run/${RC_SVCNAME}.pid\""
     "command_background=\"yes\""
     "depend() {"
     "need dbus"
@@ -41,12 +41,12 @@ def setup_rc():
     "}"
 
     "supervise() {"
-    "start-stop-daemon --start --exec \"$\{command\}\" --background --make-pidfile --pidfile \"$\{pidfile\}\" -- $>"
+    "start-stop-daemon --start --exec \"${command}\" --background --make-pidfile --pidfile \"${pidfile}\" -- $>"
     "}"
 
     "stop() {"
-    "start-stop-daemon --stop --pidfile \"$\{pidfile\}\" --retry TERM/5/KILL/5"
-    "rm -f \"$\{pidfile\}\""
+    "start-stop-daemon --stop --pidfile \"${pidfile}\" --retry TERM/5/KILL/5"
+    "rm -f \"${pidfile}\""
     "}")
 
     # Define init.d file
