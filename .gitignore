@@ -1,3 +1,4 @@
+support/*
 .ignore/*
 *.kate-swp
 install_nomad.sh

@@ -30,6 +30,13 @@ else
 # 32-bit compatibility repository
 [lib32]
 Include = /etc/pacman.d/mirrorlist
+
+# Arch compatibility
+[extra]
+Include = /etc/pacman.d/mirrorlist-arch
+
+[multilib]
+Include = /etc/pacman.d/mirrorlist-arch
 #################################################################
 EOF
     echo "Appended [lib32] block."

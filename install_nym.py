@@ -1,7 +1,7 @@
 # Python script to install Nym and setup daemon for Artix
 import os
 import shutil
-from utils import run, push_rollback, rollback_all, atomic_write, safe_mkdir, check_podman, ensure_root, check_required_apps
+from utils import run, push_rollback, rollback_all, atomic_write, safe_mkdir, ensure_root, check_required_apps
 
 # --- Defaults (can be overridden via env) ---
 OPENRC_INIT_DIR = Path(os.environ.get("OPENRC_INIT_DIR", "/etc/init.d"))
@@ -11,11 +11,11 @@ ROLLBACK_STACK = []
 
 # install script
 def install_nym():
-    cmd = "trizen -S nym-vpnd-bin nym-vpn-app-bin"
+    cmd = "trizen -S nym-vpnd-bin nym-vpn-app-bin --noconfirm"
     run(cmd)
     def remove_nym():
         try:
-            cmd = "trizen -R nym-vpnd-bin nym-vpn-app-bin"
+            cmd = "trizen -R nym-vpnd-bin nym-vpn-app-bin --noconfirm"
             run(cmd)
         except Exception:
             pass

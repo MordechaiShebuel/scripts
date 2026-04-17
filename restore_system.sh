@@ -20,27 +20,32 @@ fi
 
 if [[ "$linux" == *"artix"* ]]; then
     # Artix
-    #update first - enable multilib for Steam
+    #update first
     ./update.sh
+
+    # Pre-setup for Artix / enable multilib and arch support
+    sudo pacman -S pamac artix-archlinux-support --noconfirm
     sudo ./enable_multilib.sh
+    sudo pacman -Syy
 
     # Linux specific packages
-    pkg_list=("$pkg_list[@]" "base-devel" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "pamac" "trizen" "fakeroot" "bibletime" "signal-desktop" "telegram-desktop" "vivaldi" "vlc-plugins-all" "the_silver_searcher")
+    pkg_list=("$pkg_list[@]" "base-devel" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "trizen" "fakeroot" "bibletime" "signal-desktop" "telegram-desktop" "vivaldi" "vlc-plugins-all" "the_silver_searcher")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
     for pkg in ${pkg_list[@]}; do
-        sudo pacman -S "${pkg} --noconfirm"
+        pamac install "${pkg}" --no-confirm
     done
 
-    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "firedragon-bin" "zen-browser-bin" "brave-bin")
+    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "firedragon-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting")
 
     for pkg in ${aur_pkg_list[@]}; do
-        trizen -S "${pkg} --noconfirm"
+        trizen -S "${pkg}" --noconfirm
     done
 
     sudo python install_nym.py
 
+    sudo ln -s /usr/share/zsh/plugins/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 
 fi
 
@@ -59,4 +64,7 @@ if [[ "$linux" == *"deb13"* ]]; then
     # Cinnamon:
     # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
 fi
+
+# copy setup files you want on this system, for example local scripts, ssh pub file, etc
+cp -r support/* ~/
 
