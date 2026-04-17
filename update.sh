@@ -20,5 +20,5 @@ fi
 
 if [[ "$linux" == *"OpenWrt"* ]]; then
     ## OpenWRT
-    sudo apt-get update && sudo apt-get upgrade
+    opkg update && opkg list-upgradable | cut -f1 -d ' ' | xargs -r opkg upgrade
 fi
