@@ -38,11 +38,13 @@ def get_root():
     cmd = "su"
     run(cmd)
 
-def setup_rc(ROLLBACK_STACK)
-    cmd = 'sudo python setup_nym_rc.py'
+
+def setup_rc(ROLLBACK_STACK):
+    cmd = "sudo python setup_nym_rc.py"
     run(cmd, shell=True)
 
     return ROLLBACK_STACK
+
 
 # def setup_rc(ROLLBACK_STACK):
 #     # Create config for OpenRC
