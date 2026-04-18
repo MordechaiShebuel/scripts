@@ -34,6 +34,7 @@ if [[ "$linux" == *"artix"* ]]; then
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
     for pkg in ${pkg_list[@]}; do
+        # Check if app is already installed before trying to re-install it
         pamac install "${pkg}" --no-confirm
     done
 
@@ -46,6 +47,7 @@ if [[ "$linux" == *"artix"* ]]; then
     sudo python install_nym.py
 
     sudo ln -s /usr/share/zsh/plugins/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+    # ERROR: warning: config file /etc/pacman.d/mirrorlist, line 101: directive 'Server' in section 'options' not recognized.
 
 fi
 
