@@ -10,12 +10,23 @@ Optional environment overrides:
 Flags:
   --test-machine   : run podman machine init/start and execute podman commands inside it (requires podman)
 """
+
 import os
-import sys
 import shutil
-import tempfile
+import subprocess
+import sys
 from pathlib import Path
-from utils import run, push_rollback, rollback_all, atomic_write, safe_mkdir, ensure_root, check_required_apps, setup_test_machine
+
+from utils import (
+    atomic_write,
+    check_required_apps,
+    ensure_root,
+    push_rollback,
+    rollback_all,
+    run,
+    safe_mkdir,
+    setup_test_machine,
+)
 
 # --- Defaults (can be overridden via env) ---
 IMAGE = os.environ.get("IMAGE", "docker.io/jellyfin/jellyfin:latest")
@@ -57,20 +68,20 @@ start_pre() {
 }
 """
 
-ROLLBACK_STACK = []
 
 def main():
+    ROLLBACK_STACK = []
     test_machine = False
     if "--test-machine" in sys.argv:
         test_machine = True
 
-    required_apps = ['podman', 'podman-compose']
+    required_apps = ["podman", "podman-compose"]
 
     ensure_root()
     check_required_apps(required_apps)
 
     # If test_machine requested, init/start podman machine
-    setup_test_maching(ROLLBACK_STACK, test_machine)
+    setup_test_machine(ROLLBACK_STACK, test_machine)
 
     created_paths = []
     try:
@@ -80,7 +91,10 @@ def main():
             if created:
                 created_paths.extend(created)
                 # rollback: remove the directory only if it is empty to avoid deleting user data
-               ROLLBACK_STACK = push_rollback(lambda p=p: (p.exists() and not any(p.iterdir()) and p.rmdir()), ROLLBACK_STACK)
+                ROLLBACK_STACK = push_rollback(
+                    lambda p=p: p.exists() and not any(p.iterdir()) and p.rmdir(),
+                    ROLLBACK_STACK,
+                )
 
         # set ownership (best-effort)
         try:
@@ -95,41 +109,74 @@ def main():
         print(f"Pulling Jellyfin image: {IMAGE}")
         run([str(PODMAN_BIN), "pull", IMAGE])
         # rollback: remove image
-        ROLLBACK_STACK = push_rollback(lambda: run([str(PODMAN_BIN), "rmi", "-f", IMAGE]), ROLLBACK_STACK)
+        ROLLBACK_STACK = push_rollback(
+            lambda: run([str(PODMAN_BIN), "rmi", "-f", IMAGE]), ROLLBACK_STACK
+        )
 
         # 3) Create container if not exists
-        exists = subprocess.run([str(PODMAN_BIN), "container", "exists", CONTAINER_NAME])
+        exists = run([str(PODMAN_BIN), "container", "exists", CONTAINER_NAME])
         if exists.returncode == 0:
             print(f"Container '{CONTAINER_NAME}' already exists.")
         else:
-            print(f"Creating container '{CONTAINER_NAME}' with port mappings (LAN-only).")
-            run([
-                str(PODMAN_BIN), "create",
-                "--name", CONTAINER_NAME,
-                "--restart=always",
-                "-p", f"{JELLYFIN_HTTP_PORT}:8096/tcp",
-                "-p", f"{JELLYFIN_HTTPS_PORT}:8920/tcp",
-                "-v", f"{CONFIG_DIR}:/config",
-                "-v", f"{CACHE_DIR}:/cache",
-                "-v", f"{MEDIA_DIR}:/media:ro",
-                IMAGE
-            ])
-            ROLLBACK_STACK = push_rollback(lambda: run([str(PODMAN_BIN), "rm", "-f", CONTAINER_NAME]), ROLLBACK_STACK)
+            print(
+                f"Creating container '{CONTAINER_NAME}' with port mappings (LAN-only)."
+            )
+            run(
+                [
+                    str(PODMAN_BIN),
+                    "create",
+                    "--name",
+                    CONTAINER_NAME,
+                    "--restart=always",
+                    "-p",
+                    f"{JELLYFIN_HTTP_PORT}:8096/tcp",
+                    "-p",
+                    f"{JELLYFIN_HTTPS_PORT}:8920/tcp",
+                    "-v",
+                    f"{CONFIG_DIR}:/config",
+                    "-v",
+                    f"{CACHE_DIR}:/cache",
+                    "-v",
+                    f"{MEDIA_DIR}:/media:ro",
+                    IMAGE,
+                ]
+            )
+            ROLLBACK_STACK = push_rollback(
+                lambda: run([str(PODMAN_BIN), "rm", "-f", CONTAINER_NAME]),
+                ROLLBACK_STACK,
+            )
 
         # 4) Write OpenRC service script atomically
         INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
         if not OPENRC_INIT_DIR.exists():
             OPENRC_INIT_DIR.mkdir(parents=True, exist_ok=True)
-            ROLLBACK_STACK = push_rollback(lambda: OPENRC_INIT_DIR.rmdir() if not any(OPENRC_INIT_DIR.iterdir()) else None, ROLLBACK_STACK)
+            ROLLBACK_STACK = push_rollback(
+                lambda: (
+                    OPENRC_INIT_DIR.rmdir()
+                    if not any(OPENRC_INIT_DIR.iterdir())
+                    else None
+                ),
+                ROLLBACK_STACK,
+            )
 
         # If file already exists, back it up (so we can restore)
         backup_path = None
         if INIT_PATH.exists():
             backup_path = INIT_PATH.with_suffix(".bak")
             shutil.copy2(str(INIT_PATH), str(backup_path))
-            ROLLBACK_STACK = push_rollback(lambda: os.replace(str(backup_path), str(INIT_PATH)) if backup_path.exists() else None, ROLLBACK_STACK)
+            ROLLBACK_STACK = push_rollback(
+                lambda: (
+                    os.replace(str(backup_path), str(INIT_PATH))
+                    if backup_path.exists()
+                    else None
+                ),
+                ROLLBACK_STACK,
+            )
         else:
-            ROLLBACK_STACK = push_rollback(lambda: INIT_PATH.unlink() if INIT_PATH.exists() else None, ROLLBACK_STACK)
+            ROLLBACK_STACK = push_rollback(
+                lambda: INIT_PATH.unlink() if INIT_PATH.exists() else None,
+                ROLLBACK_STACK,
+            )
 
         atomic_write(INIT_PATH, INIT_SCRIPT, mode=0o755)
         print(f"OpenRC service script written to {INIT_PATH}")
@@ -137,7 +184,10 @@ def main():
         # 5) Enable service in default runlevel and start it
         try:
             run(["rc-update", "add", SERVICE_NAME, "default"])
-            ROLLBACK_STACK = push_rollback(lambda: run(["rc-update", "del", SERVICE_NAME, "default"]), ROLLBACK_STACK)
+            ROLLBACK_STACK = push_rollback(
+                lambda: run(["rc-update", "del", SERVICE_NAME, "default"]),
+                ROLLBACK_STACK,
+            )
         except subprocess.CalledProcessError:
             # non-fatal; continue but note we didn't add to default runlevel
             pass
@@ -145,17 +195,32 @@ def main():
         try:
             run(["rc-service", SERVICE_NAME, "start"])
             # rollback: try to stop service
-            ROLLBACK_STACK = push_rollback(lambda: run(["rc-service", SERVICE_NAME, "stop"]), ROLLBACK_STACK)
+            ROLLBACK_STACK = push_rollback(
+                lambda: run(["rc-service", SERVICE_NAME, "stop"]), ROLLBACK_STACK
+            )
         except subprocess.CalledProcessError:
-            print(f"Warning: starting service failed; try 'rc-service {SERVICE_NAME} start' manually.", file=sys.stderr)
+            print(
+                f"Warning: starting service failed; try 'rc-service {SERVICE_NAME} start' manually.",
+                file=sys.stderr,
+            )
 
         # Success: clear rollback stack
         ROLLBACK_STACK.clear()
         print()
-        host_ip = subprocess.run(["hostname", "-I"], stdout=subprocess.PIPE, text=True).stdout.strip().split()[0] if shutil.which("hostname") else "<host-ip>"
-        print(f"Jellyfin should now be created and started (container name: {CONTAINER_NAME}).")
+        host_ip = (
+            subprocess.run(["hostname", "-I"], stdout=subprocess.PIPE, text=True)
+            .stdout.strip()
+            .split()[0]
+            if shutil.which("hostname")
+            else "<host-ip>"
+        )
+        print(
+            f"Jellyfin should now be created and started (container name: {CONTAINER_NAME})."
+        )
         print()
-        print(f"Access (LAN): http://{host_ip}:{JELLYFIN_HTTP_PORT}  (or https on port {JELLYFIN_HTTPS_PORT})")
+        print(
+            f"Access (LAN): http://{host_ip}:{JELLYFIN_HTTP_PORT}  (or https on port {JELLYFIN_HTTPS_PORT})"
+        )
         print()
         print("Variables used:")
         print(f" MEDIA_DIR={MEDIA_DIR}")
@@ -165,7 +230,9 @@ def main():
         print("Notes:")
         print(" - SELinux is NOT modified by this script.")
         print(" - Media is mounted read-only into the container (/media).")
-        print(" - To change networking to host mode, edit creation options accordingly.")
+        print(
+            " - To change networking to host mode, edit creation options accordingly."
+        )
         print()
         print("To manage container manually:")
         print(f" {PODMAN_BIN} ps -a")
@@ -178,6 +245,7 @@ def main():
         print("Rolling back changes...", file=sys.stderr)
         rollback_all(ROLLBACK_STACK)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -40,73 +40,65 @@ def get_root():
 
 
 def setup_rc(ROLLBACK_STACK):
-    cmd = "sudo python setup_nym_rc.py"
+    nymd_config = (
+        "#!/sbin/openrc-run"
+        'name="nym-vpnd"'
+        'description="NymVPN daemon"'
+        'command="/usr/bin/nym-vpnd"'
+        'command_args="-v run-as-service"'
+        'pidfile="/run/${RC_SVCNAME}.pid"'
+        'command_background="yes"'
+        "depend() {"
+        "need dbus"
+        "use net"
+        "after firewall"
+        "}"
+        "start_pre() {"
+        "checkpath --directory --mode 0755 /run"
+        "}"
+        "supervise() {"
+        'start-stop-daemon --start --exec "${command}" --background --make-pidfile --pidfile "${pidfile}" -- $>'
+        "}"
+        "stop() {"
+        'start-stop-daemon --stop --pidfile "${pidfile}" --retry TERM/5/KILL/5'
+        'rm -f "${pidfile}"'
+        "}"
+    )
+    if not OPENRC_INIT_DIR.exists():
+        cmd = f"sudo mkdir {OPENRC_INIT_DIR}"
+        run(cmd, shell=True)
+
+    INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
+    backup_path = None
+    init_cmd = ""
+    if INIT_PATH.exists():
+        backup_path = INIT_PATH.with_suffix(".bak")
+        if backup_path.exists():
+            cmd = f"sudo rm {backup_path}"
+            run(cmd, shell=True)
+
+        init_cmd = f"sudo mv {INIT_PATH} {backup_path}"
+
+        def restore_backup():
+            cmd = f"sudo rm {INIT_PATH} && sudo mv {backup_path} {INIT_PATH}"
+            run(cmd, shell=True)
+
+        ROLLBACK_STACK = push_rollback(restore_backup, ROLLBACK_STACK)
+        run(init_cmd, shell=True)
+    else:
+
+        def remove_init():
+            cmd = f"sudo rm {INIT_PATH}"
+            run(cmd, shell=True)
+
+        ROLLBACK_STACK = push_rollback(remove_init, ROLLBACK_STACK)
+
+    # Write script to init file
+    cmd = f"sudo cat >> {INIT_PATH} << EOF\n\n{nymd_config}\nEOF"
     run(cmd, shell=True)
+    print(f"OpenRC service script written to {INIT_PATH}")
 
     return ROLLBACK_STACK
-
-
-# def setup_rc(ROLLBACK_STACK):
-#     # Create config for OpenRC
-#     nymd_config = (
-#         "#!/sbin/openrc-run"
-#         'name="nym-vpnd"'
-#         'description="NymVPN daemon"'
-#         'command="/usr/bin/nym-vpnd"'
-#         'command_args="-v run-as-service"'
-#         'pidfile="/run/${RC_SVCNAME}.pid"'
-#         'command_background="yes"'
-#         "depend() {"
-#         "need dbus"
-#         "use net"
-#         "after firewall"
-#         "}"
-#         "start_pre() {"
-#         "checkpath --directory --mode 0755 /run"
-#         "}"
-#         "supervise() {"
-#         'start-stop-daemon --start --exec "${command}" --background --make-pidfile --pidfile "${pidfile}" -- $>'
-#         "}"
-#         "stop() {"
-#         'start-stop-daemon --stop --pidfile "${pidfile}" --retry TERM/5/KILL/5'
-#         'rm -f "${pidfile}"'
-#         "}"
-#     )
-
-#     # Define init.d file
-#     # TODO: Need to replace these with run() commands.
-#     if not OPENRC_INIT_DIR.exists():
-#         OPENRC_INIT_DIR.mkdir(parents=True, exist_ok=True)
-#         ROLLBACK_STACK = push_rollback(
-#             lambda: (
-#                 OPENRC_INIT_DIR.rmdir() if not any(OPENRC_INIT_DIR.iterdir()) else None
-#             ),
-#             ROLLBACK_STACK,
-#         )
-
-#     INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
-
-#     # If file already exists, back it up (so we can restore)
-#     backup_path = None
-#     if INIT_PATH.exists():
-#         backup_path = INIT_PATH.with_suffix(".bak")
-#         shutil.copy2(str(INIT_PATH), str(backup_path))
-#         ROLLBACK_STACK = push_rollback(
-#             lambda: (
-#                 os.replace(str(backup_path), str(INIT_PATH))
-#                 if backup_path.exists()
-#                 else None
-#             ),
-#             ROLLBACK_STACK,
-#         )
-#     else:
-#         ROLLBACK_STACK = push_rollback(
-#             lambda: INIT_PATH.unlink() if INIT_PATH.exists() else None, ROLLBACK_STACK
-#         )
-
-#     # Save output to init.d file
-#     atomic_write(INIT_PATH, nymd_config, mode=0o755)
-#     print(f"OpenRC service script written to {INIT_PATH}")
 
 
 def start_service(ROLLBACK_STACK):
@@ -142,13 +134,13 @@ def main():
         required_apps.append("podman")
         required_apps.append("podman-compose")
         test_machine = True
+        # TODO: Need to determine if this would allow simulation of nym install
 
     print("Download and install Nym, get service running for nym-vpnd on OpenRC")
 
     check_required_apps(required_apps)
     try:
         ROLLBACK_STACK = install_nym(ROLLBACK_STACK)
-        # ensure_root()
         ROLLBACK_STACK = setup_rc(ROLLBACK_STACK)
         ROLLBACK_STACK = start_service(ROLLBACK_STACK)
     except Exception as e:

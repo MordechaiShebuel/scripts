@@ -12,21 +12,23 @@ if [[ "$linux" == *"omlx"* ]]; then
     ./update.sh
     # IFS=' ' read -ra my_strings <<< "$pkg_list"
     for pkg in ${pkg_list[@]}; do
-        sudo dnf in "${pkg}"
+        if ! command -v "$pkg" >/dev/null 2>&1; then
+            ./install.sh "${pkg}"
+        fi
     done
 
     sudo chsh -s $(which zsh) mbuel
 fi
 
 if [[ "$linux" == *"artix"* ]]; then
-    # Artix
-    #update first
-    ./update.sh
-
     # Pre-setup for Artix / enable multilib and arch support
     sudo pacman -S pamac artix-archlinux-support --noconfirm
     sudo ./enable_multilib.sh
-    sudo pacman -Syy
+    sudo ./enable_extra.sh
+
+    # Artix
+    #update first
+    ./update.sh
 
     # Linux specific packages
     pkg_list=("$pkg_list[@]" "base-devel" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "trizen" "fakeroot" "bibletime" "signal-desktop" "telegram-desktop" "vivaldi" "vlc-plugins-all" "the_silver_searcher")
@@ -35,13 +37,21 @@ if [[ "$linux" == *"artix"* ]]; then
     # Artix [lib32] and Arch [multilib]
     for pkg in ${pkg_list[@]}; do
         # Check if app is already installed before trying to re-install it
-        pamac install "${pkg}" --no-confirm
+        # pamac install "${pkg}" --no-confirm
+        if ! command -v "$pkg" >/dev/null 2>&1; then
+            ./install.sh "${pkg}"
+        fi
     done
 
     aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "firedragon-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting")
 
     for pkg in ${aur_pkg_list[@]}; do
-        trizen -S "${pkg}" --noconfirm
+        if ! command -v "$pkg" >/dev/null 2>&1; then
+            ./install.sh "${pkg}" aur
+        else
+            echo "Skipping install of ${pkg} - it is already installed."
+        fi
+        # trizen -S "${pkg}" --noconfirm
     done
 
     sudo python install_nym.py
@@ -61,7 +71,9 @@ if [[ "$linux" == *"deb13"* ]]; then
     pkg_list=("$pkg_list[@]" "podman" "podman-compose" "vlc-plugins*")
 
     for pkg in ${pkg_list[@]}; do
-        sudo apt-get install -y "${pkg}"
+        if ! command -v "$pkg" >/dev/null 2>&1; then
+            ./install "${pkg}"
+        fi
     done
     # Cinnamon:
     # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
@@ -69,4 +81,3 @@ fi
 
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
 cp -r support/* ~/
-

@@ -27,7 +27,7 @@ source "$PROFILE" 2>/dev/null || true
 # 2. Check and install requirements
 echo "→ Checking podman, curl and git"
 NEEDS_INSTALL=()
-for pkg in git podman curl; do
+for pkg in git podman curl python3-pip bridge-utils; do
     if ! command -v "$pkg" >/dev/null 2>&1; then
         NEEDS_INSTALL+=("$pkg")
     fi
@@ -35,8 +35,8 @@ done
 
 if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
     echo "   Installing: ${NEEDS_INSTALL[*]}"
-    sudo apt update
-    sudo apt install -y "${NEEDS_INSTALL[@]}"
+    ./update.sh
+    ./install.sh "${NEEDS_INSTALL[@]}"
 else
     echo "   ✅ Requirements already installed"
 fi
@@ -44,7 +44,6 @@ fi
 # Install podman-compose
 if ! command -v podman-compose >/dev/null 2>&1; then
     echo "   Installing podman-compose"
-    sudo apt install -y python3-pip
     pip3 install --break-system-packages podman-compose
 fi
 
@@ -78,8 +77,6 @@ sudo rc-service podman-socket restart || echo "   ⚠️ Podman socket started (
 
 # 4. Create dedicated bridge for Project N.O.M.A.D. (bridged networking)
 echo "→ Creating dedicated bridge br-nomad for the stack (own IP on LAN)"
-sudo apt install -y bridge-utils
-
 # Detect main interface (first one with IP, skipping lo)
 MAIN_IFACE=$(ip -4 addr show | awk '/inet/ && !/127.0.0.1/ {print $NF; exit}')
 
@@ -93,10 +90,10 @@ echo "   Main interface detected: $MAIN_IFACE"
 # Create bridge config (persistent via /etc/network/interfaces)
 sudo bash -c "cat >> /etc/network/interfaces << EOF
 
-# Bridge for Project N.O.M.A.D. - assign static IP here (e.g. 10.0.0.3/24)
+# Bridge for Project N.O.M.A.D. - assign static IP here (e.g. 10.0.0.2/24)
 auto br-nomad
 iface br-nomad inet static
-    address 10.0.0.3/24          # <<< CHANGE THIS TO YOUR DESIRED STATIC IP
+    address 10.0.0.2/24          # <<< CHANGE THIS TO YOUR DESIRED STATIC IP
     gateway 10.0.0.1              # Your router
     bridge_ports none             # We attach containers via podman network / compose
     bridge_stp off

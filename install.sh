@@ -5,13 +5,17 @@ pkg=$1
 option=$2
 
 if [[ "$linux" == *"omlx"* ]]; then # Need to verify this is correct
-    ## Open Mandrive Update
+    ## Open Mandrive Install
     sudo dnf in -y "$pkg"
 fi
 
 if [[ "$linux" == *"artix"* ]]; then
-    ## Artix update
-    pamac install "$pkg" --no-confirm
+    ## Artix Install
+    if [[ "$option" == "aur"]]; then
+        trizen -S "${pkg}" --noconfirm
+    else
+        pamac install "$pkg" --no-confirm
+    fi
 fi
 
 if [[ "$linux" == *"deb13"* ]]; then
