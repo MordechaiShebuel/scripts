@@ -6,25 +6,16 @@ IMMICHDIR="/var/lib/immich/library" # (or your preferred path on a large disk)
 
 
 # 2. Check and install requirements
-echo "→ Checking podman, curl and git"
-NEEDS_INSTALL=()
-if ! command -v git >/dev/null 2>&1; then
-    NEEDS_INSTALL+=("git")
-fi
-if ! command -v podman >/dev/null 2>&1; then
-    NEEDS_INSTALL+=("podman")
-fi
-if ! command -v curl >/dev/null 2>&1; then
-    NEEDS_INSTALL+=("curl")
-fi
-
-if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
-    echo "   Installing: ${NEEDS_INSTALL[*]}"
-    sudo apt update
-    sudo apt install -y "${NEEDS_INSTALL[@]}"
-else
-    echo "   ✅ podman and curl are already installed"
-fi
+# echo "→ Checking podman, curl and git"
+for pkg in git podman curl python3-pip bridge-utils; do
+    if ! command -v "$pkg" >/dev/null 2>&1; then
+        echo "   Installing: ${pkg}"
+        ./install.sh
+        #NEEDS_INSTALL+=("$pkg")
+    else
+        echo "   ✅ ${pkg} Requirements already installed"
+    fi
+done
 
 rc-update add podman
 rc-service podman start

@@ -11,7 +11,7 @@ fi
 
 if [[ "$linux" == *"artix"* ]]; then
     ## Artix Install
-    if [[ "$option" == "aur"]]; then
+    if [[ "$option" == "aur" ]]; then
         trizen -S "${pkg}" --noconfirm
     else
         pamac install "$pkg" --no-confirm

@@ -26,20 +26,15 @@ source "$PROFILE" 2>/dev/null || true
 
 # 2. Check and install requirements
 echo "→ Checking podman, curl and git"
-NEEDS_INSTALL=()
 for pkg in git podman curl python3-pip bridge-utils; do
     if ! command -v "$pkg" >/dev/null 2>&1; then
-        NEEDS_INSTALL+=("$pkg")
+        echo "   Installing: ${pkg}"
+        ./install.sh
+        #NEEDS_INSTALL+=("$pkg")
+    else
+        echo "   ✅ ${pkg} Requirements already installed"
     fi
 done
-
-if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
-    echo "   Installing: ${NEEDS_INSTALL[*]}"
-    ./update.sh
-    ./install.sh "${NEEDS_INSTALL[@]}"
-else
-    echo "   ✅ Requirements already installed"
-fi
 
 # Install podman-compose
 if ! command -v podman-compose >/dev/null 2>&1; then

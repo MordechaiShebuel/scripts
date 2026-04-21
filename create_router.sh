@@ -34,8 +34,19 @@ rm -rf $IMG_FILE
 
 # 1. Install required packages (if not already present)
 echo "1. Installing KVM/libvirt and tools..."
-apt-get update -qq
-apt-get install -y -qq qemu-kvm libvirt-daemon-system libvirt-clients virtinst bridge-utils curl net-tools isc-dhcp-client
+./update
+# apt-get install -y -qq qemu-kvm libvirt-daemon-system libvirt-clients virtinst bridge-utils curl net-tools isc-dhcp-client
+# Check and install requirements
+echo "→ Checking OPNSense App Reqs"
+for pkg in qemu-kvm libvirt-daemon-system libvirt-clients virtinst bridge-utils curl net-tools isc-dhcp-client; do
+    if ! command -v "$pkg" >/dev/null 2>&1; then
+        echo "   Installing: ${pkg}"
+        ./install.sh
+        #NEEDS_INSTALL+=("$pkg")
+    else
+        echo "   ✅ ${pkg} Requirements already installed"
+    fi
+done
 
 rc-update add libvirtd default
 rc-service libvirtd start || true

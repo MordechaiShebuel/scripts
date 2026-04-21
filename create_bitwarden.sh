@@ -22,10 +22,16 @@ ADMIN_TOKEN_FILE="${DATA_DIR}/admin_token"
 # ==================================================
 
 # 1. Prerequisites
-if ! command -v podman >/dev/null 2>&1; then
-    echo "❌ Podman not found. Install it first."
-    exit 1
-fi
+# echo "→ Checking podman, curl and git"
+for pkg in git podman curl python3-pip bridge-utils; do
+    if ! command -v "$pkg" >/dev/null 2>&1; then
+        echo "   Installing: ${pkg}"
+        ./install.sh
+        #NEEDS_INSTALL+=("$pkg")
+    else
+        echo "   ✅ ${pkg} Requirements already installed"
+    fi
+done
 
 # 2. Create dedicated user (if missing)
 if ! id "${USER}" >/dev/null 2>&1; then

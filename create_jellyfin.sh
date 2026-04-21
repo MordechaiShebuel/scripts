@@ -24,10 +24,16 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-if [ ! -x "$PODMAN_BIN" ]; then
-  echo "podman not found at $PODMAN_BIN. Install podman first."
-  exit 1
-fi
+echo "→ Checking podman, curl and git"
+for pkg in git podman curl python3-pip bridge-utils; do
+    if ! command -v "$pkg" >/dev/null 2>&1; then
+        echo "   Installing: ${pkg}"
+        ./install.sh
+        #NEEDS_INSTALL+=("$pkg")
+    else
+        echo "   ✅ ${pkg} Requirements already installed"
+    fi
+done
 
 # Ensure media dir exists
 mkdir -p "$MEDIA_DIR" "$CONFIG_DIR" "$CACHE_DIR"
