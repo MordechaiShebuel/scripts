@@ -6,8 +6,25 @@ Every script is still in process of development and testing.
 
 The readme is organized in the matter you should run them. You'll want to setup the router first, and then the other services.
 
-## create_router_vendewolf.sh
-- Turns your Vendewolf machine into a router. This can be used with your ISP's router, just connect one of the Ethernet ports to your device.
+Update:
+I've started converting the scripts to Python and have been avoid LLM lifting as all the initial scripts have had loads of issues that took repeated debug cycles. With the debugging cycles, it isn't saving me time to use an LLM.
+
+## install_nym.py
+- Run with `python install_nym.py`
+    - Will escalate to root priveleges as needed.
+1. Uses trizen (through install script, could be made platform agnostic for OMLx and Vendewolf) to install nym-vpn and nym-vpnd
+2. Creates OpenRC script
+3. Starts OpenRC script
+- If there is an issue while running the script, it will restore to the state that existed before running it.
+
+## Platform agnostic DevOps
+- These currently support OpenMandriva, Devuan/Vendewolf and Artix. These are also mirrored to the `support` directory (not stored in repo) and copied to the $HOME folder when you run the `restore_system.sh` script.
+- `install.sh` - install an application to your system. 
+- `update.sh` - update your system.
+- `search.sh` - search for an application on your system.
+
+## create_router.sh
+- Turns your OpenRC linux machine into a router. This can be used with your ISP's router, just connect one of the Ethernet ports to your device.
     - Script assumes your ISP router's WAN is `192.168.1.1` if your is different you will need to change it.
     - You may also need to adjust the `ethx` values in the script before running it. (instructions are in the script)
     - Vibe coded with Grok
@@ -49,12 +66,12 @@ The readme is organized in the matter you should run them. You'll want to setup 
     - Plex sends metadata from your server to their customers
     - Plex charges money for certain features.
 
-## create_piihole_vendewolf.sh
+## create_piihole.sh
 - This should be ran immediately after installing OPNSense virtual router. 
     - Setups up a bridge to the router IP address (10.0.0.1) to make a PIIHOLE server at 10.0.0.2
 - I'm discontinuing development on this, Grok was leading me down a rabbit trail that is unnecessary for OPNSense. 
     
-## create_nomad_vendewolf.sh
+## create_nomad.sh
 https://github.com/Crosstalk-Solutions/project-nomad?tab=readme-ov-file
 - Creates a podman instance of Project NOMAD
     - Checks to see if podman is already installed and if not installs it.

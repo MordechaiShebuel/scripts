@@ -17,10 +17,10 @@ if grep -Eqs '^\s*\[lib32\]\s*$' "$PACMAN_CONF" && grep -Eqs '^\s*Include\s*=\s*
   echo "[lib32] already enabled."
 else
   # If there's a commented lib32 block, uncomment it
-  if grep -Eqs '^\s*#\s*\[lib32\]\s*$' "$PACMAN_CONF" || grep -Eqs '^\s*#\s*Include\s*=\s*/etc/pacman.d/mirrorlist\s*$' "$PACMAN_CONF"; then
+  if grep -Eqs '^#\[lib32\]$' "$PACMAN_CONF" || grep -Eqs '^#Include\s*=\s*/etc/pacman.d/mirrorlist\s*$' "$PACMAN_CONF"; then
     # Uncomment lines that start with # and contain [lib32] or Include = /etc/pacman.d/mirrorlist
-    sed -i -E 's/^[[:space:]]*#[[:space:]]*(\[lib32\][[:space:]]*)/\1/' "$PACMAN_CONF" || true
-    sed -i -E 's/^[[:space:]]*#[[:space:]]*(Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist[[:space:]]*)/\1/' "$PACMAN_CONF" || true
+    sed -i -E 's/^#(\[lib32\][[:space:]]*)/\1/' "$PACMAN_CONF" || true
+    sed -i -E 's/^#(Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist[[:space:]]*)/\1/' "$PACMAN_CONF" || true
     echo "Uncommented existing [lib32] block."
   else
     # Append block
@@ -31,12 +31,6 @@ else
 [lib32]
 Include = /etc/pacman.d/mirrorlist
 
-# Arch compatibility
-[extra]
-Include = /etc/pacman.d/mirrorlist-arch
-
-[multilib]
-Include = /etc/pacman.d/mirrorlist-arch
 #################################################################
 EOF
     echo "Appended [lib32] block."

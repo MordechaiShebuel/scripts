@@ -40,6 +40,8 @@ if [[ "$linux" == *"artix"* ]]; then
         # pamac install "${pkg}" --no-confirm
         if ! command -v "$pkg" >/dev/null 2>&1; then
             ./install.sh "${pkg}"
+        else
+            echo "Skipping install of ${pkg} - it is already installed."
         fi
     done
 
@@ -54,7 +56,7 @@ if [[ "$linux" == *"artix"* ]]; then
         # trizen -S "${pkg}" --noconfirm
     done
 
-    sudo python install_nym.py
+    python install_nym.py
 
     sudo ln -s /usr/share/zsh/plugins/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
     # ERROR: warning: config file /etc/pacman.d/mirrorlist, line 101: directive 'Server' in section 'options' not recognized.

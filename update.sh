@@ -9,7 +9,6 @@ fi
 
 if [[ "$linux" == *"artix"* ]]; then
     ## Artix update
-    pamac update
     trizen -Syu
 fi
 

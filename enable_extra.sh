@@ -16,12 +16,17 @@ echo "Backup saved to $BACKUP"
 if grep -Eqs '^\s*\[extra\]\s*$' "$PACMAN_CONF" && grep -Eqs '^\s*Include\s*=\s*/etc/pacman.d/mirrorlist\s*$' "$PACMAN_CONF"; then
   echo "[extra] already enabled."
 else
-  # If there's a commented lib32 block, uncomment it
-  if grep -Eqs '^\s*#\s*\[extra\]\s*$' "$PACMAN_CONF" || grep -Eqs '^\s*#\s*Include\s*=\s*/etc/pacman.d/mirrorlist\s*$' "$PACMAN_CONF"; then
-    # Uncomment lines that start with # and contain [lib32] or Include = /etc/pacman.d/mirrorlist
-    sed -i -E 's/^[[:space:]]*#[[:space:]]*(\[extra\][[:space:]]*)/\1/' "$PACMAN_CONF" || true
-    sed -i -E 's/^[[:space:]]*#[[:space:]]*(Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist[[:space:]]*)/\1/' "$PACMAN_CONF" || true
+  # If there's a commented extra block, uncomment it
+  if grep -Eqs '^#\[extra\]$' "$PACMAN_CONF" || grep -Eqs '^\s*#\s*Include\s*=\s*/etc/pacman.d/mirrorlist\s*$' "$PACMAN_CONF"; then
+    # Uncomment lines that start with # and contain [extra] or Include = /etc/pacman.d/mirrorlist
+    sed -i -E 's/^#(\[extra\])/\1/' "$PACMAN_CONF" || true
+    sed -i -E 's/^#(Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist[[:space:]]*)/\1/' "$PACMAN_CONF" || true
     echo "Uncommented existing [extra] block."
+  elif grep -Eqs '^#\[multilib\]$' "$PACMAN_CONF" || grep -Eqs '^\s*#\s*Include\s*=\s*/etc/pacman.d/mirrorlist\s*$' "$PACMAN_CONF"; then
+    # Uncomment lines that start with # and contain [extra] or Include = /etc/pacman.d/mirrorlist
+    sed -i -E 's/^#(\[multilib\])/\1/' "$PACMAN_CONF" || true
+    sed -i -E 's/^#(Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist[[:space:]]*)/\1/' "$PACMAN_CONF" || true
+    echo "Uncommented existing [multilib] block."
   else
     # Append block
     cat >> "$PACMAN_CONF" <<'EOF'

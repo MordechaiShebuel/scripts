@@ -17,7 +17,8 @@ SERVICE_NAME = os.environ.get("SERVICE_NAME", "nym-vpnd")
 
 # install script - this has to run without root
 def install_nym(ROLLBACK_STACK):
-    cmd = "trizen -S nym-vpnd-bin nym-vpn-app-bin --noconfirm"
+    # cmd = "trizen -S nym-vpnd-bin nym-vpn-app-bin --noconfirm"
+    cmd = "./install.sh nym-vpnd-bin && ./install.sh nym-vpn-app-bin"
 
     def remove_nym():
         try:
@@ -41,27 +42,27 @@ def get_root():
 
 def setup_rc(ROLLBACK_STACK):
     nymd_config = (
-        "#!/sbin/openrc-run"
-        'name="nym-vpnd"'
-        'description="NymVPN daemon"'
-        'command="/usr/bin/nym-vpnd"'
-        'command_args="-v run-as-service"'
-        'pidfile="/run/${RC_SVCNAME}.pid"'
-        'command_background="yes"'
-        "depend() {"
-        "need dbus"
-        "use net"
-        "after firewall"
-        "}"
-        "start_pre() {"
-        "checkpath --directory --mode 0755 /run"
-        "}"
-        "supervise() {"
-        'start-stop-daemon --start --exec "${command}" --background --make-pidfile --pidfile "${pidfile}" -- $>'
-        "}"
-        "stop() {"
-        'start-stop-daemon --stop --pidfile "${pidfile}" --retry TERM/5/KILL/5'
-        'rm -f "${pidfile}"'
+        "#!/sbin/openrc-run\n"
+        'name="nym-vpnd"\n'
+        'description="NymVPN daemon"\n'
+        'command="/usr/bin/nym-vpnd"\n'
+        'command_args="-v run-as-service"\n'
+        'pidfile="/run/${RC_SVCNAME}.pid"\n'
+        'command_background="yes"\n'
+        "depend() {\n"
+        "need dbus\n"
+        "use net\n"
+        "after firewall\n"
+        "}\n"
+        "start_pre() {\n"
+        "checkpath --directory --mode 0755 /run\n"
+        "}\n"
+        "supervise() {\n"
+        'start-stop-daemon --start --exec "${command}" --background --make-pidfile --pidfile "${pidfile}" -- $>\n'
+        "}\n"
+        "stop() {\n"
+        'start-stop-daemon --stop --pidfile "${pidfile}" --retry TERM/5/KILL/5\n'
+        'rm -f "${pidfile}"\n'
         "}"
     )
     if not OPENRC_INIT_DIR.exists():
@@ -94,7 +95,10 @@ def setup_rc(ROLLBACK_STACK):
         ROLLBACK_STACK = push_rollback(remove_init, ROLLBACK_STACK)
 
     # Write script to init file
-    cmd = f"sudo cat >> {INIT_PATH} << EOF\n\n{nymd_config}\nEOF"
+    cmd = f"""sudo tee {INIT_PATH} > /dev/null << 'EOF'
+    {nymd_config}
+    EOF"""
+
     run(cmd, shell=True)
     print(f"OpenRC service script written to {INIT_PATH}")
 
