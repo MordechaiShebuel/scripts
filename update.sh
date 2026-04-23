@@ -9,12 +9,12 @@ fi
 
 if [[ "$linux" == *"artix"* ]]; then
     ## Artix update
-    trizen -Syu
+    trizen -Syu --noconfirm
 fi
 
 if [[ "$linux" == *"deb13"* ]]; then
     ## vendefoul
-    sudo apt-get update && sudo apt-get upgrade
+    sudo apt-get -y update && sudo apt-get -y upgrade
 fi
 
 if [[ "$linux" == *"OpenWrt"* ]]; then

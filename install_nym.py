@@ -1,4 +1,8 @@
 # Python script to install Nym and setup daemon for Artix
+# TODO: Errors to fix
+# Error encountered during install: [Errno 2] No such file or directory: 'sudo rc-service nym-vpnd start' - This is caused by something wrong in the openRC script, converting from a Python string to a valid runfile.
+
+
 import os
 import sys
 from pathlib import Path
@@ -18,7 +22,7 @@ SERVICE_NAME = os.environ.get("SERVICE_NAME", "nym-vpnd")
 # install script - this has to run without root
 def install_nym(ROLLBACK_STACK):
     # cmd = "trizen -S nym-vpnd-bin nym-vpn-app-bin --noconfirm"
-    cmd = "./install.sh nym-vpnd-bin && ./install.sh nym-vpn-app-bin"
+    cmd = "./install.sh nym-vpnd-bin aur && ./install.sh nym-vpn-app-bin aur"  # This will fix Download and Install
 
     def remove_nym():
         try:
@@ -41,30 +45,36 @@ def get_root():
 
 
 def setup_rc(ROLLBACK_STACK):
-    nymd_config = (
-        "#!/sbin/openrc-run\n"
-        'name="nym-vpnd"\n'
-        'description="NymVPN daemon"\n'
-        'command="/usr/bin/nym-vpnd"\n'
-        'command_args="-v run-as-service"\n'
-        'pidfile="/run/${RC_SVCNAME}.pid"\n'
-        'command_background="yes"\n'
-        "depend() {\n"
-        "need dbus\n"
-        "use net\n"
-        "after firewall\n"
-        "}\n"
-        "start_pre() {\n"
-        "checkpath --directory --mode 0755 /run\n"
-        "}\n"
-        "supervise() {\n"
-        'start-stop-daemon --start --exec "${command}" --background --make-pidfile --pidfile "${pidfile}" -- $>\n'
-        "}\n"
-        "stop() {\n"
-        'start-stop-daemon --stop --pidfile "${pidfile}" --retry TERM/5/KILL/5\n'
-        'rm -f "${pidfile}"\n'
-        "}"
-    )
+    nymd_config = """#!/sbin/openrc-run
+name="nym-vpnd"
+description="NymVPN daemon"
+
+# Path to the binary
+command="/usr/bin/nym-vpnd"
+command_args="-v run-as-service"
+
+pidfile="/run/nym-vpnd.pid"
+command_background="yes"
+
+depend() {
+     need dbus
+     use net
+     after firewall
+}
+
+start_pre() {
+     checkpath --directory --mode 0755 /run
+}
+
+supervise() {
+     start-stop-daemon --start --exec "${command}" --background --make-pidfile --pidfile "${pidfile}" -- ${command_args}
+}
+
+stop() {
+     start-stop-daemon --stop --pidfile "${pidfile}" --retry TERM/5/KILL/5
+     rm -f "${pidfile}"
+}"""
+
     if not OPENRC_INIT_DIR.exists():
         cmd = f"sudo mkdir {OPENRC_INIT_DIR}"
         run(cmd, shell=True)
@@ -96,8 +106,8 @@ def setup_rc(ROLLBACK_STACK):
 
     # Write script to init file
     cmd = f"""sudo tee {INIT_PATH} > /dev/null << 'EOF'
-    {nymd_config}
-    EOF"""
+{nymd_config}
+EOF"""
 
     run(cmd, shell=True)
     print(f"OpenRC service script written to {INIT_PATH}")
@@ -106,7 +116,11 @@ def setup_rc(ROLLBACK_STACK):
 
 
 def start_service(ROLLBACK_STACK):
-    # Create Service
+    # Fix Service File
+    INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
+    cmd = f"sudo chmod +x {INIT_PATH}"
+    run(cmd, shell=True)
+
     cmd = "sudo rc-update add nym-vpnd default"
 
     def remove_service():
@@ -117,6 +131,8 @@ def start_service(ROLLBACK_STACK):
     run(cmd, shell=True)
 
     # Start service
+    print("inserted pause.")
+    text = input()
     cmd = "sudo rc-service nym-vpnd start"
 
     def stop_service():
