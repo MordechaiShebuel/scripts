@@ -189,8 +189,7 @@ def main():
         if SKIP_PROCESS:
             print("Nym is already installed and running, skipping install...")
             sys.exit(0)
-        print("SHOULD NOT GET HERE")
-        text = input()
+
         ROLLBACK_STACK = install_nym(ROLLBACK_STACK)
         ROLLBACK_STACK = setup_rc(ROLLBACK_STACK)
         ROLLBACK_STACK = start_service(ROLLBACK_STACK)
