@@ -1,7 +1,6 @@
 # Python script to install Nym and setup daemon for Artix
-# TODO: Errors to fix
-# Error encountered during install: [Errno 2] No such file or directory: 'sudo rc-service nym-vpnd start' - This is caused by something wrong in the openRC script, converting from a Python string to a valid runfile.
-
+# Version 1.0 - functional
+# TODO: add way to test in podman container
 
 import os
 import sys
