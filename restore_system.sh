@@ -9,7 +9,7 @@ if [[ "$linux" == *"omlx"* ]]; then
     # Open Mandriva
 
     # Linux specific packages
-    pkg_list=("$pkg_list[@]" "dvd+rw-tools" "lib64dvdnav4" "lib64dvdread" "lib64dvdcss")
+    pkg_list=("${pkg_list[@]}" "dvd+rw-tools" "lib64dvdnav4" "lib64dvdread" "lib64dvdcss")
 
     ./update.sh
     # IFS=' ' read -ra my_strings <<< "$pkg_list"
@@ -30,7 +30,16 @@ fi
 
 if [[ "$linux" == *"artix"* ]]; then
     # Pre-setup for Artix / enable multilib and arch support
-    sudo pacman -S pamac artix-archlinux-support --noconfirm
+    pre_requisites=("pamac" "artix-archlinux-support")
+    for pkg in ${pre_requisites[@]}; do
+        if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
+            NEEDS_INSTALL+=("$pkg")
+        fi
+    done
+
+    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
+        sudo pacman -S "${NEEDS_INSTALL[@]}" --noconfirm
+    fi
     sudo ./enable_repo.sh lib32
     sudo ./enable_repo.sh extra
     sudo ./enable_repo.sh multilib
@@ -44,7 +53,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ./update.sh
 
     # Linux specific packages
-    pkg_list=("$pkg_list[@]" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "trizen" "fakeroot" "bibletime" "signal-desktop" "telegram-desktop" "vivaldi" "vlc-plugins-all" "the_silver_searcher")
+    pkg_list=("${pkg_list[@]}" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "trizen" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -55,17 +64,21 @@ if [[ "$linux" == *"artix"* ]]; then
             NEEDS_INSTALL+=("$pkg")
         fi
     done
-    pamac install "${NEEDS_INSTALL[@]}"
+    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
+        pamac install "${NEEDS_INSTALL[@]}"
+    fi
 
     # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
-    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "firedragon-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting")
+    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting")
 
     for pkg in ${aur_pkg_list[@]}; do
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
             NEEDS_INSTALL+=("$pkg")
         fi
     done
-    trizen -S "${NEEDS_INSTALL[@]}" --noconfirm
+    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
+        trizen -S "${NEEDS_INSTALL[@]}" --noconfirm
+    fi
 
     python install_nym.py
 
@@ -95,14 +108,16 @@ if [[ "$linux" == *"deb13"* ]]; then
     ./update.sh
 
         # Linux specific packages
-    pkg_list=("$pkg_list[@]" "podman" "podman-compose" "vlc-plugins*")
+    pkg_list=("${pkg_list[@]}" "podman" "podman-compose" "vlc-plugins*")
 
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
             NEEDS_INSTALL+=("$pkg")
         fi
     done
-    sudo dnf install "${NEEDS_INSTALL[@]}"
+    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
+        sudo dnf install "${NEEDS_INSTALL[@]}"
+    fi
     # Cinnamon:
     # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
 fi

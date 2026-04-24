@@ -57,18 +57,8 @@ def setup_rc():
     if INIT_PATH.exists():
         backup_path = INIT_PATH.with_suffix(".bak")
         shutil.copy2(str(INIT_PATH), str(backup_path))
-        # ROLLBACK_STACK = push_rollback(
-        #     lambda: (
-        #         os.replace(str(backup_path), str(INIT_PATH))
-        #         if backup_path.exists()
-        #         else None
-        #     ),
-        #     ROLLBACK_STACK,
-        # )
+
     else:
-        # ROLLBACK_STACK = push_rollback(
-        #     lambda: INIT_PATH.unlink() if INIT_PATH.exists() else None, ROLLBACK_STACK
-        # )
         print("Things shouldn't get here.")
 
     # Save output to init.d file
