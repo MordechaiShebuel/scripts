@@ -5,6 +5,7 @@
 
 import os
 import sys
+import traceback
 from pathlib import Path
 
 from utils import (
@@ -17,6 +18,32 @@ from utils import (
 # --- Defaults (can be overridden via env) ---
 OPENRC_INIT_DIR = Path(os.environ.get("OPENRC_INIT_DIR", "/etc/init.d"))
 SERVICE_NAME = os.environ.get("SERVICE_NAME", "nym-vpnd")
+
+
+def check_service():
+    cmd = f"sudo rc-service {SERVICE_NAME} status"
+    try:
+        status = run(cmd, shell=True, capture=True)
+        if "started" in str(status):
+            return True
+        return False
+    except Exception:
+        return False
+
+
+def check_apps():
+    pkgs = ["nym-vpnd-bin", "nym-vpn-app-bin"]
+    appcheck = 0
+    for pkg in pkgs:
+        cmd = f"if [[ $(pamac list --installed --quiet | grep {pkg}) == {pkg} ]]; then echo 'installed'; else echo 'not installed'; fi"
+        try:
+            installed = run(cmd, shell=True, capture=True)
+            if str(installed).strip() == "installed":
+                appcheck = appcheck + 1
+        except Exception:
+            traceback.print_exc()
+            pass
+    return appcheck == len(pkgs)
 
 
 # install script - this has to run without root
@@ -131,23 +158,21 @@ def start_service(ROLLBACK_STACK):
     run(cmd, shell=True)
 
     # Start service
-    print("inserted pause.")
-    text = input()
     cmd = "sudo rc-service nym-vpnd start"
 
     def stop_service():
         cmd = "sudo rc-service nym-vpnd stop"
-        run(cmd)
+        run(cmd, shell=True)
 
     ROLLBACK_STACK = push_rollback(stop_service, ROLLBACK_STACK)
-    run(cmd)
+    run(cmd, shell=True)
 
     return ROLLBACK_STACK
 
 
 def main():
     ROLLBACK_STACK = []
-    required_apps = ["trizen"]
+    required_apps = ["trizen", "pamac"]
 
     test_machine = False
     if "--test-machine" in sys.argv:
@@ -160,12 +185,19 @@ def main():
 
     check_required_apps(required_apps)
     try:
+        SKIP_PROCESS = check_apps() and check_service()
+        if SKIP_PROCESS:
+            print("Nym is already installed and running, skipping install...")
+            sys.exit(0)
+        print("SHOULD NOT GET HERE")
+        text = input()
         ROLLBACK_STACK = install_nym(ROLLBACK_STACK)
         ROLLBACK_STACK = setup_rc(ROLLBACK_STACK)
         ROLLBACK_STACK = start_service(ROLLBACK_STACK)
     except Exception as e:
         print("Error encountered during install:", str(e), file=sys.stderr)
         print("Rolling back changes...", file=sys.stderr)
+        traceback.print_exc()
         rollback_all(ROLLBACK_STACK)
         sys.exit(1)
 

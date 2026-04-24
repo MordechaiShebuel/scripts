@@ -11,13 +11,12 @@ def run(cmd, env=None, capture=False, shell=False):
     if capture:
         return subprocess.run(
             cmd,
+            capture_output=True,
             check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             env=env,
             text=True,
             shell=shell,
-        )
+        ).stdout
     else:
         return subprocess.run(cmd, check=True, env=env, shell=shell)
 

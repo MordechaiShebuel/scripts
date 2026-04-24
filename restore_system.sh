@@ -6,7 +6,7 @@
 # ./restore_system.sh: line 67: `fi'
 
 
-pkg_list=("zsh steam gimp obs-studio git vlc curl")
+pkg_list=("zsh" "steam" "gimp" "obs-studio" "git" "vlc" "curl")
 linux=$(uname -r)
 
 if [[ "$linux" == *"omlx"* ]]; then
@@ -19,9 +19,15 @@ if [[ "$linux" == *"omlx"* ]]; then
     # IFS=' ' read -ra my_strings <<< "$pkg_list"
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
-            ./install.sh "${pkg}"
+            NEEDS_INSTALL+=("$pkg")
+            # ./install.sh "${pkg}"
         fi
     done
+
+    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
+        sudo dnf in "${NEEDS_INSTALL[@]}"
+    fi
+
 
     sudo chsh -s $(which zsh) mbuel
 fi
@@ -50,23 +56,20 @@ if [[ "$linux" == *"artix"* ]]; then
         # Check if app is already installed before trying to re-install it
         # pamac install "${pkg}" --no-confirm
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
-            ./install.sh "$pkg"
-        else
-            echo "Skipping install of $pkg - it is already installed."
+            NEEDS_INSTALL+=("$pkg")
         fi
     done
+    pamac install "${NEEDS_INSTALL[@]}"
 
     # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
     aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "firedragon-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting")
 
     for pkg in ${aur_pkg_list[@]}; do
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
-            ./install.sh "$pkg" aur
-        else
-            echo "Skipping install of $pkg - it is already installed."
+            NEEDS_INSTALL+=("$pkg")
         fi
-        # trizen -S "${pkg}" --noconfirm
     done
+    trizen -S "${NEEDS_INSTALL[@]}" --noconfirm
 
     python install_nym.py
 
@@ -100,9 +103,10 @@ if [[ "$linux" == *"deb13"* ]]; then
 
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
-            ./install "${pkg}"
+            NEEDS_INSTALL+=("$pkg")
         fi
     done
+    sudo dnf install "${NEEDS_INSTALL[@]}"
     # Cinnamon:
     # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
 fi

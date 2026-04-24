@@ -7,7 +7,14 @@ Every script is still in process of development and testing.
 The readme is organized in the matter you should run them. You'll want to setup the router first, and then the other services.
 
 Update:
-I've started converting the scripts to Python and have been avoid LLM lifting as all the initial scripts have had loads of issues that took repeated debug cycles. With the debugging cycles, it isn't saving me time to use an LLM.
+I've started converting the scripts to Python and have been avoid LLM lifting as all the initial scripts have had loads of issues that took repeated debug cycles. With the debugging cycles, it isn't saving me time to use an LLM - 100% of the time. This is honestly a hard choice, as SWE jobs favor people who just generate slop, and don't review or test the output.
+
+Philosophically, I would rather manually code this - but I've got to learn to optimize these tools to pay the bills.
+
+## restore_system.sh
+- This became my primary focus, get this working and if something goes wrong it's easy to restore the system to a prior working state.
+- Current iteration tries to minimize password inputs
+- If something happens during install, it should not try to re-install applications. 
 
 ## install_nym.py
 - Run with `python install_nym.py`
