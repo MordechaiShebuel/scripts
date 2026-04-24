@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
-# TODO: errors:
-# ln: failed to create symbolic link '/home/mshalom/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting': No such file or directory
-# ./restore_system.sh: line 65: orlist,: command not found
-# ./restore_system.sh: line 67: syntax error near unexpected token `fi'
-# ./restore_system.sh: line 67: `fi'
+# TODO: Try expanding other systems to make this platform agnostic
 
 
 pkg_list=("zsh" "steam" "gimp" "obs-studio" "git" "vlc" "curl")
