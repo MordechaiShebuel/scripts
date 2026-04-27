@@ -73,6 +73,24 @@ def check_required_apps(apps):
             run(cmd)
 
 
+def install_apps(apps):
+    for app in apps:
+        if not app_installed(app):
+            cmd = f"trizen -S {app} --noconfirm"
+            run(cmd, shell=True)
+
+
+def app_installed(app):
+    cmd = f"if [[ $(pamac list --installed --quiet | grep {app}) == {app} ]]; then echo 'installed'; else echo 'not installed'; fi"
+    try:
+        installed = run(cmd, shell=True, capture=True)
+        if str(installed).strip() == "installed":
+            return True
+        return False
+    except Exception:
+        return False
+
+
 def setup_test_machine(ROLLBACK_STACK, test_machine=False):
     # If test_machine requested, init/start podman machine
     if test_machine:

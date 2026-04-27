@@ -80,7 +80,11 @@ if [[ "$linux" == *"artix"* ]]; then
         trizen -S "${NEEDS_INSTALL[@]}" --noconfirm
     fi
 
+    # Application that setups up Nym VPN and it's OpenRC Daemon
     python install_nym.py
+
+    # Application that setups up SSH and it's OpenRC Daemon
+    python setup_remote_ssh.py
 
     desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
     dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"

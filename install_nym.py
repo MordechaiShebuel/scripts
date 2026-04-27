@@ -8,7 +8,8 @@ import traceback
 from pathlib import Path
 
 from utils import (
-    check_required_apps,
+    app_installed,
+    install_apps,
     push_rollback,
     rollback_all,
     run,
@@ -30,14 +31,11 @@ def check_service():
         return False
 
 
-def check_apps():
-    pkgs = ["nym-vpnd-bin", "nym-vpn-app-bin"]
+def check_apps(pkgs):
     appcheck = 0
     for pkg in pkgs:
-        cmd = f"if [[ $(pamac list --installed --quiet | grep {pkg}) == {pkg} ]]; then echo 'installed'; else echo 'not installed'; fi"
         try:
-            installed = run(cmd, shell=True, capture=True)
-            if str(installed).strip() == "installed":
+            if app_installed(pkg):
                 appcheck = appcheck + 1
         except Exception:
             traceback.print_exc()
@@ -46,9 +44,9 @@ def check_apps():
 
 
 # install script - this has to run without root
-def install_nym(ROLLBACK_STACK):
-    # cmd = "trizen -S nym-vpnd-bin nym-vpn-app-bin --noconfirm"
-    cmd = "./install.sh nym-vpnd-bin aur && ./install.sh nym-vpn-app-bin aur"  # This will fix Download and Install
+
+
+def install_nym(ROLLBACK_STACK, pkgs):
 
     def remove_nym():
         try:
@@ -59,15 +57,9 @@ def install_nym(ROLLBACK_STACK):
 
     ROLLBACK_STACK = push_rollback(remove_nym, ROLLBACK_STACK)
 
-    run(cmd, shell=True)
+    install_apps(pkgs)
 
     return ROLLBACK_STACK
-
-
-# This function requires root, maybe do it with the run command instead of the built in shutil?
-def get_root():
-    cmd = "su"
-    run(cmd)
 
 
 def setup_rc(ROLLBACK_STACK):
@@ -171,7 +163,7 @@ def start_service(ROLLBACK_STACK):
 
 def main():
     ROLLBACK_STACK = []
-    required_apps = ["trizen", "pamac"]
+    required_apps = ["trizen", "pamac", "nym-vpnd-bin", "nym-vpn-app-bin"]
 
     test_machine = False
     if "--test-machine" in sys.argv:
@@ -182,14 +174,13 @@ def main():
 
     print("Download and install Nym, get service running for nym-vpnd on OpenRC")
 
-    check_required_apps(required_apps)
     try:
-        SKIP_PROCESS = check_apps() and check_service()
+        SKIP_PROCESS = check_apps(required_apps) and check_service()
         if SKIP_PROCESS:
             print("Nym is already installed and running, skipping install...")
             sys.exit(0)
 
-        ROLLBACK_STACK = install_nym(ROLLBACK_STACK)
+        ROLLBACK_STACK = install_nym(ROLLBACK_STACK, required_apps)
         ROLLBACK_STACK = setup_rc(ROLLBACK_STACK)
         ROLLBACK_STACK = start_service(ROLLBACK_STACK)
     except Exception as e:
