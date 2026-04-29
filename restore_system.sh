@@ -24,8 +24,6 @@ if [[ "$linux" == *"omlx"* ]]; then
         sudo dnf in "${NEEDS_INSTALL[@]}"
     fi
 
-
-    sudo chsh -s $(which zsh) mbuel
 fi
 
 if [[ "$linux" == *"artix"* ]]; then
@@ -53,7 +51,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "trizen" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
+    pkg_list=("${pkg_list[@]}" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -67,6 +65,16 @@ if [[ "$linux" == *"artix"* ]]; then
     if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
         pamac install "${NEEDS_INSTALL[@]}"
     fi
+
+    chsh -s $(which zsh)
+
+    # Install YAY, Trizen is being problematic'
+    # TODO: not working!
+    # git clone https://aur.archlinux.org/yay.git
+    # cd yay
+    # makepkg -si
+    # cd ..
+    # rm -rf yay
 
     # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
     aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting")
