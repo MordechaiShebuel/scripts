@@ -15,6 +15,8 @@ Philosophically, I would rather manually code this - but I've got to learn to op
 - This became my primary focus, get this working and if something goes wrong it's easy to restore the system to a prior working state.
 - Current iteration tries to minimize password inputs
 - If something happens during install, it should not try to re-install applications. 
+- Had to patch in an NTP fix, Artix wasn't automatically updating time via NTP. This caused Nym to fail, fix is to download ntp-client, set up service and patch service. 
+  - Long term this should have a python file to aid in automation.
 
 ## install_nym.py
 - Run with `python install_nym.py`

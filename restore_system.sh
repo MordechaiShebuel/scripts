@@ -51,7 +51,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
+    pkg_list=("${pkg_list[@]}" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher" "ntp-openrc")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -94,6 +94,13 @@ if [[ "$linux" == *"artix"* ]]; then
     # Application that setups up SSH and it's OpenRC Daemon
     python setup_remote_ssh.py
 
+    # Fix system clock
+    sudo rc-service ntp-client start
+    sudo rc-update add ntp-client default
+
+    echo "ADD `sleep 10` to start() after checkconfig line."
+    sudo nano /etc/init.d/ntp-client
+
     desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
     dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 
@@ -135,4 +142,4 @@ if [[ "$linux" == *"deb13"* ]]; then
 fi
 
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
-cp -r support/* ~/
+yes |/bin/cp -rf support/* ~/
