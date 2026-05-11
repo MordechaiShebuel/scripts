@@ -2,7 +2,7 @@
 # TODO: Try expanding other systems to make this platform agnostic
 
 
-pkg_list=("zsh" "steam" "gimp" "obs-studio" "git" "vlc" "curl")
+pkg_list=("zsh" "steam" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent")
 linux=$(uname -r)
 
 if [[ "$linux" == *"omlx"* ]]; then
@@ -28,7 +28,7 @@ fi
 
 if [[ "$linux" == *"artix"* ]]; then
     # Pre-setup for Artix / enable multilib and arch support
-    pre_requisites=("pamac" "artix-archlinux-support")
+    pre_requisites=("pamac" "artix-archlinux-support" "doas")
     for pkg in ${pre_requisites[@]}; do
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
             NEEDS_INSTALL+=("$pkg")
@@ -51,7 +51,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher" "ntp-openrc")
+    pkg_list=("${pkg_list[@]}" "flameshot" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher" "ntp-openrc")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -77,7 +77,7 @@ if [[ "$linux" == *"artix"* ]]; then
     # rm -rf yay
 
     # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
-    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting")
+    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting" "collabora-office")
 
     for pkg in ${aur_pkg_list[@]}; do
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then

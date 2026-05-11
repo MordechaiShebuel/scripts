@@ -1,5 +1,8 @@
 # Python script to install Nym and setup daemon for Artix
 # Version 1.0 - functional
+# TODO: something in the latest release completely borked this installer. It required manual intervention to fix.
+# TODO: Both service and application files, I had to manually copy the binaries and desktop files.
+# TODO: Had to edit desktop file to point to appropriate binary.
 # TODO: add way to test in podman container
 
 import os
@@ -19,6 +22,7 @@ from utils import (
 OPENRC_INIT_DIR = Path(os.environ.get("OPENRC_INIT_DIR", "/etc/init.d"))
 SERVICE_NAME = os.environ.get("SERVICE_NAME", "nym-vpnd")
 
+/etc/init.d/nym-vpnd
 
 def check_service():
     cmd = f"sudo rc-service {SERVICE_NAME} status"
@@ -135,24 +139,26 @@ EOF"""
 
 def start_service(ROLLBACK_STACK):
     # Fix Service File
+    print("This is where the problem is.")
+    input()
     INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
     cmd = f"sudo chmod +x {INIT_PATH}"
     run(cmd, shell=True)
 
-    cmd = "sudo rc-update add nym-vpnd default"
+    cmd = f"sudo rc-update add {INIT_PATH} default"
 
     def remove_service():
-        cmd = "sudo rc-update del nym-vpnd default"
+        cmd = f"sudo rc-update del {INIT_PATH} default"
         run(cmd, shell=True)
 
     ROLLBACK_STACK = push_rollback(remove_service, ROLLBACK_STACK)
     run(cmd, shell=True)
 
     # Start service
-    cmd = "sudo rc-service nym-vpnd start"
+    cmd = f"sudo rc-service {INIT_PATH} start"
 
     def stop_service():
-        cmd = "sudo rc-service nym-vpnd stop"
+        cmd = f"sudo rc-service {INIT_PATH} stop"
         run(cmd, shell=True)
 
     ROLLBACK_STACK = push_rollback(stop_service, ROLLBACK_STACK)
