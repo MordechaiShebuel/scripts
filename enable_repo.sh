@@ -55,6 +55,6 @@ Include = /etc/pacman.d/mirrorlist-arch
 
 #################################################################
 EOF
-    echo "Appended [extra] block."
+    echo "Appended [$REPO] block."
   fi
 fi

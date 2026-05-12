@@ -1,9 +1,5 @@
 # Python script to install Nym and setup daemon for Artix
 # Version 1.0 - functional
-# TODO: something in the latest release completely borked this installer. It required manual intervention to fix.
-# TODO: Both service and application files, I had to manually copy the binaries and desktop files.
-# TODO: Had to edit desktop file to point to appropriate binary.
-# TODO: add way to test in podman container
 
 import os
 import sys
@@ -84,7 +80,7 @@ depend() {
      after firewall
 }
 
-start_pre() {
+start_pre() {US $660.00
      checkpath --directory --mode 0755 /run
 }
 
@@ -145,7 +141,7 @@ def start_service(ROLLBACK_STACK):
     cmd = f"sudo chmod +x {INIT_PATH}"
     run(cmd, shell=True)
 
-    cmd = f"sudo rc-update add {INIT_PATH} default"
+    cmd = f"sudo rc-update add {SERVICE_NAME} default"
 
     def remove_service():
         cmd = f"sudo rc-update del {INIT_PATH} default"
@@ -155,10 +151,10 @@ def start_service(ROLLBACK_STACK):
     run(cmd, shell=True)
 
     # Start service
-    cmd = f"sudo rc-service {INIT_PATH} start"
+    cmd = f"sudo rc-service {SERVICE_NAME} start"
 
     def stop_service():
-        cmd = f"sudo rc-service {INIT_PATH} stop"
+        cmd = f"sudo rc-service {SERVICE_NAME} stop"
         run(cmd, shell=True)
 
     ROLLBACK_STACK = push_rollback(stop_service, ROLLBACK_STACK)

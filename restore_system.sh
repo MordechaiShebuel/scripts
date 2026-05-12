@@ -28,9 +28,10 @@ fi
 
 if [[ "$linux" == *"artix"* ]]; then
     # Pre-setup for Artix / enable multilib and arch support
-    pre_requisites=("pamac" "artix-archlinux-support" "doas")
+    pre_requisites=("pamac" "artix-archlinux-support" "doas" "trizen")
+
     for pkg in ${pre_requisites[@]}; do
-        if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
+        if ! pacman -Q "$pkg" &>/dev/null 2>&1; then
             NEEDS_INSTALL+=("$pkg")
         fi
     done
@@ -38,20 +39,33 @@ if [[ "$linux" == *"artix"* ]]; then
     if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
         sudo pacman -S "${NEEDS_INSTALL[@]}" --noconfirm
     fi
-    sudo ./enable_repo.sh lib32
-    sudo ./enable_repo.sh extra
-    sudo ./enable_repo.sh multilib
 
-    sudo pacman-key --init
-    sudo pacman-key --populate archlinux
-    sudo pacman -Sy
+    if ! pacman -Q pamac &>/dev/null 2>&1; then
+        echo "Warning: pamac not installed. Unable to continue."
+        exit 1
+    fi
+
+    # Enable lib32 and multilib
+    output1=$(sudo ./enable_repo.sh lib32)
+    output2=$(sudo ./enable_repo.sh extra)
+    output3=$(sudo ./enable_repo.sh multilib)
+
+    # Check if all three returned the expected message
+    if [[ "$output1" == *"Appended [lib32] block."* ]] || \
+       [[ "$output2" == *"Appended [extra] block."* ]] || \
+       [[ "$output3" == *"Appended [multilib] block."* ]]; then
+        sudo pacman-key --init
+        sudo pacman-key --populate archlinux
+        sudo pacman -Sy
+    fi
+
 
     # Artix
     #update first
     ./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "flameshot" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher" "ntp-openrc")
+    pkg_list=("${pkg_list[@]}" "flameshot" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -67,14 +81,6 @@ if [[ "$linux" == *"artix"* ]]; then
     fi
 
     chsh -s $(which zsh)
-
-    # Install YAY, Trizen is being problematic'
-    # TODO: not working!
-    # git clone https://aur.archlinux.org/yay.git
-    # cd yay
-    # makepkg -si
-    # cd ..
-    # rm -rf yay
 
     # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
     aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting" "collabora-office")
@@ -93,13 +99,6 @@ if [[ "$linux" == *"artix"* ]]; then
 
     # Application that setups up SSH and it's OpenRC Daemon
     python setup_remote_ssh.py
-
-    # Fix system clock
-    sudo rc-service ntp-client start
-    sudo rc-update add ntp-client default
-
-    echo "ADD `sleep 10` to start() after checkconfig line."
-    sudo nano /etc/init.d/ntp-client
 
     desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
     dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
