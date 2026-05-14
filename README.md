@@ -1,6 +1,6 @@
 # scripts
 
-Collection of shell scripts for updating a system, and initializing a system with the apps you use. I tried to keep the update, restore system scripts system agnostic for three distros that are free speech oriented and have taken a stronger approach against Age Verification bills. I am using AI from Grok/Duck.AI/Leo to assist in this repo, as we are running out of time to deploy and own our hardware and software. It is crucial we get routers that are not libre based, and access to media that individuals can control. 
+Collection of shell scripts for updating a system, and initializing a system with the apps you use. I tried to keep the update, restore system scripts system agnostic for three distros that are free speech oriented and have taken a stronger approach against Age Verification bills. I am using AI from Grok/Duck.AI/Leo to assist in this repo, as we are running out of time to deploy and own our hardware and software. It is crucial we get routers that are libre based, and access to media that individuals can control. 
 
 Every script is still in process of development and testing.
 
@@ -9,7 +9,7 @@ The readme is organized in the matter you should run them. You'll want to setup 
 - Update:
 I've started converting the scripts to Python and have been avoid LLM lifting as all the initial scripts have had loads of issues that took repeated debug cycles. With the debugging cycles, it isn't saving me time to use an LLM - 100% of the time. This is honestly a hard choice, as SWE jobs favor people who just generate slop, and don't review or test the output.
 
-Philosophically, I would rather manually code this - but I've got to learn to optimize these tools to pay the bills.
+Philosophically, I would rather manually code this - but I've got to learn to optimize these tools to pay the bills.s
 
 - Update May 14th, 2026:
 I'm developing a pattern of querying the LLM for code generation / debugging and knowing from the output what I need to do. I prefer this method versus implicitly trusting the RNG output they can tend toward being non-deterministic.
