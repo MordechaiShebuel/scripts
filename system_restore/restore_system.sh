@@ -11,7 +11,7 @@ if [[ "$linux" == *"omlx"* ]]; then
     # Linux specific packages
     pkg_list=("${pkg_list[@]}" "dvd+rw-tools" "lib64dvdnav4" "lib64dvdread" "lib64dvdcss")
 
-    ./update.sh
+    ../system_scripts/./update.sh
     # IFS=' ' read -ra my_strings <<< "$pkg_list"
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
@@ -59,10 +59,9 @@ if [[ "$linux" == *"artix"* ]]; then
         sudo pacman -Sy
     fi
 
-
     # Artix
     #update first
-    ./update.sh
+    ../system_scripts/./update.sh
 
     # Linux specific packages
     pkg_list=("${pkg_list[@]}" "flameshot" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
@@ -123,7 +122,7 @@ if [[ "$linux" == *"deb13"* ]]; then
 
     # Vendewolf
     # After installing
-    ./update.sh
+    ../system_scripts/./update.sh
 
         # Linux specific packages
     pkg_list=("${pkg_list[@]}" "podman" "podman-compose" "vlc-plugins*")

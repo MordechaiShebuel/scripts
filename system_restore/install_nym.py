@@ -85,7 +85,7 @@ input()
      after firewall
 }
 
-start_pre() {US $660.00
+start_pre() {
      checkpath --directory --mode 0755 /run
 }
 
