@@ -14,7 +14,7 @@ USER="vaultwarden"
 DATA_DIR="/var/lib/${SERVICE_NAME}"
 ENV_FILE="${DATA_DIR}/env"
 NETWORK_NAME="vaultwarden-bridge"
-HOST_IP="10.0.0.3"          # Your Vendefoul machine IP
+HOST_IP="10.0.0.1"          # Your server machine IP
 PORT_HOST=8081
 DOMAIN="http://${HOST_IP}:${PORT_HOST}"
 

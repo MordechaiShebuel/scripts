@@ -13,10 +13,12 @@ if [[ "$linux" == *"omlx"* ]]; then
 
     ../system_scripts/./update.sh
     # IFS=' ' read -ra my_strings <<< "$pkg_list"
+
+    NEEDS_INSTALL=()
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
             NEEDS_INSTALL+=("$pkg")
-            # ./install.sh "${pkg}"
+            ./install.sh "${pkg}"
         fi
     done
 
@@ -30,6 +32,7 @@ if [[ "$linux" == *"artix"* ]]; then
     # Pre-setup for Artix / enable multilib and arch support
     pre_requisites=("pamac" "artix-archlinux-support" "doas" "trizen")
 
+    NEEDS_INSTALL=()
     for pkg in ${pre_requisites[@]}; do
         if ! pacman -Q "$pkg" &>/dev/null 2>&1; then
             NEEDS_INSTALL+=("$pkg")
@@ -68,6 +71,7 @@ if [[ "$linux" == *"artix"* ]]; then
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
+    NEEDS_INSTALL=()
     for pkg in ${pkg_list[@]}; do
         # Check if app is already installed before trying to re-install it
         # pamac install "${pkg}" --no-confirm
@@ -75,6 +79,7 @@ if [[ "$linux" == *"artix"* ]]; then
             NEEDS_INSTALL+=("$pkg")
         fi
     done
+
     if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
         pamac install "${NEEDS_INSTALL[@]}"
     fi
@@ -84,11 +89,13 @@ if [[ "$linux" == *"artix"* ]]; then
     # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
     aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting" "collabora-office")
 
+    NEEDS_INSTALL=()
     for pkg in ${aur_pkg_list[@]}; do
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
             NEEDS_INSTALL+=("$pkg")
         fi
     done
+
     if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
         trizen -S "${NEEDS_INSTALL[@]}" --noconfirm
     fi
@@ -121,23 +128,34 @@ fi
 if [[ "$linux" == *"deb13"* ]]; then
 
     # Vendewolf
+    # Check and add contrib repository if needed
+    if ! grep -q "contrib" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
+        echo "Adding contrib repository..."
+        sudo sed -i 's/^deb \(.*\) main$/deb \1 main contrib non-free/' /etc/apt/sources.list
+        sudo apt-get update
+    fi
+
     # After installing
     ../system_scripts/./update.sh
 
-        # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "podman" "podman-compose" "vlc-plugins*")
+    # Linux specific packages
+    pkg_list=("${pkg_list[@]}" "podman" "podman-compose" "vlc-plugins*" "libdvd-pkg")
 
+    NEEDS_INSTALL=()
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
             NEEDS_INSTALL+=("$pkg")
         fi
     done
+
     if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
-        sudo dnf install "${NEEDS_INSTALL[@]}"
+        sudo apt-get install "${NEEDS_INSTALL[@]}"
     fi
+
     # Cinnamon:
     # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
 fi
+
 
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
 yes |/bin/cp -rf support/* ~/
