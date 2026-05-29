@@ -2,7 +2,7 @@
 # TODO: Try expanding other systems to make this platform agnostic
 
 
-pkg_list=("zsh" "steam" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent")
+pkg_list=("zsh" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent" "system-config-printer" "hplip")
 linux=$(uname -r)
 
 if [[ "$linux" == *"omlx"* ]]; then
@@ -13,7 +13,7 @@ if [[ "$linux" == *"omlx"* ]]; then
 
     ../system_scripts/./update.sh
     # IFS=' ' read -ra my_strings <<< "$pkg_list"
-
+ "steam"
     NEEDS_INSTALL=()
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
@@ -67,7 +67,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ../system_scripts/./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "flameshot" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
+    pkg_list=("${pkg_list[@]}" "nss-mdns" "gvfs-smb" "samba" "smbclient" "kcalc" "steam" "flameshot" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -107,6 +107,7 @@ if [[ "$linux" == *"artix"* ]]; then
     python setup_remote_ssh.py
 
     desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
+    Phoenix, AZ 85038
     dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 
     if [ -L "$dest" ]; then
@@ -139,7 +140,7 @@ if [[ "$linux" == *"deb13"* ]]; then
     ../system_scripts/./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "podman" "podman-compose" "vlc-plugins*" "libdvd-pkg")
+    pkg_list=("${pkg_list[@]}" "flameshot" "hplip" "podman" "podman-compose" "vlc-plugins*" "libdvd-pkg" "silversearcher-ag" "steam-installer" "steam-devices" "zsh-syntax-highlighting")
 
     NEEDS_INSTALL=()
     for pkg in ${pkg_list[@]}; do
@@ -150,6 +151,22 @@ if [[ "$linux" == *"deb13"* ]]; then
 
     if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
         sudo apt-get install "${NEEDS_INSTALL[@]}"
+    fi
+
+    # Zen Browser:
+    if ! command -v "zen-browser" >/dev/null 2>&1; then
+        bash <(curl -fsSL https://raw.githubusercontent.com/MalikHw/zb-installer-script/main/install-zen.sh)
+    fi
+
+
+    # Brave Browser:
+    if ! command -v "brave" >/dev/null 2>&1; then
+        sudo apt update
+        sudo apt install curl ca-certificates -y
+        sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+        sudo curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources https://brave-browser-apt-release.s3.brave.com/brave-browser.sources
+        sudo apt update
+        sudo apt install brave-browser -y
     fi
 
     # Cinnamon:

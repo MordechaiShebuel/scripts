@@ -1,5 +1,6 @@
-# Python script to install Nym and setup daemon for Artix
-# Version 1.0 - functional
+# Python script to install Nym and setup daemon for Artix/Devuan
+# Version 1.1 - functional
+# Made improvements to make script more robust and modular
 # TODO: add way to test in podman container
 
 import os
@@ -12,11 +13,18 @@ import traceback
 from pathlib import Path
 
 from lib.utils import (
+    RollbackAction,
     app_installed,
+    check_apps,
+    check_service,
+    detect_distro,
     install_apps,
+    install_required_apps,
     push_rollback,
     rollback_all,
     run,
+    setup_rc_service,
+    start_service,
 )
 
 # --- Defaults (can be overridden via env) ---
@@ -24,72 +32,9 @@ OPENRC_INIT_DIR = Path(os.environ.get("OPENRC_INIT_DIR", "/etc/init.d"))
 SERVICE_NAME = os.environ.get("SERVICE_NAME", "sshd")
 
 
-def check_service():
-    cmd = f"sudo rc-service {SERVICE_NAME} status"
-    try:
-        status = run(cmd, shell=True, capture=True)
-        if "started" in str(status):
-            return True
-        return False
-    except Exception:
-        return False
-
-
-# def app_installed(app):
-#     cmd = f"if [[ $(pamac list --installed --quiet | grep {app}) == {app} ]]; then echo 'installed'; else echo 'not installed'; fi"
-#     try:
-#         installed = run(cmd, shell=True, capture=True)
-#         if str(installed).strip() == "installed":
-#             return True
-#         return False
-#     except Exception:
-#         return False
-
-
-def check_apps():
-    pkgs = ["openssh-openrc", "openssh", "dropbear"]
-    appcheck = 0
-    for pkg in pkgs:
-        try:
-            if app_installed(pkg):
-                appcheck = appcheck + 1
-        except Exception:
-            traceback.print_exc()
-            pass
-    return appcheck == len(pkgs)
-
-
-def start_service(ROLLBACK_STACK):
-    # Fix Service File
-    INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
-    cmd = f"sudo chmod +x {INIT_PATH}"
-    run(cmd, shell=True)
-
-    cmd = f"sudo rc-update add {SERVICE_NAME} default"
-
-    def remove_service():
-        cmd = f"sudo rc-update del {SERVICE_NAME} default"
-        run(cmd, shell=True)
-
-    ROLLBACK_STACK = push_rollback(remove_service, ROLLBACK_STACK)
-    run(cmd, shell=True)
-
-    # Start service
-    cmd = f"sudo rc-service {SERVICE_NAME} start"
-
-    def stop_service():
-        cmd = f"sudo rc-service {SERVICE_NAME} stop"
-        run(cmd, shell=True)
-
-    ROLLBACK_STACK = push_rollback(stop_service, ROLLBACK_STACK)
-    run(cmd, shell=True)
-
-    return ROLLBACK_STACK
-
-
 def main():
-    ROLLBACK_STACK = []
-    required_apps = ["trizen", "pamac", "openssh-openrc", "openssh", "dropbear"]
+    rollback_stack = []
+    required_apps = ["openssh-openrc", "openssh", "dropbear"]
 
     test_machine = False
     if "--test-machine" in sys.argv:
@@ -101,19 +46,37 @@ def main():
     print("Download and install SSH, get service running for SSHD on OpenRC")
 
     try:
-        SKIP_APPS = check_apps()
-        if not SKIP_APPS:
-            install_apps(required_apps)
+        distro = detect_distro()
+        if distro == "arch":
+            required_apps.append("trizen")
+            required_apps.append("pamac")
+        elif distro == "debian":
+            # Install Nym VPN App
+            # required_apps = ["nym-vpn-app", "nym-vpnd"]
+            # rollback_stack = enable_nym_repo(rollback_stack)
+            print("No extra apps needed for Debian-based distro.")
+        else:
+            print("Unsupported distro: ", distro, file=sys.stderr)
+            sys.exit(1)
 
-        SKIP_SERVICE = check_service()
-        if not SKIP_SERVICE:
-            start_service(ROLLBACK_STACK)
+        SKIP_APPS_AND_SERVICE = check_apps(required_apps) and
+        check_service(SERVICE_NAME)
+
+        if SKIP_APPS_AND_SERVICE:
+            print("Apps and service already installed, skipping installation.")
+            sys.exit(0)
+
+        if not check_apps(required_apps):
+            rollback_stack = install_required_apps(rollback_stack, required_apps, distro)
+
+        if not check_service(SERVICE_NAME):
+            rollback_stack = start_service(rollback_stack, SERVICE_NAME, OPENRC_INIT_DIR)
 
     except Exception as e:
         print("Error encountered during install:", str(e), file=sys.stderr)
         print("Rolling back changes...", file=sys.stderr)
         traceback.print_exc()
-        rollback_all(ROLLBACK_STACK)
+        rollback_all(rollback_stack)
         sys.exit(1)
 
     print("SSH Services installed and daemon started.")

@@ -1,73 +1,39 @@
-# Python script to install Nym and setup daemon for Artix
-# Version 1.0 - functional
+# Python script to install Nym and setup daemon for Artix/Devuan
+# Version 1.1 - functional
 
 import os
 import sys
+from calendar import c
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import traceback
+from collections.abc import Callable
+
+
+
+
+
+
 from pathlib import Path
 
 from lib.utils import (
+    RollbackAction,
     app_installed,
+    check_apps,
+    check_service,
+    detect_distro,
     install_apps,
+    install_required_apps,
     push_rollback,
     rollback_all,
     run,
+    setup_rc_service,
+    start_service,
 )
 
-# --- Defaults (can be overridden via env) ---
-OPENRC_INIT_DIR = Path(os.environ.get("OPENRC_INIT_DIR", "/etc/init.d"))
-SERVICE_NAME = os.environ.get("SERVICE_NAME", "nym-vpnd")
-
-
-def check_service():
-    cmd = f"sudo rc-service {SERV    print("This is where the problem is.")
-    input()ICE_NAME} status"
-    try:
-        status = run(cmd, shell=True, capture=True)
-        if "started" in str(status):
-            return True
-        return False
-    except Exception:
-        return False
-
-
-def check_apps(pkgs):
-    appcheck = 0
-    for pkg in pkgs:
-        try:
-            if app_installed(pkg):
-                appcheck = appcheck + 1
-        except Exception:
-            traceback.print_exc()
-            pass
-    return appcheck == len(pkgs)
-
-
-# install script - this has to run without root
-
-
-def install_nym(ROLLBACK_STACK, pkgs):
-
-    def remove_nym():
-        try:
-            cmd = "trizen -R nym-vpnd-bin nym-vpn-app-bin"
-            run(cmd, shell=True)
-        except Exception:
-            pass
-
-    ROLLBACK_STACK = push_rollback(remove_nym, ROLLBACK_STACK)
-
-    install_apps(pkgs)
-
-    return ROLLBACK_STACK
-
-
-def setup_rc(ROLLBACK_STACK):
-    nymd_config = """#!/sbin/openrc-run
+NYMD_CONFIG = """#!/sbin/openrc-run
 name="nym-vpnd"
 description="NymVPN daemon"
 
@@ -98,78 +64,101 @@ stop() {
      rm -f "${pidfile}"
 }"""
 
-    if not OPENRC_INIT_DIR.exists():
-        cmd = f"sudo mkdir {OPENRC_INIT_DIR}"
-        run(cmd, shell=True)
+# --- Defaults (can be overridden via env) ---
+OPENRC_INIT_DIR = Path(os.environ.get("OPENRC_INIT_DIR", "/etc/init.d"))
+SERVICE_NAME = os.environ.get("SERVICE_NAME", "nym-vpnd")
 
-    INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
-    backup_path = None
-    init_cmd = ""
-    if INIT_PATH.exists():
-        backup_path = INIT_PATH.with_suffix(".bak")
-        if backup_path.exists():
-            cmd = f"sudo rm {backup_path}"
+def enable_nym_repo(
+    rollback_stack: list[RollbackAction],
+) -> list[RollbackAction]:
+    """Enable the Nym repository for Debian-based distros."""
+    # Add GPG key and repository
+    cmd = 'sudo curl -s --compressed "https://apt.nymtech.net/nymtech.gpg" | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/nymtech.gpg > /dev/null'
+
+    run(cmd, shell=True)
+
+    # Add repository
+    cmd = "sudo tee /etc/apt/sources.list.d/nymtech.list > /dev/null << 'EOF'\ndeb [arch=amd64] https://apt.nymtech.net/ stable main\neof"
+    run(cmd, shell=True)
+
+    return rollback_stack
+
+
+# This is not needed with the repo add, but it could be expanded to support other distros
+def download_and_install_nym_vpnd(rollback_stack):
+    """Download and install Nym VPND from GitHub releases."""
+    import tarfile
+    import tempfile
+    import urllib.request
+
+    version = "v1.29.3"
+    url = f"https://github.com/nymtech/nym-vpn-client/releases/download/nym-vpn-core-{version}/nym-vpn-core-{version}_linux_x86_64.tar.gz"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tar_path = Path(tmpdir) / "nym-vpn-core.tar.gz"
+
+        # Download
+        print(f"Downloading Nym VPND from {url}...")
+        urllib.request.urlretrieve(url, tar_path)
+
+        # Extract
+        print("Extracting Nym VPND...")
+        with tarfile.open(tar_path, "r:gz") as tar:
+            tar.extractall(tmpdir)
+
+        # Find the binary
+        extracted_dir = Path(tmpdir) / f"nym-vpn-core-{version}_linux_x86_64"
+        binary_path = extracted_dir / "nym-vpnd"
+
+        if not binary_path.exists():
+            raise FileNotFoundError(f"nym-vpnd binary not found in {extracted_dir}")
+
+        # Install to /usr/bin
+        cmd = def start_service(rollback_stack: List[Callable[[], None]]) -> List[Callable[[], None]]:
+        #     # Fix Service File
+
+        #     INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
+        #     cmd = f"sudo chmod +x {INIT_PATH}"
+        #     run(cmd, shell=True)
+
+        #     cmd = f"sudo rc-update add {SERVICE_NAME} default"
+
+        #     def remove_service():
+        #         cmd = f"sudo rc-update del {INIT_PATH} default"
+        #         run(cmd, shell=True)
+
+        #     rollback_stack = push_rollback(remove_service, rollback_stack)
+        #     run(cmd, shell=True)
+
+        #     # Start service
+        #     cmd = f"sudo rc-service {SERVICE_NAME} start"
+
+        #     def stop_service():
+        #         cmd = f"sudo rc-service {SERVICE_NAME} stop"
+        #         run(cmd, shell=True)
+
+        #     rollback_stack = push_rollback(stop_service, rollback_stack)
+        #     run(cmd, shell=True)
+
+        #     return rollback_stackf"sudo install -m 755 {binary_path} /usr/bin/nym-vpnd"
+        run(cmd, shell=True)
+        print("Nym VPND installed to /usr/bin/nym-vpnd")
+
+        # Rollback function
+        def remove_nym_vpnd():
+            cmd = "sudo rm -f /usr/bin/nym-vpnd"
             run(cmd, shell=True)
 
-        init_cmd = f"sudo mv {INIT_PATH} {backup_path}"
+        rollback_stack = push_rollback(remove_nym_vpnd, rollback_stack)
 
-        def restore_backup():
-            cmd = f"sudo rm {INIT_PATH} && sudo mv {backup_path} {INIT_PATH}"
-            run(cmd, shell=True)
-
-        ROLLBACK_STACK = push_rollback(restore_backup, ROLLBACK_STACK)
-        run(init_cmd, shell=True)
-    else:
-
-        def remove_init():
-            cmd = f"sudo rm {INIT_PATH}"
-            run(cmd, shell=True)
-
-        ROLLBACK_STACK = push_rollback(remove_init, ROLLBACK_STACK)
-
-    # Write script to init file
-    cmd = f"""sudo tee {INIT_PATH} > /dev/null << 'EOF'
-{nymd_config}
-EOF"""
-
-    run(cmd, shell=True)
-    print(f"OpenRC service script written to {INIT_PATH}")
-
-    return ROLLBACK_STACK
-
-
-def start_service(ROLLBACK_STACK):
-    # Fix Service File
-
-    INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
-    cmd = f"sudo chmod +x {INIT_PATH}"
-    run(cmd, shell=True)
-
-    cmd = f"sudo rc-update add {SERVICE_NAME} default"
-
-    def remove_service():
-        cmd = f"sudo rc-update del {INIT_PATH} default"
-        run(cmd, shell=True)
-
-    ROLLBACK_STACK = push_rollback(remove_service, ROLLBACK_STACK)
-    run(cmd, shell=True)
-
-    # Start service
-    cmd = f"sudo rc-service {SERVICE_NAME} start"
-
-    def stop_service():
-        cmd = f"sudo rc-service {SERVICE_NAME} stop"
-        run(cmd, shell=True)
-
-    ROLLBACK_STACK = push_rollback(stop_service, ROLLBACK_STACK)
-    run(cmd, shell=True)
-
-    return ROLLBACK_STACK
+    return rollback_stack
 
 
 def main():
-    ROLLBACK_STACK = []
-    required_apps = ["trizen", "pamac", "nym-vpnd-bin", "nym-vpn-app-bin"]
+    rollback_stack = []
+
+    required_apps = []
+    install_nym_vpnd_manual = False
 
     test_machine = False
     if "--test-machine" in sys.argv:
@@ -181,19 +170,34 @@ def main():
     print("Download and install Nym, get service running for nym-vpnd on OpenRC")
 
     try:
+        distro = detect_distro()
+
+        if distro == "arch":
+            required_apps = ["trizen", "pamac", "nym-vpnd-bin", "nym-vpn-app-bin"]
+        elif distro == "debian":
+            # Install Nym VPN App
+            required_apps = ["nym-vpn-app", "nym-vpnd"]
+            rollback_stack = enable_nym_repo(rollback_stack)
+        else:
+            print("Unsupported distro: ", distro, file=sys.stderr)
+            sys.exit(1)
+
         SKIP_PROCESS = check_apps(required_apps) and check_service()
         if SKIP_PROCESS:
             print("Nym is already installed and running, skipping install...")
             sys.exit(0)
 
-        ROLLBACK_STACK = install_nym(ROLLBACK_STACK, required_apps)
-        ROLLBACK_STACK = setup_rc(ROLLBACK_STACK)
-        ROLLBACK_STACK = start_service(ROLLBACK_STACK)
+        rollback_stack = install_required_apps(rollback_stack, required_apps, distro)
+
+        rollback_stack = setup_rc_service(
+            rollback_stack, OPENRC_INIT_DIR, SERVICE_NAME, NYMD_CONFIG
+        )
+        rollback_stack = start_service(rollback_stack, SERVICE_NAME, OPENRC_INIT_DIR)
     except Exception as e:
         print("Error encountered during install:", str(e), file=sys.stderr)
         print("Rolling back changes...", file=sys.stderr)
         traceback.print_exc()
-        rollback_all(ROLLBACK_STACK)
+        rollback_all(rollback_stack)
         sys.exit(1)
 
 
