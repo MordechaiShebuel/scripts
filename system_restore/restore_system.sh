@@ -13,18 +13,12 @@ if [[ "$linux" == *"omlx"* ]]; then
 
     ../system_scripts/./update.sh
     # IFS=' ' read -ra my_strings <<< "$pkg_list"
- "steam"
-    NEEDS_INSTALL=()
+
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
-            NEEDS_INSTALL+=("$pkg")
-            ./install.sh "${pkg}"
+            sudo dnf in "$pkg"
         fi
     done
-
-    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
-        sudo dnf in "${NEEDS_INSTALL[@]}"
-    fi
 
 fi
 
@@ -32,16 +26,11 @@ if [[ "$linux" == *"artix"* ]]; then
     # Pre-setup for Artix / enable multilib and arch support
     pre_requisites=("pamac" "artix-archlinux-support" "doas" "trizen")
 
-    NEEDS_INSTALL=()
     for pkg in ${pre_requisites[@]}; do
         if ! pacman -Q "$pkg" &>/dev/null 2>&1; then
-            NEEDS_INSTALL+=("$pkg")
+            sudo pacman -S "$pkg"
         fi
     done
-
-    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
-        sudo pacman -S "${NEEDS_INSTALL[@]}" --noconfirm
-    fi
 
     if ! pacman -Q pamac &>/dev/null 2>&1; then
         echo "Warning: pamac not installed. Unable to continue."
@@ -71,62 +60,31 @@ if [[ "$linux" == *"artix"* ]]; then
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
-    NEEDS_INSTALL=()
     for pkg in ${pkg_list[@]}; do
         # Check if app is already installed before trying to re-install it
         # pamac install "${pkg}" --no-confirm
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
-            NEEDS_INSTALL+=("$pkg")
+            pamac install "$pkg"
         fi
     done
-
-    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
-        pamac install "${NEEDS_INSTALL[@]}"
-    fi
 
     chsh -s $(which zsh)
 
     # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
     aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting" "collabora-office")
 
-    NEEDS_INSTALL=()
     for pkg in ${aur_pkg_list[@]}; do
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
-            NEEDS_INSTALL+=("$pkg")
+            trizen -S "$pkg"
         fi
     done
-
-    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
-        trizen -S "${NEEDS_INSTALL[@]}" --noconfirm
-    fi
-
-    # Application that setups up Nym VPN and it's OpenRC Daemon
-    python install_nym.py
-
-    # Application that setups up SSH and it's OpenRC Daemon
-    python setup_remote_ssh.py
-
-    desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
-    Phoenix, AZ 85038
-    dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-
-    if [ -L "$dest" ]; then
-        if [ "$(readlink "$dest")" = "$desired" ]; then
-            echo "Correct symlink already present"
-        else
-            echo "Symlink points to a different target ($(readlink "$dest")), updating..."
-            ln -sf "$desired" "$dest"
-        fi
-    elif [ -e "$dest" ]; then
-        echo "A file or directory exists at $dest; not creating symlink"
-    else
-        ln -s "$desired" "$dest"
-        echo "Symlink created"
-    fi
 
 fi
 
 if [[ "$linux" == *"deb13"* ]]; then
+
+    # Enable 32-bit repos
+    sudo dpkg --add architecture i386
 
     # Vendewolf
     # Check and add contrib repository if needed
@@ -140,24 +98,18 @@ if [[ "$linux" == *"deb13"* ]]; then
     ../system_scripts/./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "flameshot" "hplip" "podman" "podman-compose" "vlc-plugins*" "libdvd-pkg" "silversearcher-ag" "steam-installer" "steam-devices" "zsh-syntax-highlighting")
+    pkg_list=("${pkg_list[@]}" "python" "flameshot" "hplip" "podman" "podman-compose" "vlc-plugins*" "libdvd-pkg" "silversearcher-ag" "steam-libs-i386:386" "steam-installer" "zsh-syntax-highlighting")
 
-    NEEDS_INSTALL=()
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
-            NEEDS_INSTALL+=("$pkg")
+            sudo apt-get install "$pkg"
         fi
     done
-
-    if [ ${#NEEDS_INSTALL[@]} -gt 0 ]; then
-        sudo apt-get install "${NEEDS_INSTALL[@]}"
-    fi
 
     # Zen Browser:
     if ! command -v "zen-browser" >/dev/null 2>&1; then
         bash <(curl -fsSL https://raw.githubusercontent.com/MalikHw/zb-installer-script/main/install-zen.sh)
     fi
-
 
     # Brave Browser:
     if ! command -v "brave" >/dev/null 2>&1; then
@@ -173,6 +125,31 @@ if [[ "$linux" == *"deb13"* ]]; then
     # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
 fi
 
+# Application that setups up Nym VPN and it's OpenRC Daemon
+python install_nym.py
+
+# Application that setups up SSH and it's OpenRC Daemon
+python sane_sharing.py
+
+# Application that setups up SSH and it's OpenRC Daemon
+python setup_remote_ssh.py
+
+desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
+dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+
+if [ -L "$dest" ]; then
+    if [ "$(readlink "$dest")" = "$desired" ]; then
+        echo "Correct symlink already present"
+    else
+        echo "Symlink points to a different target ($(readlink "$dest")), updating..."
+        ln -sf "$desired" "$dest"
+    fi
+elif [ -e "$dest" ]; then
+    echo "A file or directory exists at $dest; not creating symlink"
+else
+    ln -s "$desired" "$dest"
+    echo "Symlink created"
+fi
 
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
-yes |/bin/cp -rf support/* ~/
+yes | /bin/cp -rf ../support/* ~/

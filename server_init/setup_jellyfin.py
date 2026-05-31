@@ -13,6 +13,7 @@ Flags:
 
 import os
 import sys
+from sre_parse import IN
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -22,14 +23,16 @@ import subprocess
 from pathlib import Path
 
 from lib.utils import (
-    atomic_write,
     check_required_apps,
+    create_podman_container,
     ensure_root,
-    push_rollback,
+    pull_image,
     rollback_all,
-    run,
-    safe_mkdir,
+    set_ownership_array,
+    setup_directories,
+    setup_rc_service,
     setup_test_machine,
+    start_service,
 )
 
 # --- Defaults (can be overridden via env) ---
@@ -74,142 +77,54 @@ start_pre() {
 
 
 def main():
-    ROLLBACK_STACK = []
+    rollback_stack = []
     test_machine = False
     if "--test-machine" in sys.argv:
         test_machine = True
+        setup_test_machine(rollback_stack, test_machine)
 
     required_apps = ["podman", "podman-compose"]
 
     ensure_root()
     check_required_apps(required_apps)
 
-    # If test_machine requested, init/start podman machine
-    setup_test_machine(ROLLBACK_STACK, test_machine)
-
-    created_paths = []
     try:
+        DIRS = [MEDIA_DIR, CONFIG_DIR, CACHE_DIR]
         # 1) Ensure dirs exist
-        for p in (MEDIA_DIR, CONFIG_DIR, CACHE_DIR):
-            created = safe_mkdir(p)
-            if created:
-                created_paths.extend(created)
-                # rollback: remove the directory only if it is empty to avoid deleting user data
-                ROLLBACK_STACK = push_rollback(
-                    lambda p=p: p.exists() and not any(p.iterdir()) and p.rmdir(),
-                    ROLLBACK_STACK,
-                )
+        rollback_stack = setup_directories(DIRS, rollback_stack)
 
         # set ownership (best-effort)
-        try:
-            for p in (MEDIA_DIR, CONFIG_DIR, CACHE_DIR):
-                # chown to 1000:1000 like original; record previous ownership is complex, skip restoring
-                os.chown(str(p), 1000, 1000)
-        except Exception:
-            # non-fatal; avoid failing if chown is not allowed
-            pass
+        rollback_stack = set_ownership_array(DIRS, 1000, 1000, rollback_stack)
 
         # 2) Pull image
-        print(f"Pulling Jellyfin image: {IMAGE}")
-        run([str(PODMAN_BIN), "pull", IMAGE])
-        # rollback: remove image
-        ROLLBACK_STACK = push_rollback(
-            lambda: run([str(PODMAN_BIN), "rmi", "-f", IMAGE]), ROLLBACK_STACK
-        )
+        rollback_stack = pull_image(str(PODMAN_BIN), IMAGE, rollback_stack)
 
         # 3) Create container if not exists
-        exists = run([str(PODMAN_BIN), "container", "exists", CONTAINER_NAME])
-        if exists.returncode == 0:
-            print(f"Container '{CONTAINER_NAME}' already exists.")
-        else:
-            print(
-                f"Creating container '{CONTAINER_NAME}' with port mappings (LAN-only)."
-            )
-            run(
-                [
-                    str(PODMAN_BIN),
-                    "create",
-                    "--name",
-                    CONTAINER_NAME,
-                    "--restart=always",
-                    "-p",
-                    f"{JELLYFIN_HTTP_PORT}:8096/tcp",
-                    "-p",
-                    f"{JELLYFIN_HTTPS_PORT}:8920/tcp",
-                    "-v",
-                    f"{CONFIG_DIR}:/config",
-                    "-v",
-                    f"{CACHE_DIR}:/cache",
-                    "-v",
-                    f"{MEDIA_DIR}:/media:ro",
-                    IMAGE,
-                ]
-            )
-            ROLLBACK_STACK = push_rollback(
-                lambda: run([str(PODMAN_BIN), "rm", "-f", CONTAINER_NAME]),
-                ROLLBACK_STACK,
-            )
+        rollback_stack = create_podman_container(
+            str(PODMAN_BIN),
+            CONTAINER_NAME,
+            JELLYFIN_HTTP_PORT,
+            JELLYFIN_HTTPS_PORT,
+            str(CONFIG_DIR),
+            str(CACHE_DIR),
+            str(MEDIA_DIR),
+            IMAGE,
+            rollback_stack,
+        )
 
         # 4) Write OpenRC service script atomically
-        INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
-        if not OPENRC_INIT_DIR.exists():
-            OPENRC_INIT_DIR.mkdir(parents=True, exist_ok=True)
-            ROLLBACK_STACK = push_rollback(
-                lambda: (
-                    OPENRC_INIT_DIR.rmdir()
-                    if not any(OPENRC_INIT_DIR.iterdir())
-                    else None
-                ),
-                ROLLBACK_STACK,
-            )
-
-        # If file already exists, back it up (so we can restore)
-        backup_path = None
-        if INIT_PATH.exists():
-            backup_path = INIT_PATH.with_suffix(".bak")
-            shutil.copy2(str(INIT_PATH), str(backup_path))
-            ROLLBACK_STACK = push_rollback(
-                lambda: (
-                    os.replace(str(backup_path), str(INIT_PATH))
-                    if backup_path.exists()
-                    else None
-                ),
-                ROLLBACK_STACK,
-            )
-        else:
-            ROLLBACK_STACK = push_rollback(
-                lambda: INIT_PATH.unlink() if INIT_PATH.exists() else None,
-                ROLLBACK_STACK,
-            )
-
-        atomic_write(INIT_PATH, INIT_SCRIPT, mode=0o755)
-        print(f"OpenRC service script written to {INIT_PATH}")
+        rollback_stack = setup_rc_service(
+            rollback_stack,
+            OPENRC_INIT_DIR,
+            SERVICE_NAME,
+            INIT_SCRIPT,
+        )
 
         # 5) Enable service in default runlevel and start it
-        try:
-            run(["rc-update", "add", SERVICE_NAME, "default"])
-            ROLLBACK_STACK = push_rollback(
-                lambda: run(["rc-update", "del", SERVICE_NAME, "default"]),
-                ROLLBACK_STACK,
-            )
-        except subprocess.CalledProcessError:
-            # non-fatal; continue but note we didn't add to default runlevel
-            pass
-
-        try:
-            run(["rc-service", SERVICE_NAME, "start"])
-            # rollback: try to stop service
-            ROLLBACK_STACK = push_rollback(
-                lambda: run(["rc-service", SERVICE_NAME, "stop"]), ROLLBACK_STACK
-            )
-        except subprocess.CalledProcessError:
-            print(
-                f"Warning: starting service failed; try 'rc-service {SERVICE_NAME} start' manually.",
-                file=sys.stderr,
-            )
+        rollback_stack = start_service(rollback_stack, SERVICE_NAME, OPENRC_INIT_DIR)
 
         # Success: clear rollback stack
-        ROLLBACK_STACK.clear()
+        rollback_stack.clear()
         print()
         host_ip = (
             subprocess.run(["hostname", "-I"], stdout=subprocess.PIPE, text=True)
@@ -247,7 +162,7 @@ def main():
     except Exception as e:
         print("Error encountered during install:", str(e), file=sys.stderr)
         print("Rolling back changes...", file=sys.stderr)
-        rollback_all(ROLLBACK_STACK)
+        rollback_all(rollback_stack)
         sys.exit(1)
 
 

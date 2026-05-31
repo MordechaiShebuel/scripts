@@ -33,8 +33,8 @@ def run(
 
 
 def push_rollback(
-    fn: Callable[[], None], rollback_stack: List[Callable[[], None]]
-) -> List[Callable[[], None]]:
+    fn: Callable[[], None], rollback_stack: list[RollbackAction]
+) -> list[RollbackAction]:
     rollback_stack.append(fn)
     return rollback_stack
 
@@ -91,18 +91,6 @@ def install_apps(apps, in_cmd):
         if not app_installed(app):
             cmd = f"{in_cmd} -S {app}"
             run(cmd, shell=True)
-
-
-def check_apps(pkgs: list[str]) -> bool:
-    appcheck = 0
-    for pkg in pkgs:
-        try:
-            if app_installed(pkg):
-                appcheck = appcheck + 1
-        except Exception:
-            traceback.print_exc()
-            pass
-    return appcheck == len(pkgs)
 
 
 def app_installed(app):
@@ -256,8 +244,8 @@ def install_required_apps(
 
 
 def start_service(
-    rollback_stack: List[Callable[[], None]], SERVICE_NAME: str, OPENRC_INIT_DIR: Path
-) -> List[Callable[[], None]]:
+    rollback_stack: list[RollbackAction], SERVICE_NAME: str, OPENRC_INIT_DIR: Path
+) -> list[RollbackAction]:
     # Set service file to be +X
 
     INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
@@ -282,5 +270,115 @@ def start_service(
 
     rollback_stack = push_rollback(stop_service, rollback_stack)
     run(cmd, shell=True)
+
+    return rollback_stack
+
+
+def set_ownership(
+    path: Path, user: int, group: int, rollback_stack: list[RollbackAction] = []
+) -> list[RollbackAction]:
+    def restore_ownership():
+        os.chown(str(path), user, group)
+
+    rollback_stack = push_rollback(restore_ownership, rollback_stack)
+    os.chown(str(path), user, group)
+
+    return rollback_stack
+
+
+def set_ownership_recursive(
+    path: Path, user: int, group: int, rollback_stack: list[RollbackAction] = []
+) -> list[RollbackAction]:
+
+    for p in path.rglob("*"):
+        rollback_stack = set_ownership(p, user, group, rollback_stack)
+
+    return rollback_stack
+
+
+def set_ownership_array(
+    paths: list[Path], user: int, group: int, rollback_stack: list[RollbackAction] = []
+) -> list[RollbackAction]:
+    for p in paths:
+        rollback_stack = set_ownership(p, user, group, rollback_stack)
+
+    return rollback_stack
+
+
+def pull_image(
+    podman_cmd: str, image: str, rollback_stack: list[RollbackAction] = []
+) -> list[RollbackAction]:
+
+    def rollback():
+        run(f"{podman_cmd} rmi {image}")
+
+    rollback_stack = push_rollback(rollback, rollback_stack)
+
+    run(f"{podman_cmd} pull {image}")
+
+    return rollback_stack
+
+
+def create_podman_container(
+    podman_cmd: str,
+    container_name: str,
+    jellyfin_http_port: str,
+    jellyfin_https_port: str,
+    config_dir: str,
+    cache_dir: str,
+    media_dir: str,
+    image: str,
+    rollback_stack: list[RollbackAction] = [],
+) -> list[RollbackAction]:
+    exists = run(f"{str(podman_cmd)} container exists {container_name}")
+
+    if exists and "exists" in exists:
+        print(f"Container '{container_name}' already exists.")
+    else:
+        print(f"Creating container '{container_name}' with port mappings (LAN-only).")
+        run(
+            [
+                str(podman_cmd),
+                "create",
+                "--name",
+                container_name,
+                "--restart=always",
+                "-p",
+                f"{jellyfin_http_port}:8096/tcp",
+                "-p",
+                f"{jellyfin_https_port}:8920/tcp",
+                "-v",
+                f"{config_dir}:/config",
+                "-v",
+                f"{cache_dir}:/cache",
+                "-v",
+                f"{media_dir}:/media:ro",
+                image,
+            ]
+        )
+        return push_rollback(
+            lambda: run([str(podman_cmd), "rm", "-f", container_name]),
+            rollback_stack,
+        )
+
+
+def setup_directories(
+    DIRS: list[Path],
+    rollback_stack: list[RollbackAction],
+) -> list[RollbackAction]:
+    created_paths = []
+    for p in DIRS:
+        created = safe_mkdir(p)
+        if created:
+            created_paths.extend(created)
+            # rollback: remove the directory only if it is empty to avoid deleting user data
+            rollback_stack = push_rollback(
+                lambda p=p: (
+                    None
+                    if not (p.exists() and not any(p.iterdir()))
+                    else (p.rmdir() or None)
+                ),
+                rollback_stack,
+            )
 
     return rollback_stack

@@ -10,23 +10,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import traceback
 from collections.abc import Callable
-
-
-
-
-
-
 from pathlib import Path
 
 from lib.utils import (
     RollbackAction,
-    app_installed,
     check_apps,
     check_service,
     detect_distro,
-    install_apps,
     install_required_apps,
-    push_rollback,
     rollback_all,
     run,
     setup_rc_service,
@@ -68,6 +59,7 @@ stop() {
 OPENRC_INIT_DIR = Path(os.environ.get("OPENRC_INIT_DIR", "/etc/init.d"))
 SERVICE_NAME = os.environ.get("SERVICE_NAME", "nym-vpnd")
 
+
 def enable_nym_repo(
     rollback_stack: list[RollbackAction],
 ) -> list[RollbackAction]:
@@ -85,73 +77,73 @@ def enable_nym_repo(
 
 
 # This is not needed with the repo add, but it could be expanded to support other distros
-def download_and_install_nym_vpnd(rollback_stack):
-    """Download and install Nym VPND from GitHub releases."""
-    import tarfile
-    import tempfile
-    import urllib.request
+# def download_and_install_nym_vpnd(rollback_stack):
+#     """Download and install Nym VPND from GitHub releases."""
+#     import tarfile
+#     import tempfile
+#     import urllib.request
 
-    version = "v1.29.3"
-    url = f"https://github.com/nymtech/nym-vpn-client/releases/download/nym-vpn-core-{version}/nym-vpn-core-{version}_linux_x86_64.tar.gz"
+#     version = "v1.29.3"
+#     url = f"https://github.com/nymtech/nym-vpn-client/releases/download/nym-vpn-core-{version}/nym-vpn-core-{version}_linux_x86_64.tar.gz"
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tar_path = Path(tmpdir) / "nym-vpn-core.tar.gz"
+# with tempfile.TemporaryDirectory() as tmpdir:
+#     tar_path = Path(tmpdir) / "nym-vpn-core.tar.gz"
 
-        # Download
-        print(f"Downloading Nym VPND from {url}...")
-        urllib.request.urlretrieve(url, tar_path)
+# Download
+# print(f"Downloading Nym VPND from {url}...")
+# urllib.request.urlretrieve(url, tar_path)
 
-        # Extract
-        print("Extracting Nym VPND...")
-        with tarfile.open(tar_path, "r:gz") as tar:
-            tar.extractall(tmpdir)
+# Extract
+# print("Extracting Nym VPND...")
+# with tarfile.open(tar_path, "r:gz") as tar:
+#     tar.extractall(tmpdir)
 
-        # Find the binary
-        extracted_dir = Path(tmpdir) / f"nym-vpn-core-{version}_linux_x86_64"
-        binary_path = extracted_dir / "nym-vpnd"
+# Find the binary
+# extracted_dir = Path(tmpdir) / f"nym-vpn-core-{version}_linux_x86_64"
+# binary_path = extracted_dir / "nym-vpnd"
 
-        if not binary_path.exists():
-            raise FileNotFoundError(f"nym-vpnd binary not found in {extracted_dir}")
+# if not binary_path.exists():
+#     raise FileNotFoundError(f"nym-vpnd binary not found in {extracted_dir}")
 
-        # Install to /usr/bin
-        cmd = def start_service(rollback_stack: List[Callable[[], None]]) -> List[Callable[[], None]]:
-        #     # Fix Service File
+# Install to /usr/bin
+# cmd = def start_service(rollback_stack: List[Callable[[], None]]) -> List[Callable[[], None]]:
+#     # Fix Service File
 
-        #     INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
-        #     cmd = f"sudo chmod +x {INIT_PATH}"
-        #     run(cmd, shell=True)
+#     INIT_PATH = OPENRC_INIT_DIR / SERVICE_NAME
+#     cmd = f"sudo chmod +x {INIT_PATH}"
+#     run(cmd, shell=True)
 
-        #     cmd = f"sudo rc-update add {SERVICE_NAME} default"
+#     cmd = f"sudo rc-update add {SERVICE_NAME} default"
 
-        #     def remove_service():
-        #         cmd = f"sudo rc-update del {INIT_PATH} default"
-        #         run(cmd, shell=True)
+#     def remove_service():
+#         cmd = f"sudo rc-update del {INIT_PATH} default"
+#         run(cmd, shell=True)
 
-        #     rollback_stack = push_rollback(remove_service, rollback_stack)
-        #     run(cmd, shell=True)
+#     rollback_stack = push_rollback(remove_service, rollback_stack)
+#     run(cmd, shell=True)
 
-        #     # Start service
-        #     cmd = f"sudo rc-service {SERVICE_NAME} start"
+#     # Start service
+#     cmd = f"sudo rc-service {SERVICE_NAME} start"
 
-        #     def stop_service():
-        #         cmd = f"sudo rc-service {SERVICE_NAME} stop"
-        #         run(cmd, shell=True)
+#     def stop_service():
+#         cmd = f"sudo rc-service {SERVICE_NAME} stop"
+#         run(cmd, shell=True)
 
-        #     rollback_stack = push_rollback(stop_service, rollback_stack)
-        #     run(cmd, shell=True)
+#     rollback_stack = push_rollback(stop_service, rollback_stack)
+#     run(cmd, shell=True)
 
-        #     return rollback_stackf"sudo install -m 755 {binary_path} /usr/bin/nym-vpnd"
-        run(cmd, shell=True)
-        print("Nym VPND installed to /usr/bin/nym-vpnd")
+#     return rollback_stackf"sudo install -m 755 {binary_path} /usr/bin/nym-vpnd"
+# run(cmd, shell=True)
+# print("Nym VPND installed to /usr/bin/nym-vpnd")
 
-        # Rollback function
-        def remove_nym_vpnd():
-            cmd = "sudo rm -f /usr/bin/nym-vpnd"
-            run(cmd, shell=True)
+# Rollback function
+#     def remove_nym_vpnd():
+#         cmd = "sudo rm -f /usr/bin/nym-vpnd"
+#         run(cmd, shell=True)
 
-        rollback_stack = push_rollback(remove_nym_vpnd, rollback_stack)
+#     rollback_stack = push_rollback(remove_nym_vpnd, rollback_stack)
 
-    return rollback_stack
+# return rollback_stack
 
 
 def main():
@@ -182,7 +174,7 @@ def main():
             print("Unsupported distro: ", distro, file=sys.stderr)
             sys.exit(1)
 
-        SKIP_PROCESS = check_apps(required_apps) and check_service()
+        SKIP_PROCESS = check_apps(required_apps) and check_service(SERVICE_NAME)
         if SKIP_PROCESS:
             print("Nym is already installed and running, skipping install...")
             sys.exit(0)
