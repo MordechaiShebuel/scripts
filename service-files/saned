@@ -1,0 +1,7 @@
+#!/sbin/openrc-run
+command="/usr/sbin/saned"
+command_args="-d"
+pidfile="/run/saned.pid"
+depend() {
+  need net
+}

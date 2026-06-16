@@ -1,0 +1,50 @@
+#!/sbin/openrc-run
+
+description="Immich self-hosted photo and video server (Podman Compose)"
+supervisor="supervise-daemon"
+
+command="/usr/bin/podman-compose"
+command_args="-f /opt/immich/docker-compose.yml up"
+command_background=true
+pidfile="/run/${RC_SVCNAME}.pid"
+
+extra_commands="logs pull down"
+
+depend() {
+    need podman
+    use net
+}
+
+start_pre() {
+    cd /opt/immich || return 1
+    ebegin "Pulling latest Immich images with Podman"
+    podman-compose -f /opt/immich/docker-compose.yml pull --quiet || eend 1
+    eend 0
+}
+
+stop() {
+    ebegin "Stopping Immich"
+    cd /opt/immich
+    podman-compose -f /opt/immich/docker-compose.yml down
+    eend $?
+}
+
+restart() {
+    stop
+    start
+}
+
+logs() {
+    cd /opt/immich
+    podman-compose -f /opt/immich/docker-compose.yml logs -f
+}
+
+pull() {
+    cd /opt/immich
+    podman-compose -f /opt/immich/docker-compose.yml pull
+}
+
+down() {
+    cd /opt/immich
+    podman-compose -f /opt/immich/docker-compose.yml down -v
+}

@@ -1,0 +1,22 @@
+#!/sbin/openrc-run
+
+name="project-nomad"
+description="Project N.O.M.A.D. stack via podman-compose"
+
+command="/usr/local/bin/podman-compose"
+command_args="-f /opt/project-nomad/compose.yml up -d --remove-orphans"
+command_background=false
+
+depend() {
+    need networking podman-socket
+    after podman-socket
+}
+
+start_pre() {
+    mkdir -p /opt/project-nomad
+}
+
+stop() {
+    cd /opt/project-nomad
+    /usr/local/bin/podman-compose -f compose.yml down || true
+}

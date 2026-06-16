@@ -1,0 +1,31 @@
+#!/sbin/openrc-run
+description="Vaultwarden (rootless Podman on bridge network)"
+command="/usr/bin/podman"
+command_user="vaultwarden"
+pidfile="/run/vaultwarden.pid"
+
+start() {
+    ebegin "Starting Vaultwarden on bridge {NETWORK_NAME}"
+
+        su -s /bin/sh -c "\\{command} run
+    "        --name vaultwarden \\"
+    "        --rm \\"
+    "        --replace \\"
+    "        -d \\"
+    f"        --network {NETWORK_NAME} \\"
+    f"        --volume {DATA_DIR}/data:/data:z \\"
+    f"        --env-file {ENV_FILE} \\"
+    f"        -p {HOST_IP}:{PORT_HOST} \\"
+    '        vaultwarden/server:latest" \\{command_user}'
+    ""
+    "    eend \\$?"
+    "}"
+    ""
+    "stop() {"
+    '    ebegin "Stopping Vaultwarden"'
+    '    su -s /bin/sh -c "\\{command} stop vaultwarden" \\{command_user} 2>/dev/null || true'
+    "    eend 0"
+    "}"
+    "status() {"
+    '    su -s /bin/sh -c "\\{command} ps --filter name=vaultwarden" \\{command_user}'
+    "}"

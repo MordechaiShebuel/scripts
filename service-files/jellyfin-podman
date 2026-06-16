@@ -1,0 +1,25 @@
+#!/sbin/openrc-run
+description="Manage Jellyfin (Podman container)"
+
+name="jellyfin-podman"
+command="/usr/bin/podman"
+command_args="start -a jellyfin"
+pidfile="/run/${RC_SVCNAME}.pid"
+
+depend() {
+  need localmount
+  use net
+}
+
+start_pre() {
+  # Ensure container exists (no-op if already present)
+  /usr/bin/podman container exists jellyfin || /usr/bin/podman create \\
+    --name jellyfin
+    --restart=always
+    -p 8096:8096/tcp
+    -p 8920:8920/tcp
+    -v /var/lib/jellyfin/config:/config
+    -v /var/lib/jellyfin/cache:/cache
+    -v /srv/media:/media:ro
+    docker.io/jellyfin/jellyfin:latest
+}

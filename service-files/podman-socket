@@ -1,0 +1,17 @@
+#!/sbin/openrc-run
+name="podman-socket"
+description="Podman API socket for Project N.O.M.A.D."
+command="/usr/bin/podman"
+command_args="system service --time=0 unix:///run/podman/podman.sock"
+command_background=true
+pidfile="/run/${RC_SVCNAME}.pid"
+
+depend() {
+    need networking
+    after networking
+}
+
+start_pre() {
+    mkdir -p /run/podman
+    chmod 755 /run/podman
+}
