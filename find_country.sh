@@ -11,19 +11,19 @@ Linux=$(uname -r)
 if ! command -v jq >/dev/null 2>&1; then
     # install jq
     if [[ "$Linux" == *"omlx"* ]]; then # Need to verify this is correct
-    ## Open Mandrive Update
-    sudo dnf in jq
-fi
+        ## Open Mandrive Update
+        sudo dnf in jq
+    fi
 
-if [[ "$Linux" == *"artix"* ]]; then
-    ## Artix update
-    sudo pacman -S jq
-fi
+    if [[ "$Linux" == *"artix"* ]]; then
+        ## Artix update
+        sudo pacman -S jq
+    fi
 
-if [[ "$Linux" == *"vendefoul"* ]]; then
-    ## vendefoul
-    sudo apt-get install jq
-fi
+    if [[ "$Linux" == *"deb13"* ]]; then
+        ## vendefoul
+        sudo apt-get install jq
+    fi
 fi
 
 curl_command=$(curl -X GET "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/countries-codes/records?select=iso2_code%2C%20label_en&where=label_en%20like%20%22$country%22&limit=20")

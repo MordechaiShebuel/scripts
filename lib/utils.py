@@ -39,7 +39,7 @@ def push_rollback(
     return rollback_stack
 
 
-def rollback_all(rollback_stack: List[Callable[[], None]]):
+def rollback_all(rollback_stack: List[RollbackAction]):
     # Run in reverse order, ignore errors
     for fn in reversed(rollback_stack):
         try:
@@ -335,6 +335,12 @@ def create_podman_container(
     if exists and "exists" in exists:
         print(f"Container '{container_name}' already exists.")
     else:
+
+        def remove_container() -> None:
+            run([str(podman_cmd), "rm", "-f", container_name])
+
+        rollback_stack = push_rollback(remove_container, rollback_stack)
+
         print(f"Creating container '{container_name}' with port mappings (LAN-only).")
         run(
             [
@@ -356,10 +362,7 @@ def create_podman_container(
                 image,
             ]
         )
-        return push_rollback(
-            lambda: run([str(podman_cmd), "rm", "-f", container_name]),
-            rollback_stack,
-        )
+    return rollback_stack
 
 
 def setup_directories(

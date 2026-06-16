@@ -13,17 +13,11 @@ import traceback
 from pathlib import Path
 
 from lib.utils import (
-    RollbackAction,
-    app_installed,
     check_apps,
     check_service,
     detect_distro,
-    install_apps,
     install_required_apps,
-    push_rollback,
     rollback_all,
-    run,
-    setup_rc_service,
     start_service,
 )
 
@@ -59,18 +53,23 @@ def main():
             print("Unsupported distro: ", distro, file=sys.stderr)
             sys.exit(1)
 
-        SKIP_APPS_AND_SERVICE = check_apps(required_apps) and
-        check_service(SERVICE_NAME)
+        SKIP_APPS_AND_SERVICE = check_apps(required_apps) and check_service(
+            SERVICE_NAME
+        )
 
         if SKIP_APPS_AND_SERVICE:
             print("Apps and service already installed, skipping installation.")
             sys.exit(0)
 
         if not check_apps(required_apps):
-            rollback_stack = install_required_apps(rollback_stack, required_apps, distro)
+            rollback_stack = install_required_apps(
+                rollback_stack, required_apps, distro
+            )
 
         if not check_service(SERVICE_NAME):
-            rollback_stack = start_service(rollback_stack, SERVICE_NAME, OPENRC_INIT_DIR)
+            rollback_stack = start_service(
+                rollback_stack, SERVICE_NAME, OPENRC_INIT_DIR
+            )
 
     except Exception as e:
         print("Error encountered during install:", str(e), file=sys.stderr)

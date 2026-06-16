@@ -63,7 +63,7 @@ def main():
             print("Unsupported distro:", distro, file=sys.stderr)
             sys.exit(1)
 
-        SKIP_PROCESS = check_apps(required_apps) and check_service()
+        SKIP_PROCESS = check_apps(required_apps) and check_service(SERVICE_NAME)
         if SKIP_PROCESS:
             print("sane is already installed and running, skipping install...")
             sys.exit(0)

@@ -2,7 +2,7 @@
 # TODO: Try expanding other systems to make this platform agnostic
 
 
-pkg_list=("zsh" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent" "system-config-printer" "hplip")
+pkg_list=("flameshot" "zsh" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent" "system-config-printer" "hplip")
 linux=$(uname -r)
 
 if [[ "$linux" == *"omlx"* ]]; then
@@ -56,7 +56,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ../system_scripts/./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "nss-mdns" "gvfs-smb" "samba" "smbclient" "kcalc" "steam" "flameshot" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
+    pkg_list=("${pkg_list[@]}" "nss-mdns" "gvfs-smb" "samba" "smbclient" "kcalc" "steam" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "bibletime" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -71,7 +71,7 @@ if [[ "$linux" == *"artix"* ]]; then
     chsh -s $(which zsh)
 
     # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
-    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting" "collabora-office")
+    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting" "collabora-office" "zsh-autocomplete-git")
 
     for pkg in ${aur_pkg_list[@]}; do
         if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
@@ -98,7 +98,7 @@ if [[ "$linux" == *"deb13"* ]]; then
     ../system_scripts/./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "python" "flameshot" "hplip" "podman" "podman-compose" "vlc-plugins*" "libdvd-pkg" "silversearcher-ag" "steam-libs-i386:386" "steam-installer" "zsh-syntax-highlighting")
+    pkg_list=("${pkg_list[@]}" "zsh-syntax-highlighting" "smbclient" "gvfs" "python" "hplip" "podman" "podman-compose" "vlc-plugins*" "bibletime" "libdvd-pkg" "silversearcher-ag" "steam-libs-i386:386" "steam-installer" "zsh-syntax-highlighting")
 
     for pkg in ${pkg_list[@]}; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
@@ -125,9 +125,26 @@ if [[ "$linux" == *"deb13"* ]]; then
     # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
 fi
 
+if [[ -d ~/.oh-my-zsh ]]; then
+    # do nothing
+    echo "Oh My ZSH already installed\!"
+else
+    echo "Installing OMZ\!"
+    if curl -fsSL "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" | sh; then
+        echo "OMZ Install complete."
+    else
+        echo "OMZ Install failes.">&2
+        exit 1
+    fi
+fi
+
+
 # Application that setups up Nym VPN and it's OpenRC Daemon
 python install_nym.py
 
+# Application that setups up
+# Artix path (Debian requires adding repo for Nym)
+python setup_app.py --service-name nym-vpnd -apps nym-vpnd-bin,nym-vpn-app-bin
 # Application that setups up SSH and it's OpenRC Daemon
 python sane_sharing.py
 
