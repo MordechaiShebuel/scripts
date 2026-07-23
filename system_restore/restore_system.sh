@@ -2,7 +2,7 @@
 # TODO: Try expanding other systems to make this platform agnostic
 
 
-pkg_list=("flameshot" "zsh" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent" "system-config-printer" "hplip")
+pkg_list=("flameshot" "htop" "wget" "zsh" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent" "system-config-printer" "hplip")
 linux=$(uname -r)
 
 if [[ "$linux" == *"omlx"* ]]; then
@@ -139,13 +139,13 @@ else
 fi
 
 
-# Application that setups up Nym VPN and it's OpenRC Daemon
-python install_nym.py
+# Application that setups up Nym VPN and it's OpenRC Daemon (OLD METHOD)
+# python install_nym.py
 
 # Application that setups up
 # Artix path (Debian requires adding repo for Nym)
-python setup_app.py --service-name nym-vpnd -apps nym-vpnd-bin,nym-vpn-app-bin
-# Application that setups up SSH and it's OpenRC Daemon
+python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
+# Application that setups up scanner sharing
 python sane_sharing.py
 
 # Application that setups up SSH and it's OpenRC Daemon

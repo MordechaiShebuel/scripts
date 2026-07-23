@@ -165,7 +165,7 @@ def main():
         distro = detect_distro()
 
         if distro == "arch":
-            required_apps = ["trizen", "pamac", "nym-vpnd-bin", "nym-vpn-app-bin"]
+            required_apps = ["trizen", "pamac", "nym-vpnd-bin", "nym-vpn-app-bin", "nym-vpnc-bin"]
         elif distro == "debian":
             # Install Nym VPN App
             required_apps = ["nym-vpn-app", "nym-vpnd"]
