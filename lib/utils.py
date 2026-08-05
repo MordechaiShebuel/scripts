@@ -86,10 +86,10 @@ def check_required_apps(apps):
             run(cmd)
 
 
-def install_apps(apps, in_cmd):
+def install_apps(in_cmd, apps):
     for app in apps:
         if not app_installed(app):
-            cmd = f"{in_cmd} -S {app}"
+            cmd = f"{in_cmd} {app}"
             run(cmd, shell=True)
 
 
@@ -238,7 +238,7 @@ def install_required_apps(
 
     rollback_stack = push_rollback(remove_nym, rollback_stack)
 
-    install_apps(pkgs, installer)
+    install_apps(installer, pkgs)
 
     return rollback_stack
 
