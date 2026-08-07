@@ -28,7 +28,12 @@ def run(
             shell=shell,
         ).stdout
     else:
-        subprocess.run(cmd, check=True, env=env, shell=shell)
+        try:
+            subprocess.run(cmd, check=True, env=env, shell=shell)
+        except Exception:
+            traceback.print_exc()
+            print("Failed to run command", cmd)
+            sys.exit(1)
         return None
 
 
@@ -82,7 +87,7 @@ def ensure_root():
 def check_required_apps(apps):
     for app in apps:
         if shutil.which(app) is None:
-            cmd = f"./install.sh {app}"
+            cmd = f"./../system_scripts/install.sh {app}"
             run(cmd)
 
 

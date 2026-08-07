@@ -61,7 +61,7 @@ if [[ "$linux" == *"artix"* ]]; then
     ../system_scripts/./update.sh
 
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "poco" "nss-mdns" "gvfs-smb" "samba" "kcalc" "steam" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
+    pkg_list=("${pkg_list[@]}" "python-pipenv" "poco" "nss-mdns" "gvfs-smb" "samba" "kcalc" "steam" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -167,12 +167,16 @@ fi
 
 # Application that setups up
 # Artix path (Debian requires adding repo for Nym)
-python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
+
+# Install Python dependencies via pipenv from the base directory
+pipenv install
+# Application that setups up Nym VPN and it's OpenRC Daemon
+pipenv run python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
 # Application that setups up scanner sharing
-python sane_sharing.py
+pipenv run python sane_sharing.py
 
 # Application that setups up SSH and it's OpenRC Daemon
-python setup_remote_ssh.py
+pipenv run python setup_remote_ssh.py
 
 desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
 dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"

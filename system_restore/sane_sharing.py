@@ -55,10 +55,10 @@ def main():
         distro = detect_distro()
 
         if distro == "arch":
-            required_apps = ["trizen", "pamac", "sane-utils", "libsane-extras"]
-        elif distro == "debian":
+            required_apps = ["skanpage", "ksanecore", "libksane"]
+        # elif distro == "debian":
             # Install sane App
-            required_apps = ["sane-utils", "libsane-extras"]
+            # required_apps = ["sane-openrc", "ksanecore", "libksane"]
         else:
             print("Unsupported distro:", distro, file=sys.stderr)
             sys.exit(1)

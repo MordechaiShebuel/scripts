@@ -181,7 +181,7 @@ def main():
         required_apps.append("podman-compose")
         test_machine = True
 
-    print("Download and install Nym, get service running for nym-vpnd on OpenRC")
+    print("Download and install Bitwarden, get service running for bitwarden on OpenRC")
 
     ensure_root()
     check_required_apps(required_apps)
