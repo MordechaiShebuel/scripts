@@ -1,12 +1,34 @@
 #!/usr/bin/env bash
 # TODO: Try expanding other systems to make this platform agnostic
+# I'd love to try Void Linux next!
 
+if [[ -r /etc/os-release ]]; then
+    . /etc/os-release
+fi
+
+case "$ID" in
+    openmandriva)
+        echo "OpenMandriva"
+        ;;
+    debian)
+        echo "Debian-based system"
+        ;;
+    void)
+        echo "Void Linux"
+        ;;
+    artix)
+        echo "Artix Linux"
+        ;;
+    *)
+        echo "Unsupported distribution: ${ID:-unknown}" >&2
+        exit 1
+        ;;
+esac
 
 pkg_list=("flameshot" "htop" "wget" "zsh" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent" "system-config-printer" "hplip" "smbclient" "bibletime" "zsh-syntax-highlighting")
 linux=$(uname -r)
 
-if [[ "$linux" == *"omlx"* ]]; then
-    # Open Mandriva
+if [[ "$ID" == "openmandriva" || "$ID_LIKE" == *rhel* ]]; then    # Open Mandriva
 
     # Linux specific packages
     pkg_list=("${pkg_list[@]}" "dvd+rw-tools" "lib64dvdnav4" "lib64dvdread" "lib64dvdcss")
@@ -14,7 +36,7 @@ if [[ "$linux" == *"omlx"* ]]; then
     ../system_scripts/./update.sh
     # IFS=' ' read -ra my_strings <<< "$pkg_list"
 
-    for pkg in ${pkg_list[@]}; do
+for pkg in "${pkg_list[@]}"; do
         if ! command -v "$pkg" >/dev/null 2>&1; then
             sudo dnf in "$pkg"
         fi
@@ -22,7 +44,7 @@ if [[ "$linux" == *"omlx"* ]]; then
 
 fi
 
-if [[ "$linux" == *"artix"* ]]; then
+if [[ "$ID" == "artix" || "$ID_LIKE" == *arch* ]]; then
     # Pre-setup for Artix / enable multilib and arch support
     pre_requisites=("pamac" "artix-archlinux-support" "doas" "trizen")
 
@@ -60,8 +82,8 @@ if [[ "$linux" == *"artix"* ]]; then
     #update first
     ../system_scripts/./update.sh
 
-    # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "python-pipenv" "poco" "nss-mdns" "gvfs-smb" "samba" "kcalc" "steam" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
+    # Artix specific packages
+    pkg_list=("${pkg_list[@]}" "skanpage" "zed" "python-pipenv" "poco" "nss-mdns" "gvfs-smb" "samba" "kcalc" "steam" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
 
     # Enable lib32 in config
     # Artix [lib32] and Arch [multilib]
@@ -100,10 +122,13 @@ if [[ "$linux" == *"artix"* ]]; then
 fi
 
 if [[ "$linux" == *"deb13"* ]]; then
+    # Tested this on PeppermintOS and Vendewolf
+    # Because Vendewolf uses Xlibre, this will require adding `Architectures: amd64` to
+    # /etc/apt/sources.list.d/xlibre-debian.sources
 
     # Enable 32-bit repos
-    sudo dpkg --add architecture i386
-
+    sudo dpkg --add-architecture i386
+    sudo apt update
     # Vendewolf
     # Check and add contrib repository if needed
     if ! grep -q "contrib" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
@@ -115,23 +140,32 @@ if [[ "$linux" == *"deb13"* ]]; then
     # After installing
     ../system_scripts/./update.sh
 
+    # PEPPERMINTOS SPECIFIC
+    sudo apt install task-kde-desktop
+    sudo apt install sddm
+    sudo dpkg-reconfigure sddm
+
     # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "vlc-plugins*" "libdvd-pkg" "silversearcher-ag" "steam-libs-i386:386" "steam-installer")
+    pkg_list=("${pkg_list[@]}" "python-is-python3" "pipenv" "vlc-plugins*" "libdvd-pkg" "silversearcher-ag" "steam-installer")
 
     to_install=()
-    for pkg in ${pkg_list[@]}; do
-        if ! command -v "$pkg" >/dev/null 2>&1; then
+    for pkg in "${pkg_list[@]}"; do
+        if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null |
+             grep -q "install ok installed"; then
             to_install+=("$pkg")
         fi
     done
 
-    if [ ${#to_install[@]} -gt 0 ]; then
-        sudo apt-get install "${to_install[@]}"
+    if ((${#to_install[@]} > 0)); then
+        sudo apt-get install -y "${to_install[@]}"
     fi
 
     # Zen Browser:
     if ! command -v "zen-browser" >/dev/null 2>&1; then
         bash <(curl -fsSL https://raw.githubusercontent.com/MalikHw/zb-installer-script/main/install-zen.sh)
+        echo "Zen Browser installed\!"
+    else
+        echo "Zen Browser already installed or could not be installed\!"
     fi
 
     # Brave Browser:
@@ -142,6 +176,9 @@ if [[ "$linux" == *"deb13"* ]]; then
         sudo curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources https://brave-browser-apt-release.s3.brave.com/brave-browser.sources
         sudo apt update
         sudo apt install brave-browser -y
+        echo "Brave Browser installed\!"
+    else
+        echo "Brave Browser already installed or could not be installed\!"
     fi
 
     # Cinnamon:
@@ -161,6 +198,13 @@ else
     fi
 fi
 
+sudo chsh -s "$(command -v zsh)" "$USER"
+
+if getent passwd "$USER" | grep -qE ':/bin/zsh$'; then
+    echo "Your login shell is set to zsh."
+else
+    echo "Your login shell is not set to zsh."
+fi
 
 # Application that setups up Nym VPN and it's OpenRC Daemon (OLD METHOD)
 # python install_nym.py
@@ -168,15 +212,26 @@ fi
 # Application that setups up
 # Artix path (Debian requires adding repo for Nym)
 
-# Install Python dependencies via pipenv from the base directory
-pipenv install
-# Application that setups up Nym VPN and it's OpenRC Daemon
-pipenv run python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
-# Application that setups up scanner sharing
-pipenv run python sane_sharing.py
+# These are failing on the debian path, pipenv command not found
+if ! command -v "pipenv" >/dev/null 2>&1; then
+    echo "pipenv not found, unable to install pipenv dependencies"
+else
+    # Install Python dependencies via pipenv from the base directory
+    pipenv install
+    # Application that setups up Nym VPN and it's OpenRC Daemon
+    pipenv run python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
+    # Application that setups up scanner sharing
+    pipenv run python sane_sharing.py
 
-# Application that setups up SSH and it's OpenRC Daemon
-pipenv run python setup_remote_ssh.py
+    # Application that setups up SSH and it's OpenRC Daemon
+    pipenv run python setup_remote_ssh.py
+
+    if ! command -v "nym-vpnd" >/dev/null 2>&1; then
+        echo "nym-vpnd not found, unable to install nym-vpnd"
+    fi
+    # Should check for sane_sharing success and ssh server success
+    #
+fi
 
 desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
 dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"

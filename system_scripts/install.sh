@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 
+if [[ $# -lt 1 ]]; then
+    echo "Error: Package name is required"
+    echo "Usage: $0 <package> [aur]"
+    exit 1
+fi
+
 linux=$(uname -a)
 pkg=$1
 option=$2
+echo "Installing $pkg"
 
 if [[ "$linux" == *"omlx"* ]]; then # Need to verify this is correct
     ## Open Mandrive Install

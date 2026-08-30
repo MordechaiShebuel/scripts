@@ -87,7 +87,7 @@ def ensure_root():
 def check_required_apps(apps):
     for app in apps:
         if shutil.which(app) is None:
-            cmd = f"./../system_scripts/install.sh {app}"
+            cmd = f"in {app}" # Required path in system to this script
             run(cmd)
 
 

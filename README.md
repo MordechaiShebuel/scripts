@@ -9,10 +9,14 @@ The readme is organized in the matter you should run them. You'll want to setup 
 - Update:
 I've started converting the scripts to Python and have been avoid LLM lifting as all the initial scripts have had loads of issues that took repeated debug cycles. With the debugging cycles, it isn't saving me time to use an LLM - 100% of the time. This is honestly a hard choice, as SWE jobs favor people who just generate slop, and don't review or test the output.
 
-Philosophically, I would rather manually code this - but I've got to learn to optimize these tools to pay the bills.s
+Philosophically, I would rather manually code this - but I've got to learn to optimize these tools to pay the bills.
 
 - Update May 14th, 2026:
 I'm developing a pattern of querying the LLM for code generation / debugging and knowing from the output what I need to do. I prefer this method versus implicitly trusting the RNG output they can tend toward being non-deterministic.
+
+- Update August 29th, 2026:
+  - There has been a lot of drama in the Artix forums surrounding Xlibre and SonicDE. They aren't wrong that both are alpha state right now with bugs. However, the response and over reaction by the Artix team and completely pulling support for these projects has been a source of frustration for me. I've read numerous forum posts regarding this topic, and accusations from the Artix team that personal attacks were made. They never provided evidence, not once I've asked for it, never seen it. 
+  - The over reaction and sudden pulling of support for these projects is affirms my platform agnostic goal in this repo. If one project dies or DEIS going woke (and I honestly consider what happened here a symptom of wokeness) then you have a way to get back up and running quickly on another system. I've expanded the Devuan (Deb13) section accordingly, and the related support Python scripts. I've done some testing with Vendefoul/wolf and Peppermint, which are both Devuan-based and should work with this repo. It truly makes me sad Artix was my favorite distro, I had it installed on all my computers, even my server.
 
 ## restore_system.sh
 - This became my primary focus, get this working and if something goes wrong it's easy to restore the system to a prior working state.

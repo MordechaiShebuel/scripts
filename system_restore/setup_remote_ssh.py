@@ -28,7 +28,7 @@ SERVICE_NAME = os.environ.get("SERVICE_NAME", "sshd")
 
 def main():
     rollback_stack = []
-    required_apps = ["openssh-openrc", "openssh", "dropbear"]
+    required_apps = []
 
     test_machine = False
     if "--test-machine" in sys.argv:
@@ -44,11 +44,16 @@ def main():
         if distro == "arch":
             required_apps.append("trizen")
             required_apps.append("pamac")
+            required_apps.append("openssh-openrc")
+            required_apps.append("openssh")
+            #required_apps.append("dropbear")
         elif distro == "debian":
+            required_apps.append('openssh-server')
             # Install Nym VPN App
             # required_apps = ["nym-vpn-app", "nym-vpnd"]
             # rollback_stack = enable_nym_repo(rollback_stack)
             print("No extra apps needed for Debian-based distro.")
+            SERVICE_NAME = 'ssh'
         else:
             print("Unsupported distro: ", distro, file=sys.stderr)
             sys.exit(1)

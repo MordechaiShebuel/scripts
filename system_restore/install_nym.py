@@ -1,5 +1,8 @@
 # Python script to install Nym and setup daemon for Artix/Devuan
 # Version 1.1 - functional
+# Bug in Vendewolf:
+# E: Malformed line 2 in source list /etc/apt/sources.list.d/nymtech.list (type)
+# E: The list of sources could not be read.
 
 import os
 import sys
@@ -35,7 +38,7 @@ command_args="-v run-as-service"
 pidfile="/run/nym-vpnd.pid"
 command_background="yes"
 
-depend() {    print("This is where the problem is.")
+depend() {
 input()
      need dbus
      use net
@@ -70,10 +73,33 @@ def enable_nym_repo(
     run(cmd, shell=True)
 
     # Add repository
-    cmd = "sudo tee /etc/apt/sources.list.d/nymtech.list > /dev/null << 'EOF'\ndeb [arch=amd64] https://apt.nymtech.net/ stable main\neof"
-    run(cmd, shell=True)
+    import subprocess
 
+    repo_file = Path("/etc/apt/sources.list.d/nymtech.list")
+    repo_contents = "deb [arch=amd64] https://apt.nymtech.net/ stable main\n"
+    try:
+        current = repo_file.read_text()
+    except FileNotFoundError:
+        current = None
+
+    if current == None:
+
+        subprocess.run(
+            ["sudo", "tee", str(repo_file)],
+            input=repo_contents,
+            text=True,
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
+    def remove_nym_repo():
+        subprocess.run(
+            ["sudo", "rm", "-f", str(repo_file)],
+            check=False,
+        )
+    # Add a rollback action only if this function changed the file
+    rollback_stack.append(lambda: remove_nym_repo())
     return rollback_stack
+
 
 
 # This is not needed with the repo add, but it could be expanded to support other distros
