@@ -9,7 +9,29 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import List, Optional, Union
 
+import shlex
+
 RollbackAction = Callable[[], None]
+
+installed_commands = {
+    "arch": ["pacman", "-Q"],
+    "debian": (
+        ["dpkg-query", "-W", "-f='${Status}'"]
+    ),
+    "void": ["xbps-query", "-l"],
+}
+
+installers = {
+    "arch": "trizen -S",
+    "debian": "sudo apt-get install -y",
+    "void": "sudo xbps-install -y",
+}
+
+removers = {
+    "arch": "trizen -R",
+    "debian": "sudo apt-get remove -y",
+    "void": "sudo xbps-remove -y",
+}
 
 
 def run(
@@ -28,12 +50,7 @@ def run(
             shell=shell,
         ).stdout
     else:
-        try:
-            subprocess.run(cmd, check=True, env=env, shell=shell)
-        except Exception:
-            traceback.print_exc()
-            print("Failed to run command", cmd)
-            sys.exit(1)
+        subprocess.run(cmd, check=True, env=env, shell=shell)
         return None
 
 
@@ -87,26 +104,37 @@ def ensure_root():
 def check_required_apps(apps):
     for app in apps:
         if shutil.which(app) is None:
-            cmd = f"in {app}" # Required path in system to this script
+            cmd = f"./install.sh {app}"
             run(cmd)
 
+def install_apps(apps: list[str], in_cmd: str, distro: str):
+    print("This function is deprecated and will be replaced by install_required_apps()")
+    install_apps_deprecated(apps, in_cmd, distro)
 
-def install_apps(in_cmd, apps):
+# This needs to be replaced with function below
+def install_apps_deprecated(apps: list[str], in_cmd: str, distro: str):
     for app in apps:
-        if not app_installed(app):
-            cmd = f"{in_cmd} {app}"
+        if not app_installed(app, distro):
+            cmd = f"{in_cmd} -S {app}"
             run(cmd, shell=True)
 
+def app_installed(app: str, distro: str):
+    command = installed_commands.get(distro)
 
-def app_installed(app):
-    cmd = f"if [[ $(pamac list --installed --quiet | grep {app}) == {app} ]]; then echo 'installed'; else echo 'not installed'; fi"
-    try:
-        installed = run(cmd, shell=True, capture=True)
-        if str(installed).strip() == "installed":
-            return True
+    if command is None:
         return False
+
+    try:
+        output = run(command + [app], capture=True)
+
+        if distro == "debian":
+            return output.strip() == "install ok installed"
+
+        return True
+
     except Exception:
         return False
+
 
 
 def setup_test_machine(rollback_stack, test_machine=False):
@@ -149,28 +177,33 @@ def detect_distro():
             "debian" in content.lower()
             or "ubuntu" in content.lower()
             or "linuxmint" in content.lower()
-            or "Vendefoul" in content.lower()
+            or "vendefoul" in content.lower()
+	    or "devuan" in content.lower()
+            or "peppermint" in content.lower()
         ):
             return "debian"
+        if "void" in content.lower():
+            return "void"
+    
     return "unknown"
 
 
-def check_service(service: str) -> bool:
-    cmd = f"sudo rc-service {service} status"
+def check_service(service: str, svc_cmd: str) -> bool:
+    cmd = f"sudo {svc_cmd} {service} status"
     try:
         status = run(cmd, shell=True, capture=True)
-        if "started" in str(status):
+        if "started" in str(status) or "run" in str(status):
             return True
         return False
     except Exception:
         return False
 
 
-def check_apps(pkgs: list[str]) -> bool:
+def check_apps(pkgs: list[str], distro: str) -> bool:
     appcheck = 0
     for pkg in pkgs:
         try:
-            if app_installed(pkg):
+            if app_installed(pkg, distro):
                 appcheck = appcheck + 1
         except Exception:
             traceback.print_exc()
@@ -228,8 +261,8 @@ EOF"""
 def install_required_apps(
     rollback_stack: list[RollbackAction], pkgs: list[str], distro: str
 ) -> list[RollbackAction]:
-    installer = "trizen -S" if distro == "arch" else "apt-get install -y"
-    remover = "trizen -R" if distro == "arch" else "apt-get remove -y"
+    installer = installers.get(distro)
+    remover = removers.get(distro)
 
     def remove_nym():
         try:
@@ -243,7 +276,7 @@ def install_required_apps(
 
     rollback_stack = push_rollback(remove_nym, rollback_stack)
 
-    install_apps(installer, pkgs)
+    install_apps(pkgs, installer, distro)
 
     return rollback_stack
 

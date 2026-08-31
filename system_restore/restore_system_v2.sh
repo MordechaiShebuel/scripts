@@ -18,7 +18,6 @@ pkg_list=(
     wget
     zsh
     gimp
-    obs-studio
     git
     vlc
     curl
@@ -138,6 +137,7 @@ install_packages_apt() {
         steam-installer
         vlc-plugins*
         libdvd-pkg
+        obs-studio
     )
 
     # Enable 32-bit packages for Steam and other 32-bit software.
@@ -171,6 +171,7 @@ install_packages_apt() {
 
 install_packages_pacman() {
     pkg_list+=(
+        obs-studio
         dvd+rw-tools
         libdvdcss
         libdvdnav
@@ -205,14 +206,70 @@ install_packages_pacman() {
 }
 
 install_packages_xbps() {
-    pkg_list+=(
-        dvd+rw-tools
-        libdvdnav
-        libdvdread
-    )
 
     sudo xbps-install -Syu
+
+    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" | sudo tee /etc/xbps.d/noid-xbps-repo.conf
+
+    sudo xbps-install -Syu void-repo-nonfree void-repo-multilib
+    sudo xbps-install -Syu void-repo-multilib-nonfree
+    sudo xbps-install -Su
+
+    pkg_list+=(
+        bitwarden-desktop
+        brave-origin
+        obs
+        onlyoffice
+        python
+        dvd+rw-tools
+        libdvdcss
+        libdvdnav
+        libdvdread
+        kde-plasma
+        smplayer
+        steam
+        libGL-32bit
+        libpulseaudio-32bit
+        libtxc_dxtn-32bit
+        glibc-32bit
+        libdrm-32bit
+        libglvnd-32bit
+        mesa-32bit
+        mesa-dri-32bit
+        vulkan-loader-32bit
+        smplayer
+        zen-browser
+        nodejs
+        the_silver_searcher
+    )
+
+    # AMD:
+    sudo xbps-install -S mesa-vulkan-radeon mesa-vulkan-radeon-32bit
+
+    # INTEL: (LAPTOP)
+    # sudo xbps-install -S mesa-vulkan-intel mesa-vulkan-intel-32bit
+
     sudo xbps-install -y "${pkg_list[@]}"
+
+    # install Zeditor:
+    curl -f https://zed.dev/install.sh | sh
+
+    # install ente-auth
+    wget https://github.com/ente/ente/releases/download/auth-v4.4.25/ente-auth-v4.4.25-x86_64.AppImage &&
+        sudo mkdir -p /opt/bin &&
+        sudo cp ente-auth-* /opt/bin &&
+        sudo chmod +x /opt/bin/ente-auth-v4.4.25-x86_64.AppImage &&
+        sudo ln -s /opt/bin/ente-auth-v4.4.25-x86_64.AppImage /usr/bin/ente-auth &&
+        tee ~/.local/share/applications/ente-auth.desktop <<EOF
+[Desktop Entry]
+Name=Ente Auth
+Exec=ente-auth
+Type=Application
+Icon=/opt/bin/ente-auth-v4.4.25-x86_64.AppImage
+Terminal=false
+Categories=Utility;Security;
+EOF
+
 }
 
 install_packages_dnf() {
@@ -276,5 +333,73 @@ case "$ID" in
         exit 1
         ;;
 esac
+
+if [[ -d ~/.oh-my-zsh ]]; then
+    # do nothing
+    echo "Oh My ZSH already installed\!"
+else
+    echo "Installing OMZ\!"
+    if curl -fsSL "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" | sh; then
+        echo "OMZ Install complete."
+    else
+        echo "OMZ Install fails.">&2
+        exit 1
+    fi
+fi
+
+sudo chsh -s "$(command -v zsh)" "$USER"
+
+if getent passwd "$USER" | grep -qE ':/bin/zsh$'; then
+    echo "Your login shell is set to zsh."
+else
+    echo "Your login shell is not set to zsh."
+fi
+
+# Application that setups up Nym VPN and it's OpenRC Daemon (OLD METHOD)
+# python install_nym.py
+
+# Application that setups up
+# Artix path (Debian requires adding repo for Nym)
+
+# These are failing on the debian path, pipenv command not found
+if ! command -v "pipenv" >/dev/null 2>&1; then
+    echo "pipenv not found, unable to install pipenv dependencies"
+else
+    # Install Python dependencies via pipenv from the base directory
+    pipenv install
+    # Application that setups up Nym VPN and it's OpenRC Daemon
+    pipenv run python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
+    # Application that setups up scanner sharing
+    pipenv run python sane_sharing.py
+
+    # Application that setups up SSH and it's OpenRC Daemon
+    pipenv run python setup_remote_ssh.py
+
+    if ! command -v "nym-vpnd" >/dev/null 2>&1; then
+        echo "nym-vpnd not found, unable to install nym-vpnd"
+    fi
+    # Should check for sane_sharing success and ssh server success
+    #
+fi
+
+desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
+dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+
+if [ -L "$dest" ]; then
+    if [ "$(readlink "$dest")" = "$desired" ]; then
+        echo "Correct symlink already present"
+    else
+        echo "Symlink points to a different target ($(readlink "$dest")), updating..."
+        ln -sf "$desired" "$dest"
+    fi
+elif [ -e "$dest" ]; then
+    echo "A file or directory exists at $dest; not creating symlink"
+else
+    ln -s "$desired" "$dest"
+    echo "Symlink created"
+fi
+
+# copy setup files you want on this system, for example local scripts, ssh pub file, etc
+yes | /bin/cp -rf ../support/* ~/
 
 echo "Restore script completed."

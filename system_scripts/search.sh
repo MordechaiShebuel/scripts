@@ -1,36 +1,45 @@
-#!/usr/bin/env bash
-
-search_term=$1
-linux=$(uname -r)
-
-if [[ "$linux" == *"omlx"* ]]; then
-    # Open Mandriva
-    ./update.sh
-
-    sudo dnf search "$search_term"
+# Read distribution information.
+if [[ ! -r /etc/os-release ]]; then
+    echo "Cannot determine the operating system." >&2
+    exit 1
 fi
 
-if [[ "$linux" == *"artix"* ]]; then
-    # Artix
-    #update first
-    ./update.sh
+. /etc/os-release
 
-    if ! command -v "pamac" >/dev/null 2>&1; then
-        sudo pacman -S pamac
-    fi
+pkg=$1
+option=$2
 
-    # Enable lib32 in config
-    # Artix [lib32] and Arch [multilib]
+# Select the package manager based on /etc/os-release.
+case "$ID" in
+    debian|peppermint)
+        echo "Detected Debian-based system: $ID"
+        sudo apt-get update
+        sudo apt-cache search "$pkg"
+        ;;
 
-    pamac search "$search_term"
-fi
+    void)
+        echo "Detected Void Linux"
 
-if [[ "$linux" == *"deb13"* ]]; then
-    # Vendewolf
-    ./update.sh
+        sudo xbps-install -Rs "$pkg"
+        ;;
 
-    # After installing
-    sudo apt-cache search "$search_term"
-    # Cinnamon:
-    # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
-fi
+    artix)
+        echo "Detected Artix Linux"
+
+        sudo pamac search "$pkg"
+        ;;
+
+    openmandriva)
+        echo "Detected OpenMandriva"
+
+        sudo dnf search "$pkg"
+        ;;
+
+    *)
+        echo "Unsupported distribution: ${ID:-unknown}" >&2
+        echo "Detected values:" >&2
+        echo "  ID=${ID:-unknown}" >&2
+        echo "  ID_LIKE=${ID_LIKE:-unknown}" >&2
+        exit 1
+        ;;
+esac

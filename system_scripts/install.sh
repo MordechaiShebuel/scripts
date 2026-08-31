@@ -1,36 +1,47 @@
 #!/usr/bin/env bash
 
-if [[ $# -lt 1 ]]; then
-    echo "Error: Package name is required"
-    echo "Usage: $0 <package> [aur]"
+# Read distribution information.
+if [[ ! -r /etc/os-release ]]; then
+    echo "Cannot determine the operating system." >&2
     exit 1
 fi
 
-linux=$(uname -a)
+. /etc/os-release
+
 pkg=$1
 option=$2
-echo "Installing $pkg"
 
-if [[ "$linux" == *"omlx"* ]]; then # Need to verify this is correct
-    ## Open Mandrive Install
-    sudo dnf in -y "$pkg"
-fi
+# Select the package manager based on /etc/os-release.
+case "$ID" in
+    debian|peppermint)
+        echo "Detected Debian-based system: $ID"
 
-if [[ "$linux" == *"artix"* ]]; then
-    ## Artix Install
-    if [[ "$option" == "aur" ]]; then
-        trizen -S "${pkg}" --noconfirm
-    else
-        pamac install "$pkg" --no-confirm
-    fi
-fi
+        sudo apt-get install -y "$pkg"
+        ;;
 
-if [[ "$linux" == *"deb13"* ]]; then
-    ## vendefoul
-    sudo apt-get install -y "$pkg"
-fi
+    void)
+        echo "Detected Void Linux"
 
-if [[ "$linux" == *"OpenWrt"* ]]; then
-    ## OpenWRT
-    opkg install -y
-fi
+        sudo xbps-install -S "$pkg"
+        ;;
+
+    artix)
+        echo "Detected Artix Linux"
+
+        sudo pacman -S --noconfirm "$pkg"
+        ;;
+
+    openmandriva)
+        echo "Detected OpenMandriva"
+
+        sudo dnf install -y "$pkg"
+        ;;
+
+    *)
+        echo "Unsupported distribution: ${ID:-unknown}" >&2
+        echo "Detected values:" >&2
+        echo "  ID=${ID:-unknown}" >&2
+        echo "  ID_LIKE=${ID_LIKE:-unknown}" >&2
+        exit 1
+        ;;
+esac

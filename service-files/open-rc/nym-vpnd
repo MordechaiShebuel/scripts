@@ -1,0 +1,30 @@
+#!/sbin/openrc-run
+name="nym-vpnd"
+description="NymVPN daemon"
+
+# Path to the binary
+command="/usr/bin/nym-vpnd"
+command_args="-v run-as-service"
+
+pidfile="/run/nym-vpnd.pid"
+command_background="yes"
+
+depend() {
+input()
+     need dbus
+     use net
+     after firewall
+}
+
+start_pre() {
+     checkpath --directory --mode 0755 /run
+}
+
+supervise() {
+     start-stop-daemon --start --exec "${command}" --background --make-pidfile --pidfile "${pidfile}" -- ${command_args}
+}
+
+stop() {
+     start-stop-daemon --stop --pidfile "${pidfile}" --retry TERM/5/KILL/5
+     rm -f "${pidfile}"
+}
