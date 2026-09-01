@@ -210,6 +210,7 @@ install_packages_xbps() {
     sudo xbps-install -Syu
 
     echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" | sudo tee /etc/xbps.d/noid-xbps-repo.conf
+    echo 'repository=https://voidrepo.linuxnauta.com' | sudo tee /etc/xbps.d/linuxnauta.conf
 
     sudo xbps-install -Syu void-repo-nonfree void-repo-multilib
     sudo xbps-install -Syu void-repo-multilib-nonfree
@@ -236,11 +237,16 @@ install_packages_xbps() {
         libglvnd-32bit
         mesa-32bit
         mesa-dri-32bit
+        nano
         vulkan-loader-32bit
         smplayer
         zen-browser
         nodejs
         the_silver_searcher
+        falkon
+        telegram-desktop
+        linux-cachyos
+        linux-cachyos-headers
     )
 
     # AMD:
@@ -253,6 +259,13 @@ install_packages_xbps() {
 
     # install Zeditor:
     curl -f https://zed.dev/install.sh | sh
+
+    sudo xbps-install -S sddm
+    sudo sv down lightdm
+    sudo rm /var/service/lightdm
+
+    sudo ln -s /etc/sv/sddm /var/service/
+    sudo sv up sddm
 
     # install ente-auth
     wget https://github.com/ente/ente/releases/download/auth-v4.4.25/ente-auth-v4.4.25-x86_64.AppImage &&
@@ -269,6 +282,15 @@ Icon=/opt/bin/ente-auth-v4.4.25-x86_64.AppImage
 Terminal=false
 Categories=Utility;Security;
 EOF
+
+    # install avahi
+    sudo xbps-install -y avahi
+    sudo ln -s /etc/sv/avahi-daemon /var/service/
+
+    # install cups
+    sudo xbps-install -S
+    sudo xbps-install -y cups cups-filters print-manager system-config-printer
+    sudo ln -s /etc/sv/cupsd /var/service/
 
 }
 
@@ -368,9 +390,9 @@ else
     # Install Python dependencies via pipenv from the base directory
     pipenv install
     # Application that setups up Nym VPN and it's OpenRC Daemon
-    pipenv run python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
+    # pipenv run python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
     # Application that setups up scanner sharing
-    pipenv run python sane_sharing.py
+    # pipenv run python sane_sharing.py
 
     # Application that setups up SSH and it's OpenRC Daemon
     pipenv run python setup_remote_ssh.py
@@ -403,3 +425,5 @@ fi
 yes | /bin/cp -rf ../support/* ~/
 
 echo "Restore script completed."
+
+echo "You should reboot now."

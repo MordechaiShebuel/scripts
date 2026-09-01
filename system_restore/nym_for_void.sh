@@ -1,4 +1,5 @@
 #!/bin/sh
+# Compiles and installs, but there are some backend database issues I wasn't able to resolve.
 set -eu
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -183,7 +184,7 @@ echo "  sv tail nym-vpnd"
 # Name=Nym VPN App
 # Comment=Privacy-focused VPN client
 # Exec=/usr/local/bin/nym-vpn-app
-# Icon=nym-vpn-app
+# Icon=/usr/local/bin/nym-vpn-app
 # Terminal=false
 # Categories=Utility;Network;
 # EOF

@@ -3,7 +3,7 @@
 # NymVPN installer combo
 #
 # Install the following components:
-# - daemon (nym-vpnd) as a runit service
+# - daemon (nym-vpnd) as a systemd service
 # - client app (nym-vpn-app)
 #
 # On deb based systems, the script installs the deb packages.
@@ -16,9 +16,6 @@
 #
 # To uninstall, run
 # `./install uninstall`
-# Mordechai mods:
-# Added other distros
-# Changed service to RUNIT, this particular script will not work with other init systems
 
 set -E
 set -o pipefail
@@ -92,8 +89,7 @@ vpnd_deb_ver=$vpnd_version
 vpnd_deb_ver_url=$vpnd_version
 vpnd_raw_url="https://github.com/nymtech/nym-vpn-client/releases/download/$vpnd_tag/nym-vpn-core-v${vpnd_version}_linux_${arch}.tar.gz"
 vpnd_deb_url="https://github.com/nymtech/nym-vpn-client/releases/download/$vpnd_tag/nym-vpnd_${vpnd_deb_ver_url}_${deb_arch}.deb"
-# runit service file will be created inline during installation
-unit_url=""
+unit_url="https://raw.githubusercontent.com/nymtech/nym-vpn-client/fb526935/nym-vpn-core/crates/nym-vpnd/.pkg/aur/nym-vpnd.service"
 ##################################################################
 
 # function called when an error occurs, will print the exit
@@ -183,14 +179,13 @@ target_appimage="NymVPN.AppImage"
 core_archive="nym-vpn-core-v${vpnd_version}_linux_${arch}.tar.gz"
 vpnd_bin="nym-vpnd"
 socks5_proxy_bin="nym-socks5-proxy"
-vpnd_service="nym-vpnd"
+vpnd_service="nym-vpnd.service"
 vpnd_deb="nym-vpnd_${vpnd_deb_ver}_${deb_arch}.deb"
-units_dir="/etc/runit/service"
+units_dir="/usr/lib/systemd/system"
 desktop_exec='env RUST_LOG=info,nym_vpn_app=debug NymVPN.AppImage -l %U'
-#os=$(uname -a)
-. /etc/os-release
+os=$(uname -a)
 # → to lowercase
-os="$ID"
+os="${os,,}"
 install_type=raw
 
 # for deb based systems install from deb packages
@@ -271,7 +266,7 @@ vpnd_dev_setup() {
   if [ "$CORE_BUILD" = 0 ]; then
     core_build_base=https://builds.cdn.nymte.ch/nym-vpn-client/nym-vpn-core/develop
     manifest=$(curl -s "$core_build_base/latest.json")
-    latest=$(printf '%s' "$manifest" | grep -oP '"timestamp"\s*:\s*\K[0-9]+')
+    latest=$(printf '%s' "$manifest" | grep -oP '"timestamp"\s*:\s*"\K[0-9]+')
     if [ -z "$latest" ]; then
       echo "failed to resolve latest dev build from $core_build_base/latest.json" >&2
       exit 1
@@ -360,11 +355,10 @@ download_app_appimage() {
   log "  ${B_GRN}Downloading$RS $appimage"
   curl -fL -# "$appimage_url" -o "$appimage"
   log "  ${B_GRN}Downloading$RS $appimage.sha256sum"
-  # disabled this, Nym isn't providing this - going to open bug ticket
-  # curl -fL -# "$appimage_url.sha256sum" -o "$appimage.sha256sum"
-  # log "  ${B_GRN}Checking$RS sha256sum"
-  # sha256sum --check --status "$appimage.sha256sum"
-  # log "   ${BI_MGT}ok$RS"
+  curl -fL -# "$appimage_url.sha256sum" -o "$appimage.sha256sum"
+  log "  ${B_GRN}Checking$RS sha256sum"
+  sha256sum --check --status "$appimage.sha256sum"
+  log "   ${BI_MGT}ok$RS"
   log "  ${B_GRN}Downloading$RS app desktop entry"
   curl -fL -# "$desktop_url" -o app.desktop
   log "  ${B_GRN}Downloading$RS app icon"
@@ -390,15 +384,13 @@ download_vpnd_raw() {
   _pushd "$temp_dir"
   log "  ${B_GRN}Downloading$RS nym-vpnd archive"
   curl -fL -# "$vpnd_raw_url" -o "$core_archive"
-  # SHA256 files missing from source
-  # log "  ${B_GRN}Downloading$RS archive sha256sum"
-  # curl -fL -# "$vpnd_raw_url.sha256sum" -o "$core_archive.sha256sum"
-  # log "  ${B_GRN}Checking$RS sha256sum"
-  # sha256sum --check --status "$core_archive.sha256sum"
-  # log "   ${BI_MGT}ok$RS"
-  # UNIT files missing from source for RUNIT, created in-situ
-  # log "  ${B_GRN}Downloading$RS unit file"
-  # curl -fL -# "$unit_url" -o nym-vpnd.service
+  log "  ${B_GRN}Downloading$RS archive sha256sum"
+  curl -fL -# "$vpnd_raw_url.sha256sum" -o "$core_archive.sha256sum"
+  log "  ${B_GRN}Checking$RS sha256sum"
+  sha256sum --check --status "$core_archive.sha256sum"
+  log "   ${BI_MGT}ok$RS"
+  log "  ${B_GRN}Downloading$RS unit file"
+  curl -fL -# "$unit_url" -o nym-vpnd.service
   log "  ${B_GRN}Unarchiving$RS nym-vpnd"
   tar -xzf "$core_archive"
   mv "${core_archive%.tar.gz}/$vpnd_bin" $vpnd_bin
@@ -430,13 +422,12 @@ dir_in_path() {
 # check if a unit exists
 # return 0 if found, 1 if not found
 check_unit() {
-  if sv status nym-vpnd &>/dev/null; then
+  if systemctl status nym-vpnd &>/dev/null; then
     return 0
   else
     status=$?
-    # runit returns 1 for service not found, 0 for running, etc.
-    if [ $status -eq 1 ]; then
-      # exit code 1 means the service is not found
+    if [ $status -eq 4 ]; then
+      # exit code 4 means the service is not found
       return 1
     fi
   fi
@@ -489,22 +480,13 @@ start_service() {
   user_prompt choice "$prompt"
 
   if [ "$choice" = "y" ] || [ "$choice" = "Y" ]; then
-    # Install service definition
-    sudo mkdir -p /etc/sv/nym-vpnd
-    sudo tee /etc/sv/nym-vpnd/run <<'EOF' >/dev/null
-#!/bin/sh
-exec /usr/bin/nym-vpnd
-EOF
-    sudo chmod +x /etc/sv/nym-vpnd/run
-
-    # Enable (symlink into the active runsvdir)
-    sudo ln -sfn /etc/sv/nym-vpnd /var/service/nym-vpnd
-
+    sudo systemctl enable $vpnd_service &>/dev/null
+    sudo systemctl start $vpnd_service &>/dev/null
     log "    ${B_GRN}✓$RS service enabled and started"
   else
     log "   Run the following commands to enable and start the VPN service:
-    ${I_YLW}sudo ln -s /etc/sv/nym-vpnd /var/service/$RS
-    ${I_YLW}sudo sv start nym-vpnd$RS"
+    ${I_YLW}sudo systemctl enable $vpnd_service$RS
+    ${I_YLW}sudo systemctl start $vpnd_service$RS"
   fi
 }
 
@@ -518,13 +500,13 @@ check_system_deps() {
   fi
 
   case "$os" in
-  *ubuntu* | *debian* | *devuan* | *peppermint*)
+  *ubuntu* | *debian*)
     # check for ubuntu version > 22.04 libfuse3 (needed for AppImage)
     fuse_output=$(dpkg --get-selections | grep fuse)
     if [[ "$fuse_output" != *"libfuse3-3"* ]]; then
       choice=""
       log "  ${B_GRN}Install$RS required package libfuse3?"
-      prompt="    ${BI_YLW}Y${RS}es \(recommended\) ${BI_YLW}N${RS}o "
+      prompt="    ${BI_YLW}Y${RS}es (recommended) ${BI_YLW}N${RS}o "
       user_prompt choice "$prompt"
 
       if [ "$choice" = "y" ] || [ "$choice" = "Y" ]; then
@@ -536,7 +518,7 @@ check_system_deps() {
       fi
     fi
     ;;
-  *arch* | *manjaro* | *endeavour* | *garuda* | *artix)
+  *arch* | *manjaro* | *endeavour* | *garuda*)
     # check if fuse3 is installed (needed for AppImage)
     if ! pacman -Qk fuse3 &>/dev/null; then
       choice=""
@@ -553,24 +535,6 @@ check_system_deps() {
     fi
     ;;
   *)
-    return 0
-    ;;
-    *void*)
-    # check if fuse3 is installed (needed for AppImage)
-    if ! sudo xbps-pkgdb fuse3 &>/dev/null; then
-        choice=""
-        log "  ${B_GRN}Install$RS required package fuse3?"
-        user_prompt choice "    ${BI_YLW}Y${RS}es ${BI_YLW}N${RS}o "
-
-        if [ "$choice" = "y" ] || [ "$choice" = "Y" ]; then
-        sudo xbps-install -S fuse3
-        log "   ${B_GRN}Installed$RS fuse3"
-        else
-        log "   ${B_YLW}⚠$RS fuse3 is required for the app to work, install it with: ${I_YLW}sudo xbps-install -S fuse3$RS"
-        fi
-    fi
-    ;;
-    *)
     return 0
     ;;
   esac
@@ -606,11 +570,8 @@ install_vpnd_raw() {
   sudo install -o "$(id -u)" -g "$(id -g)" -Dm755 "$temp_dir/$vpnd_bin" "$install_dir/$vpnd_bin"
   sudo install -o "$(id -u)" -g "$(id -g)" -Dm755 "$temp_dir/$socks5_proxy_bin" "$install_dir/$socks5_proxy_bin"
 
-  log "  ${B_GRN}Installing$RS runit service"
-  sudo install -Dm644 "$temp_dir/$vpnd_service" "/etc/runit/service/nym-vpnd"
-  # Create the runit service directory and symlink
-  sudo mkdir -p /usr/lib/runit/sv
-  sudo ln -sf /etc/runit/service/nym-vpnd /usr/lib/runit/sv/nym-vpnd
+  log "  ${B_GRN}Installing$RS systemd service"
+  sudo install -Dm644 "$temp_dir/$vpnd_service" "$units_dir/$vpnd_service"
 
   log "  ${B_GRN}Installed$RS files"
   log "   ${I_YLW}$(tilded "$install_dir/$vpnd_bin")$RS"
@@ -675,12 +636,12 @@ remove_file_set() {
 stop_vpnd_service() {
   log "  ${B_GRN}Stopping$RS nym-vpnd service"
   log "  ${B_YLW}sudo$RS needed to stop and disable the service"
-  if sudo sv stop /etc/runit/service/nym-vpnd &>/dev/null; then
+  if sudo systemctl stop nym-vpnd.service &>/dev/null; then
     log "   ${B_GRN}✓$RS service stopped"
   else
     log "   ${B_GRY}✓$RS ${ITL}service is not active$RS"
   fi
-  if sudo sv disable /etc/runit/service/nym-vpnd &>/dev/null; then
+  if sudo systemctl disable nym-vpnd.service &>/dev/null; then
     log "   ${B_GRN}✓$RS service disabled$RS"
   else
     log "   ${B_GRY}✓$RS ${ITL}service is not enabled$RS"
@@ -689,7 +650,8 @@ stop_vpnd_service() {
 
 post_install() {
   if ! dir_in_path "$install_dir"; then
-    log "${B_YLW}⚠$RS $install_dir is not in the ${BLD}PATH$RS, please add it using your shell configuration"
+    log "${B_YLW}⚠$RS $install_dir is not in the ${BLD}PATH$RS
+  please add it using your shell configuration"
   fi
 }
 
@@ -720,7 +682,7 @@ _install() {
   else
     # can't install app package only
     if [ "$_app" = 0 ] && [ "$_vpnd" = 1 ]; then
-      log "${B_YLW}⚠$RS can\'t install app package only (vpnd is required)"
+      log "${B_YLW}⚠$RS can't install app package only (vpnd is required)"
       exit 1
     fi
     [[ "$_vpnd" == 0 ]] && download_vpnd_deb
@@ -743,11 +705,8 @@ _uninstall_raw() {
       "$xdg_bin_home/nym-vpnd"
       "/usr/bin/nym-vpnd"
       "/usr/bin/nym-socks5-proxy"
-      "/etc/runit/service/nym-vpnd"
+      "/usr/lib/systemd/system/nym-vpnd.service"
       "/etc/nym/nym-vpnd.toml"
-      "$HOME/.cache/nym-vpn-appimage"
-      "$HOME/.local/share/applications/nym-vpn.desktop"
-      "$HOME/bin/nym-vpn"
     )
   fi
   if [ "$_app" == 0 ]; then
@@ -839,44 +798,3 @@ fi
 log "$ITL${BI_GRY}nym$RS${BI_GRN}VPN$RS ${BI}installer$RS\n"
 [[ "$BUILD_CHANNEL" = "dev" ]] && dev_setup
 _install
-
-# Need to fix AppImage bug:
-LOCALBIN="$HOME/bin" # Need to make sure you have path to this
-mkdir -p "$LOCALBIN"
-
-tee "$LOCALBIN/nym-vpn" <<EOF
-#!/bin/bash
-EXTRACT_DIR="$HOME/.cache/nym-vpn-appimage"
-
-if [ ! -x "$EXTRACT_DIR/AppRun" ]; then
-  mkdir -p "$EXTRACT_DIR"
-  (cd "$EXTRACT_DIR" && /usr/bin/NymVPN.AppImage --appimage-extract)
-  rm -f "$EXTRACT_DIR/squashfs-root/usr/lib/libwayland-"*.so*
-  rm -f "$EXTRACT_DIR/squashfs-root/usr/lib/libEGL"*.so*
-  rm -f "$EXTRACT_DIR/squashfs-root/usr/lib/libGL"*.so*
-fi
-
-exec "$EXTRACT_DIR/squashfs-root/AppRun" "$@"
-EOF
-chmod +x "$LOCALBIN/nym-vpn"
-
-# create desktop entry
-tee "$HOME/.local/share/applications/nym-vpn.desktop" <<EOF
-[Desktop Entry]
-Categories=Network;
-Comment=Decentralized, mixnet, and zero-knowledge VPN
-Exec=env LOG_FILE=1 RUST_LOG=info,nym_vpn_app=debug "$LOCALBIN/nym-vpn" %U
-Icon=nym-vpn
-Name=NymVPN
-NoDisplay=false
-Path=
-PrefersNonDefaultGPU=false
-StartupNotify=true
-StartupWMClass=nym-vpn-app
-Terminal=false
-TerminalOptions=
-Type=Application
-Version=1.0
-X-KDE-SubstituteUID=false
-X-KDE-Username=
-EOF
