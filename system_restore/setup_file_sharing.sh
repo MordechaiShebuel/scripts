@@ -8,7 +8,7 @@ fi
 
 SERVER="10.0.0.147"
 REMOTE_PATH="/home/media/shared"
-USERNAME="${1:?Usage: $0 username}"
+USERNAME="${1:?Usage: $0 nezmahb}"
 
 # Look up the user and home directory
 USER_INFO="$(getent passwd "$USERNAME" || true)"
@@ -26,7 +26,7 @@ if [[ -z "$USER_HOME" || ! -d "$USER_HOME" ]]; then
 fi
 
 MOUNT_POINT="$USER_HOME/shared/local-server"
-FSTAB_LINE="$SERVER:$REMOTE_PATH $MOUNT_POINT nfs defaults,_netdev 0 0"
+FSTAB_LINE="$SERVER:/ $MOUNT_POINT nfs defaults,_netdev 0 0"
 
 # Create the mount-point directory if necessary
 install -d \

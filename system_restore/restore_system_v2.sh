@@ -227,6 +227,11 @@ install_packages_xbps() {
         libdvdnav
         libdvdread
         kde-plasma
+        isoimagewriter
+        openbsd-netcat
+        nfs-utils
+        cups
+        cups-filters
         smplayer
         steam
         libGL-32bit
@@ -355,6 +360,14 @@ case "$ID" in
         exit 1
         ;;
 esac
+
+# Setup printer:
+sudo lpadmin -p "HP_LaserJet_Pro_M148f-M149f" \
+  -v "ipp://server.lan:631/printers/HP_LaserJet_Pro_M148f-M149f" \
+  -m everywhere -E
+
+# Setup file-sharing
+./setup_file_sharing.sh
 
 if [[ -d ~/.oh-my-zsh ]]; then
     # do nothing
