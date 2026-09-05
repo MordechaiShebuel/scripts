@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
 # Version 2 of restore script, goal is to make it easier to add platforms.
+# Update with command line options
+# mode = client/server
+# gpu = amd/nvidia/intel
+
+mode=$1
+gpu=$2
+
+if [[ $mode != "client" && $mode != "server" ]]; then
+    echo "Invalid mode: $mode" >&2
+    echo "Usage: $0 <mode> <gpu>" >&2
+    exit 1
+fi
+
+if [[ $gpu != "amd" && $gpu != "nvidia" && $gpu != "intel" ]]; then
+    echo "Invalid GPU: $gpu" >&2
+    echo "Usage: $0 <mode> <gpu>" >&2
+    exit 1
+fi
 
 set -u
 
@@ -138,6 +156,9 @@ install_packages_apt() {
         vlc-plugins*
         libdvd-pkg
         obs-studio
+        hplip
+        sane-utils
+        sane-daemon
     )
 
     # Enable 32-bit packages for Steam and other 32-bit software.
@@ -183,6 +204,8 @@ install_packages_pacman() {
         zeditor
         python-pipenv
         telegram-desktop
+        sane-utils
+        libsane1
     )
     # Enable lib32 and multilib
     output1=$(sudo ./enable_repo.sh lib32)
@@ -252,13 +275,24 @@ install_packages_xbps() {
         telegram-desktop
         linux-cachyos
         linux-cachyos-headers
+        sane
+        skanpage
+        cronie
+        lmsensors
+        lact
     )
 
-    # AMD:
-    sudo xbps-install -S mesa-vulkan-radeon mesa-vulkan-radeon-32bit
-
-    # INTEL: (LAPTOP)
-    # sudo xbps-install -S mesa-vulkan-intel mesa-vulkan-intel-32bit
+    case $gpu in
+    amd)
+        sudo xbps-install -S mesa-vulkan-radeon mesa-vulkan-radeon-32bit
+        ;;
+    nvidia)
+        sudo xbps-install -S mesa-vulkan-nvidia mesa-vulkan-nvidia-32bit
+        ;;
+    intel)
+        sudo xbps-install -S mesa-vulkan-intel mesa-vulkan-intel-32bit
+        ;;
+    esac
 
     sudo xbps-install -y "${pkg_list[@]}"
 
@@ -271,6 +305,10 @@ install_packages_xbps() {
 
     sudo ln -s /etc/sv/sddm /var/service/
     sudo sv up sddm
+
+    #Cron setup
+    sudo ln -s /etc/sv/cronie /var/service/
+
 
     # install ente-auth
     wget https://github.com/ente/ente/releases/download/auth-v4.4.25/ente-auth-v4.4.25-x86_64.AppImage &&
@@ -305,7 +343,8 @@ install_packages_dnf() {
         lib64dvdnav4
         lib64dvdread
         lib64dvdcss
-    )
+    )echo server.lan | sudo tee /etc/sane.d/net.conf
+
 
     sudo dnf install -y "${pkg_list[@]}"
 }
@@ -361,13 +400,33 @@ case "$ID" in
         ;;
 esac
 
-# Setup printer:
-sudo lpadmin -p "HP_LaserJet_Pro_M148f-M149f" \
-  -v "ipp://server.lan:631/printers/HP_LaserJet_Pro_M148f-M149f" \
-  -m everywhere -E
+case $mode in
+    server)
 
-# Setup file-sharing
-./setup_file_sharing.sh
+        # Setup print server:
+        ./print_server_setup.sh
+
+        # Setup file server:
+        ./setup_server_file_sharing.sh
+
+        # Setup SANE server:
+        echo 10.0.0.0/24 | sudo tee /etc/sane.d/saned.conf
+        ;;
+    client)
+        # Setup client printer:
+        sudo lpadmin -p "HP_LaserJet_Pro_M148f-M149f" \
+          -v "ipp://server.lan:631/printers/HP_LaserJet_Pro_M148f-M149f" \
+          -m everywhere -E
+
+        # Setup client scanner access through SANE:
+        echo server.lan | sudo tee /etc/sane.d/net.conf
+
+        # Setup file-sharing client access:
+        ./setup_file_sharing.sh
+        ;;
+esac
+
+
 
 if [[ -d ~/.oh-my-zsh ]]; then
     # do nothing
