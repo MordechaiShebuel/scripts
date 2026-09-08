@@ -11,19 +11,19 @@ option=$2
 
 # Select the package manager based on /etc/os-release.
 case "$ID" in
-    debian|peppermint)
-        echo "Detected Debian-based system: $ID"
+    debian|peppermint|devuan)
+        echo Detected Debian-based system: "$ID"
         sudo apt-get update
         sudo apt-cache search "$pkg"
         ;;
 
-    void)
+    void|vostok)
         echo "Detected Void Linux"
 
-        sudo xbps-install -Rs "$pkg"
+        sudo xbps-query -Rs "$pkg"
         ;;
 
-    artix)
+    artix|arch|manjaro)
         echo "Detected Artix Linux"
 
         sudo pamac search "$pkg"

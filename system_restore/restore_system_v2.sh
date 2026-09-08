@@ -4,6 +4,8 @@
 # mode = client/server
 # gpu = amd/nvidia/intel
 
+set -Eeuo pipefail
+
 mode=$1
 gpu=$2
 
@@ -43,6 +45,7 @@ pkg_list=(
     smbclient
     bibletime
     zsh-syntax-highlighting
+    kvirc
 )
 
 browser_installed() {
@@ -204,42 +207,7 @@ install_packages_pacman() {
         zeditor
         python-pipenv
         telegram-desktop
-        sane-utils
-        libsane1
-    )
-    # Enable lib32 and multilib
-    output1=$(sudo ./enable_repo.sh lib32)
-    output2=$(sudo ./enable_repo.sh extra)
-    output3=$(sudo ./enable_repo.sh multilib)
-
-    # Check if all three returned the expected message
-    if [[ "$output1" == *"Appended [lib32] block."* ]] || \
-       [[ "$output2" == *"Appended [extra] block."* ]] || \
-       [[ "$output3" == *"Appended [multilib] block."* ]]; then
-        sudo pacman-key --init
-        sudo pacman-key --populate archlinux
-        sudo pacman -Sy
-    fi
-
-    # update
-    sudo pacman -Syu
-
-    # --needed prevents reinstalling packages that are already installed.
-    sudo pacman -Syu --needed "${pkg_list[@]}"
-}
-
-install_packages_xbps() {
-
-    sudo xbps-install -Syu
-
-    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" | sudo tee /etc/xbps.d/noid-xbps-repo.conf
-    echo 'repository=https://voidrepo.linuxnauta.com' | sudo tee /etc/xbps.d/linuxnauta.conf
-
-    sudo xbps-install -Syu void-repo-nonfree void-repo-multilib
-    sudo xbps-install -Syu void-repo-multilib-nonfree
-    sudo xbps-install -Su
-
-    pkg_list+=(
+        sane-utilspkg_list
         bitwarden-desktop
         brave-origin
         obs
@@ -250,7 +218,6 @@ install_packages_xbps() {
         libdvdnav
         libdvdread
         kde-plasma
-        isoimagewriter
         openbsd-netcat
         nfs-utils
         cups
@@ -273,50 +240,167 @@ install_packages_xbps() {
         the_silver_searcher
         falkon
         telegram-desktop
-        linux-cachyos
-        linux-cachyos-headers
         sane
         skanpage
         cronie
-        lmsensors
         lact
     )
 
+    # Enable lib32 and multilib
+    output1=$(sudo ./enable_repo.sh lib32)
+    output2=$(sudo ./enable_repo.sh extra)
+    output3=$(sudo ./enable_repo.sh multilib)
+
+    # Check if all three returned the expected message
+    if [[ "$output1" == *"Appended [lib32] block."* ]] || \
+       [[ "$output2" == *"Appended [extra] block."* ]] || \
+       [[ "$output3" == *"Appended [multilib] block."* ]]; then
+        sudo pacman-key --init
+        sudo pacman-key --populate archlinux
+        sudo pacman -Sy
+    fi
+
+    # update
+    sudo pacman -Syu
+
+    # --needed prevents reinstalling packages that are already installed.
+    sudo pacman -Syu --needed "${pkg_list[@]}"
+}
+
+install_packages_xbps() { # There is a serious bug in this code, if one of the packages is missing it doesn't bubble up and just rams through the other changes.
+
+    sudo xbps-install -Syu
+
+    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" | sudo tee /etc/xbps.d/noid-xbps-repo.conf
+    echo 'repository=https://voidrepo.linuxnauta.com' | sudo tee /etc/xbps.d/linuxnauta.conf
+    echo "repository=https://repo.voiders.dev" | sudo tee /etc/xbps.d/voiders-dev-repo.conf
+    echo "repository=https://sourceforge.net/projects/neko-void/files/repo" | sudo tee /etc/xbps.d/neko-void.conf
+
+    sudo xbps-install -Syu void-repo-nonfree void-repo-multilib
+    sudo xbps-install -Syu void-repo-multilib-nonfree
+    sudo xbps-install -Su
+
+    pkg_list+=(
+        python3-pipenv
+        bitwarden-desktop
+        brave-origin
+        cronie
+        cups
+        cups-filters
+        dvd+rw-tools
+        falkon
+        glibc-32bit
+        libdrm-32bit
+        libdvdcss
+        libdvdnav
+        libdvdread
+        libGL-32bit
+        libglvnd-32bit
+        libpulseaudio-32bit
+        libtxc_dxtn-32bit
+        linux-cachyos
+        linux-cachyos-headers
+        mesa-32bit
+        mesa-dri-32bit
+        nano
+        Neko-Kernel-Manager
+        nfs-utils
+        nodejs
+        obs
+        onlyoffice
+        openbsd-netcat
+        python
+        sane
+        skanpage
+        steam
+        telegram-desktop
+        the_silver_searcher
+        vulkan-loader-32bit
+        zen-browser
+    )
+
+
     case $gpu in
     amd)
-        sudo xbps-install -S mesa-vulkan-radeon mesa-vulkan-radeon-32bit
+        pkg_list+=(mesa-vulkan-radeon mesa-vulkan-radeon-32bit LACT)
         ;;
     nvidia)
-        sudo xbps-install -S mesa-vulkan-nvidia mesa-vulkan-nvidia-32bit
+        pkg_list+=(mesa-vulkan-nvidia mesa-vulkan-nvidia-32bit)
         ;;
     intel)
-        sudo xbps-install -S mesa-vulkan-intel mesa-vulkan-intel-32bit
+        pkg_list+=(mesa-vulkan-intel mesa-vulkan-intel-32bit)
         ;;
     esac
 
-    sudo xbps-install -y "${pkg_list[@]}"
+    failed=()
+
+    echo "Attempting to install packages for Void."
+    for pkg in "${pkg_list[@]}"; do
+        echo "Installing: $pkg"
+
+        if ! sudo xbps-install -y "$pkg"; then
+            failed+=("$pkg")
+        fi
+    done
+
+    if ((${#failed[@]})); then
+        echo "The following packages failed to install:" >&2
+        printf '  %s\n' "${failed[@]}" >&2
+        exit 1
+    fi
+
 
     # install Zeditor:
-    curl -f https://zed.dev/install.sh | sh
+    if ! command -v zed >/dev/null 2>&1; then
+        echo "Installing Zed - Editor"
+        curl -f https://zed.dev/install.sh | sh
+    else
+        echo "Zed already installed"
+    fi
 
-    sudo xbps-install -S sddm
-    sudo sv down lightdm
-    sudo rm /var/service/lightdm
+    if xbps-query -p pkgver sddm >/dev/null 2>&1 &&
+    [ -L /var/service/sddm ] &&
+    sv status sddm >/dev/null 2>&1; then
+        echo "SDDM is already installed and running."
+    else
+        sudo xbps-install -S sddm
 
-    sudo ln -s /etc/sv/sddm /var/service/
-    sudo sv up sddm
+        if xbps-query -p pkgver lightdm >/dev/null 2>&1 &&
+        [ -L /var/service/lightdm ]; then
+            echo "Stopping and disabling LightDM..."
+            sudo sv down lightdm
+            sudo rm -f /var/service/lightdm
+        fi
 
-    #Cron setup
-    sudo ln -s /etc/sv/cronie /var/service/
+        if [ ! -e /var/service/sddm ]; then
+            sudo ln -s /etc/sv/sddm /var/service/sddm
+        fi
 
+        sudo sv up sddm
+    fi
 
-    # install ente-auth
-    wget https://github.com/ente/ente/releases/download/auth-v4.4.25/ente-auth-v4.4.25-x86_64.AppImage &&
-        sudo mkdir -p /opt/bin &&
-        sudo cp ente-auth-* /opt/bin &&
-        sudo chmod +x /opt/bin/ente-auth-v4.4.25-x86_64.AppImage &&
-        sudo ln -s /opt/bin/ente-auth-v4.4.25-x86_64.AppImage /usr/bin/ente-auth &&
-        tee ~/.local/share/applications/ente-auth.desktop <<EOF
+    # Cron setup
+    if [ ! -L /var/service/cronie ]; then
+        sudo ln -s /etc/sv/cronie /var/service/cronie
+    fi
+
+    # Wait for runit to notice the new service
+    for _ in 1 2 3 4 5; do
+        if sudo sv status cronie >/dev/null 2>&1; then
+            echo "Cronie running properly!"
+            break
+        fi
+        sleep 1
+    done
+
+    if ! command -v ente-auth >/dev/null 2>&1; then
+        # install ente-auth
+        wget https://github.com/ente/ente/releases/download/auth-v4.4.25/ente-auth-v4.4.25-x86_64.AppImage &&
+            sudo mkdir -p /opt/bin &&
+            sudo cp ente-auth-* /opt/bin &&
+            sudo chmod +x /opt/bin/ente-auth-v4.4.25-x86_64.AppImage &&
+            sudo ln -s /opt/bin/ente-auth-v4.4.25-x86_64.AppImage /usr/bin/ente-auth &&
+            tee ~/.local/share/applications/ente-auth.desktop <<EOF
 [Desktop Entry]
 Name=Ente Auth
 Exec=ente-auth
@@ -325,17 +409,56 @@ Icon=/opt/bin/ente-auth-v4.4.25-x86_64.AppImage
 Terminal=false
 Categories=Utility;Security;
 EOF
+        echo "Ente-Auth installedyes | /bin/cp -rf ../support/* ~/"
+    else
+        echo "Ente-Auth already installed."
+    fi
 
-    # install avahi
-    sudo xbps-install -y avahi
-    sudo ln -s /etc/sv/avahi-daemon /var/service/
+    # Install and enable Avahi
+    if ! xbps-query -p pkgver avahi >/dev/null 2>&1; then
+        sudo xbps-install -y avahi
+    else
+        echo "avahi is already installed."
+    fi
 
-    # install cups
-    sudo xbps-install -S
-    sudo xbps-install -y cups cups-filters print-manager system-config-printer
-    sudo ln -s /etc/sv/cupsd /var/service/
+    if [ ! -e /var/service/avahi-daemon ]; then
+        sudo ln -s /etc/sv/avahi-daemon /var/service/avahi-daemon
+    else
+        echo "avahi-daemon is already enabled."
+    fi
+
+    if sv status avahi-daemon >/dev/null 2>&1; then
+        echo "avahi-daemon is already running."
+    else
+        sudo sv up avahi-daemon
+    fi
+
+    # Install and enable CUPS
+    if ! xbps-query -p pkgver cups >/dev/null 2>&1; then
+        sudo xbps-install -S
+        sudo xbps-install -y cups cups-filters print-manager system-config-printer
+    else
+        echo "CUPS is already installed."
+    fi
+
+    if [ ! -e /var/service/cupsd ]; then
+        sudo ln -s /etc/sv/cupsd /var/service/cupsd
+    fi
+
+    if sv status cupsd >/dev/null 2>&1; then
+        echo "cupsd is already running."
+    else
+        sudo sv up cupsd
+    fi
+
+    echo "Fix Cachyos kernel bug so it shows up at boot."
+    #kernel fix
+    sudo cp /usr/lib/modules/6.18.5-1-cachyos/vmlinuz /boot/vmlinuz-6.18.5-1-cachyos
+    sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 }
+
+
 
 install_packages_dnf() {
     pkg_list+=(
@@ -366,7 +489,7 @@ case "$ID" in
         install_brave_debian
         ;;
 
-    void)
+    void|vostok)
         echo "Detected Void Linux"
 
         install_packages_xbps
@@ -404,10 +527,10 @@ case $mode in
     server)
 
         # Setup print server:
-        ./print_server_setup.sh
+        sudo ./print_server_setup.sh
 
         # Setup file server:
-        ./setup_server_file_sharing.sh
+        sudo ./setup_server_file_sharing.sh
 
         # Setup SANE server:
         echo 10.0.0.0/24 | sudo tee /etc/sane.d/saned.conf
@@ -422,11 +545,9 @@ case $mode in
         echo server.lan | sudo tee /etc/sane.d/net.conf
 
         # Setup file-sharing client access:
-        ./setup_file_sharing.sh
+        sudo ./setup_file_sharing.sh $USER
         ;;
 esac
-
-
 
 if [[ -d ~/.oh-my-zsh ]]; then
     # do nothing
@@ -443,7 +564,7 @@ fi
 
 sudo chsh -s "$(command -v zsh)" "$USER"
 
-if getent passwd "$USER" | grep -qE ':/bin/zsh$'; then
+if getent passwd "$USER" | grep -qE ':/bin/zsh$'; then # Even though this works, it displays it isn't set to ZSH
     echo "Your login shell is set to zsh."
 else
     echo "Your login shell is not set to zsh."
@@ -454,6 +575,9 @@ fi
 
 # Application that setups up
 # Artix path (Debian requires adding repo for Nym)
+#
+# Setup SSH key from client to this host:
+# scp .ssh/id_ed25519.pub USER@client.lan:/home/USER/
 
 # These are failing on the debian path, pipenv command not found
 if ! command -v "pipenv" >/dev/null 2>&1; then
@@ -494,6 +618,7 @@ else
 fi
 
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
+echo "Copying setting files to root of this User."
 yes | /bin/cp -rf ../support/* ~/
 
 echo "Restore script completed."

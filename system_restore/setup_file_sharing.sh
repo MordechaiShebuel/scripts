@@ -81,6 +81,7 @@ fi
 EOF
 
     chmod 755 "$SCRIPT"
+    echo "Created: $SCRIPT"
 else
     echo "$SCRIPT already exists; leaving it unchanged"
 fi
@@ -89,7 +90,7 @@ fi
 if ! crontab -l 2>/dev/null | grep -Fqx "$CRON_LINE"; then
     (
         crontab -l 2>/dev/null
-        printf '%s\n' "$CRON_LINE"
+        sudo printf '%s\n' "$CRON_LINE"
     ) | crontab -
 
     echo "Cron job added"

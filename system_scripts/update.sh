@@ -1,4 +1,5 @@
-# Read distribution information.
+#!/usr/bin/env bash
+# Read dist ribution information.
 if [[ ! -r /etc/os-release ]]; then
     echo "Cannot determine the operating system." >&2
     exit 1
@@ -11,19 +12,19 @@ option=$2
 
 # Select the package manager based on /etc/os-release.
 case "$ID" in
-    debian|peppermint)
+    debian|peppermint|devuan)
         echo "Detected Debian-based system: $ID"
         sudo apt-get update
         sudo apt-get upgrade
         ;;
 
-    void)
+    void|vostok)
         echo "Detected Void Linux"
 
         sudo xbps-install -Su
         ;;
 
-    artix)
+    artix|arch|manjaro)
         echo "Detected Artix Linux"
 
         sudo pamac update
