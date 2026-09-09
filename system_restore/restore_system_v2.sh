@@ -6,26 +6,35 @@
 
 set -Eeuo pipefail
 
-mode=$1
-gpu=$2
+# Color output
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+YELLOW="\033[1;33m"
+BLUE="\033[0;34m"
+NC="\033[0m" # No Color
+
+mode="${1:-clients}"
+gpu="${2:-amd}"
+
+log() {
+  echo -e "$1"
+}
 
 if [[ $mode != "client" && $mode != "server" ]]; then
-    echo "Invalid mode: $mode" >&2
-    echo "Usage: $0 <mode> <gpu>" >&2
+    log "$YELLOW Invalid mode:$NC $RED $mode $NC" >&2
+    log "$YELLOW Usage:$NC $GREEN $0 <mode> <gpu> $NC" >&2
     exit 1
 fi
 
 if [[ $gpu != "amd" && $gpu != "nvidia" && $gpu != "intel" ]]; then
-    echo "Invalid GPU: $gpu" >&2
-    echo "Usage: $0 <mode> <gpu>" >&2
+    log "${YELLOW}Invalid GPU:${NC} ${RED}$gpu${NC}" >&2
+    log "${YELLOW}Usage:${NC} ${GREEN}$0 <mode> <gpu>${NC}" >&2
     exit 1
 fi
 
-set -u
-
 # Read distribution information.
 if [[ ! -r /etc/os-release ]]; then
-    echo "Cannot determine the operating system." >&2
+    log "${YELLOW}Cannot determine the operating system.{$NC}" >&2
     exit 1
 fi
 
@@ -107,20 +116,20 @@ install_brave_debian() {
     sudo apt-get install -y brave-browser
 
     if browser_installed brave brave-browser; then
-        echo "Brave Browser installed!"
+        echo "{$GREEN}Brave Browser installed!{$NC}"
     else
-        echo "Brave Browser installation failed." >&2
+        echo "${RED}Brave Browser installation failed.${NC}" >&2
         return 1
     fi
 }
 
 install_brave_pacman() {
     if browser_installed brave brave-browser; then
-        echo "Brave Browser is already installed."
+        echo "${YELLOW}Brave Browser is already installed.${NC}"
         return 0
     fi
 
-    echo "Checking for a Brave package in the configured repositories..."
+    echo "Checking for a ${GREEN}Brave${NC} package in the configured repositories..."
 
     local brave_package=""
 
@@ -175,8 +184,8 @@ install_packages_apt() {
     if ! grep -RqsE '^[[:space:]]*(deb|Components:).*contrib' \
         /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
 
-        echo "contrib was not detected automatically."
-        echo "Check your APT repositories if packages are unavailable."
+        log "$YELLOW contrib was not detected automatically. $NC"
+        echo "$YELLOW Check your APT repositories if packages are unavailable. $NC"
     fi
 
     for package in "${pkg_list[@]}"; do
@@ -336,7 +345,7 @@ install_packages_xbps() { # There is a serious bug in this code, if one of the p
 
     echo "Attempting to install packages for Void."
     for pkg in "${pkg_list[@]}"; do
-        echo "Installing: $pkg"
+        log "$BLUE Installing: $NC $GREEN $pkg $NC"
 
         if ! sudo xbps-install -y "$pkg"; then
             failed+=("$pkg")
@@ -344,30 +353,30 @@ install_packages_xbps() { # There is a serious bug in this code, if one of the p
     done
 
     if ((${#failed[@]})); then
-        echo "The following packages failed to install:" >&2
-        printf '  %s\n' "${failed[@]}" >&2
+        log "$RED The following packages failed to install: $RED" >&2
+        printf '%s %s %s\n ' "$RED" "${failed[@]}" "                $NC" >&2
         exit 1
     fi
 
 
     # install Zeditor:
     if ! command -v zed >/dev/null 2>&1; then
-        echo "Installing Zed - Editor"
+        log "$GREEN Installing Zed - Editor $NC"
         curl -f https://zed.dev/install.sh | sh
     else
-        echo "Zed already installed"
+        log "$YELLOW Zed already installed $YELLOW"
     fi
 
     if xbps-query -p pkgver sddm >/dev/null 2>&1 &&
     [ -L /var/service/sddm ] &&
     sv status sddm >/dev/null 2>&1; then
-        echo "SDDM is already installed and running."
+        log "$YELLOW SDDM is already installed and running. $NC"
     else
         sudo xbps-install -S sddm
 
         if xbps-query -p pkgver lightdm >/dev/null 2>&1 &&
         [ -L /var/service/lightdm ]; then
-            echo "Stopping and disabling LightDM..."
+            log "$YELLOW Stopping and disabling LightDM... $NC"
             sudo sv down lightdm
             sudo rm -f /var/service/lightdm
         fi
@@ -387,11 +396,16 @@ install_packages_xbps() { # There is a serious bug in this code, if one of the p
     # Wait for runit to notice the new service
     for _ in 1 2 3 4 5; do
         if sudo sv status cronie >/dev/null 2>&1; then
-            echo "Cronie running properly!"
+            log "$GREEN Cronie running properly! $NC"
             break
         fi
         sleep 1
     done
+
+    # This is used for file sharing as well:
+    sudo ln -s /etc/sv/rpcbind /var/service/rpcbind 2>/dev/null
+    sudo ln -s /etc/sv/statd /var/service/statd 2>/dev/null
+
 
     if ! command -v ente-auth >/dev/null 2>&1; then
         # install ente-auth
@@ -409,7 +423,7 @@ Icon=/opt/bin/ente-auth-v4.4.25-x86_64.AppImage
 Terminal=false
 Categories=Utility;Security;
 EOF
-        echo "Ente-Auth installedyes | /bin/cp -rf ../support/* ~/"
+        echo "Ente-Auth installed"
     else
         echo "Ente-Auth already installed."
     fi
@@ -454,8 +468,9 @@ EOF
     echo "Fix Cachyos kernel bug so it shows up at boot."
     #kernel fix
     sudo cp /usr/lib/modules/6.18.5-1-cachyos/vmlinuz /boot/vmlinuz-6.18.5-1-cachyos
+    sudo depmod 6.18.5-1-cachyos
+    sudo dracut -f /boot/initramfs-6.18.5-1-cachyos.img 6.18.5-1-cachyos
     sudo grub-mkconfig -o /boot/grub/grub.cfg
-
 }
 
 
@@ -525,50 +540,14 @@ esac
 
 case $mode in
     server)
-
-        # Setup print server:
-        sudo ./print_server_setup.sh
-
-        # Setup file server:
-        sudo ./setup_server_file_sharing.sh
-
-        # Setup SANE server:
-        echo 10.0.0.0/24 | sudo tee /etc/sane.d/saned.conf
+        ./server_setup.sh
         ;;
     client)
-        # Setup client printer:
-        sudo lpadmin -p "HP_LaserJet_Pro_M148f-M149f" \
-          -v "ipp://server.lan:631/printers/HP_LaserJet_Pro_M148f-M149f" \
-          -m everywhere -E
-
-        # Setup client scanner access through SANE:
-        echo server.lan | sudo tee /etc/sane.d/net.conf
-
-        # Setup file-sharing client access:
-        sudo ./setup_file_sharing.sh $USER
+        ./client_setup.sh $USER
         ;;
 esac
 
-if [[ -d ~/.oh-my-zsh ]]; then
-    # do nothing
-    echo "Oh My ZSH already installed\!"
-else
-    echo "Installing OMZ\!"
-    if curl -fsSL "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" | sh; then
-        echo "OMZ Install complete."
-    else
-        echo "OMZ Install fails.">&2
-        exit 1
-    fi
-fi
-
-sudo chsh -s "$(command -v zsh)" "$USER"
-
-if getent passwd "$USER" | grep -qE ':/bin/zsh$'; then # Even though this works, it displays it isn't set to ZSH
-    echo "Your login shell is set to zsh."
-else
-    echo "Your login shell is not set to zsh."
-fi
+./zsh_setup.sh $USER
 
 # Application that setups up Nym VPN and it's OpenRC Daemon (OLD METHOD)
 # python install_nym.py
@@ -600,26 +579,8 @@ else
     #
 fi
 
-desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
-dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-
-if [ -L "$dest" ]; then
-    if [ "$(readlink "$dest")" = "$desired" ]; then
-        echo "Correct symlink already present"
-    else
-        echo "Symlink points to a different target ($(readlink "$dest")), updating..."
-        ln -sf "$desired" "$dest"
-    fi
-elif [ -e "$dest" ]; then
-    echo "A file or directory exists at $dest; not creating symlink"
-else
-    ln -s "$desired" "$dest"
-    echo "Symlink created"
-fi
-
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
-echo "Copying setting files to root of this User."
-yes | /bin/cp -rf ../support/* ~/
+./bin_setup.sh
 
 echo "Restore script completed."
 

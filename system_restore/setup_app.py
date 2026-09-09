@@ -156,7 +156,7 @@ def main(test_machine: bool, service_name: str | None, apps: str | None):
             print("Unsupported distro: ", distro, file=sys.stderr)
             sys.exit(1)
 
-        SKIP_PROCESS = check_apps(required_apps) and check_service(service_name)
+        SKIP_PROCESS = check_apps(required_apps, distro) and check_service(service_name, distro)
         if SKIP_PROCESS:
             print(
                 f"{', '.join(required_apps)} is already installed and running, skipping install..."

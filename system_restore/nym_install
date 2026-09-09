@@ -77,17 +77,17 @@ esac
 
 ## STABLE BUILDS #################################################
 # app artifacts
-app_tag=nym-vpn-v2026.12.3
-app_version=2026.12.3
+app_version="${1:-2026.12.3}"
+app_tag=nym-vpn-v$app_version
 appimage_url="https://github.com/nymtech/nym-vpn-client/releases/download/$app_tag/NymVPN_${app_version}_${app_image_arch}.AppImage"
 app_deb_url="https://github.com/nymtech/nym-vpn-client/releases/download/$app_tag/nym-vpn-app_${app_version}_${deb_arch}.deb"
 desktop_url="https://raw.githubusercontent.com/nymtech/nym-vpn-client/ac4153bb1/nym-vpn-app/.pkg/app.desktop"
 icon_url="https://raw.githubusercontent.com/nymtech/nym-vpn-client/fb526935/nym-vpn-app/.pkg/icon.svg"
 
 # nym-vpnd artifacts
-vpnd_tag=nym-vpn-v2026.12.3
+vpnd_tag=nym-vpn-v$app_version
 # ⚠ there are inconsistencies in the package version naming…
-vpnd_version=2026.12.3
+vpnd_version=$app_version
 vpnd_deb_ver=$vpnd_version
 vpnd_deb_ver_url=$vpnd_version
 vpnd_raw_url="https://github.com/nymtech/nym-vpn-client/releases/download/$vpnd_tag/nym-vpn-core-v${vpnd_version}_linux_${arch}.tar.gz"
@@ -846,17 +846,29 @@ mkdir -p "$LOCALBIN"
 
 tee "$LOCALBIN/nym-vpn" <<EOF
 #!/bin/bash
-EXTRACT_DIR="$HOME/.cache/nym-vpn-appimage"
 
-if [ ! -x "$EXTRACT_DIR/AppRun" ]; then
-  mkdir -p "$EXTRACT_DIR"
-  (cd "$EXTRACT_DIR" && /usr/bin/NymVPN.AppImage --appimage-extract)
-  rm -f "$EXTRACT_DIR/squashfs-root/usr/lib/libwayland-"*.so*
-  rm -f "$EXTRACT_DIR/squashfs-root/usr/lib/libEGL"*.so*
-  rm -f "$EXTRACT_DIR/squashfs-root/usr/lib/libGL"*.so*
+set -e
+
+EXTRACT_DIR="/home/mbuel/.cache/nym-vpn-appimage"
+APPIMAGE="/usr/bin/NymVPN.AppImage"
+ROOT="$EXTRACT_DIR/squashfs-root"
+
+if [ ! -x "$ROOT/AppRun" ]; then
+    rm -rf "$ROOT"
+    mkdir -p "$EXTRACT_DIR"
+
+    (
+        cd "$EXTRACT_DIR"
+        "$APPIMAGE" --appimage-extract
+    )
+
+    rm -f "$ROOT/usr/lib/libwayland-"*.so*
+    rm -f "$ROOT/usr/lib/libEGL"*.so*
+    rm -f "$ROOT/usr/lib/libGL"*.so*
 fi
 
-exec "$EXTRACT_DIR/squashfs-root/AppRun" "$@"
+exec "$ROOT/AppRun" "$@"
+
 EOF
 chmod +x "$LOCALBIN/nym-vpn"
 

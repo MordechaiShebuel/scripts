@@ -52,8 +52,15 @@ fi
 if mountpoint -q "$MOUNT_POINT"; then
     echo "Already mounted: $MOUNT_POINT"
 else
-    mount "$MOUNT_POINT"
-    echo "Mounted: $MOUNT_POINT"
+    echo "Mounting: $MOUNT_POINT"
+
+    if timeout 30 mount -v "$MOUNT_POINT"; then
+        echo "Mounted: $MOUNT_POINT"
+    else
+        status=$?
+        echo "Mount failed or timed out after 30 seconds: $MOUNT_POINT" >&2
+        exit "$status"
+    fi
 fi
 
 echo "Creating cron job for shared mount check"
