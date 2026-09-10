@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Read distribution information.
 if [[ ! -r /etc/os-release ]]; then
     echo "Cannot determine the operating system." >&2
@@ -13,28 +15,26 @@ option=$2
 case "$ID" in
     debian|peppermint|devuan)
         echo "Detected Debian-based system: $ID"
-        # sudo apt-get update
-        # sudo apt-get upgrade
+
+        sudo apt-get install -y "$pkg"
         ;;
 
     void|vostok)
         echo "Detected Void Linux"
 
-        sudo xbps-remove -yO
-        sudo xbps-remove -yo
+        sudo xbps-install -S "$pkg"
         ;;
 
     artix|arch|manjaro)
         echo "Detected Artix Linux"
 
-        # sudo pamac update
+        sudo pacman -S --noconfirm "$pkg"
         ;;
 
     openmandriva)
         echo "Detected OpenMandriva"
 
-        # sudo dnf clean all ; sudo dnf dsync --allowerasing -x kernel-desktop
-
+        sudo dnf install -y "$pkg"
         ;;
 
     *)

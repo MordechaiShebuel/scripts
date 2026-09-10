@@ -35,7 +35,7 @@ I'm developing a pattern of querying the LLM for code generation / debugging and
 
 ## Platform agnostic DevOps
 - These currently support OpenMandriva, Devuan/Vendewolf and Artix. These are also mirrored to the `support` directory (not stored in repo) and copied to the $HOME folder when you run the `restore_system.sh` script.
-- `install.sh` - install an application to your system. 
+- `inst.sh` - install an application to your system. 
 - `update.sh` - update your system.
 - `search.sh` - search for an application on your system.
 

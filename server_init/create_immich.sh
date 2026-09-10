@@ -10,7 +10,7 @@ IMMICHDIR="/var/lib/immich/library" # (or your preferred path on a large disk)
 for pkg in git podman curl python3-pip bridge-utils; do
     if ! command -v "$pkg" >/dev/null 2>&1; then
         echo "   Installing: ${pkg}"
-        ./install.sh
+        ./bin/./inst.sh ${pkg}
         #NEEDS_INSTALL+=("$pkg")
     else
         echo "   ✅ ${pkg} Requirements already installed"

@@ -13,7 +13,7 @@ YELLOW="\033[1;33m"
 BLUE="\033[0;34m"
 NC="\033[0m" # No Color
 
-mode="${1:-clients}"
+mode="${1:-client}"
 gpu="${2:-amd}"
 
 log() {
@@ -345,7 +345,7 @@ install_packages_xbps() { # There is a serious bug in this code, if one of the p
 
     echo "Attempting to install packages for Void."
     for pkg in "${pkg_list[@]}"; do
-        log "$BLUE Installing: $NC $GREEN $pkg $NC"
+        log "$YELLOW Installing: $NC $GREEN $pkg $NC"
 
         if ! sudo xbps-install -y "$pkg"; then
             failed+=("$pkg")
@@ -358,14 +358,7 @@ install_packages_xbps() { # There is a serious bug in this code, if one of the p
         exit 1
     fi
 
-
-    # install Zeditor:
-    if ! command -v zed >/dev/null 2>&1; then
-        log "$GREEN Installing Zed - Editor $NC"
-        curl -f https://zed.dev/install.sh | sh
-    else
-        log "$YELLOW Zed already installed $YELLOW"
-    fi
+    ./install_zeditor.sh
 
     if xbps-query -p pkgver sddm >/dev/null 2>&1 &&
     [ -L /var/service/sddm ] &&
@@ -388,92 +381,16 @@ install_packages_xbps() { # There is a serious bug in this code, if one of the p
         sudo sv up sddm
     fi
 
-    # Cron setup
-    if [ ! -L /var/service/cronie ]; then
-        sudo ln -s /etc/sv/cronie /var/service/cronie
-    fi
+    ./setup_cron_void.sh $GREEN $NC
 
-    # Wait for runit to notice the new service
-    for _ in 1 2 3 4 5; do
-        if sudo sv status cronie >/dev/null 2>&1; then
-            log "$GREEN Cronie running properly! $NC"
-            break
-        fi
-        sleep 1
-    done
+    ./install_ente_auth.sh
 
-    # This is used for file sharing as well:
-    sudo ln -s /etc/sv/rpcbind /var/service/rpcbind 2>/dev/null
-    sudo ln -s /etc/sv/statd /var/service/statd 2>/dev/null
+    ./install_avahi.sh
 
+    ./enable_cups.sh # this was giving me hell on resetup tonight, may need more debugging
 
-    if ! command -v ente-auth >/dev/null 2>&1; then
-        # install ente-auth
-        wget https://github.com/ente/ente/releases/download/auth-v4.4.25/ente-auth-v4.4.25-x86_64.AppImage &&
-            sudo mkdir -p /opt/bin &&
-            sudo cp ente-auth-* /opt/bin &&
-            sudo chmod +x /opt/bin/ente-auth-v4.4.25-x86_64.AppImage &&
-            sudo ln -s /opt/bin/ente-auth-v4.4.25-x86_64.AppImage /usr/bin/ente-auth &&
-            tee ~/.local/share/applications/ente-auth.desktop <<EOF
-[Desktop Entry]
-Name=Ente Auth
-Exec=ente-auth
-Type=Application
-Icon=/opt/bin/ente-auth-v4.4.25-x86_64.AppImage
-Terminal=false
-Categories=Utility;Security;
-EOF
-        echo "Ente-Auth installed"
-    else
-        echo "Ente-Auth already installed."
-    fi
-
-    # Install and enable Avahi
-    if ! xbps-query -p pkgver avahi >/dev/null 2>&1; then
-        sudo xbps-install -y avahi
-    else
-        echo "avahi is already installed."
-    fi
-
-    if [ ! -e /var/service/avahi-daemon ]; then
-        sudo ln -s /etc/sv/avahi-daemon /var/service/avahi-daemon
-    else
-        echo "avahi-daemon is already enabled."
-    fi
-
-    if sv status avahi-daemon >/dev/null 2>&1; then
-        echo "avahi-daemon is already running."
-    else
-        sudo sv up avahi-daemon
-    fi
-
-    # Install and enable CUPS
-    if ! xbps-query -p pkgver cups >/dev/null 2>&1; then
-        sudo xbps-install -S
-        sudo xbps-install -y cups cups-filters print-manager system-config-printer
-    else
-        echo "CUPS is already installed."
-    fi
-
-    if [ ! -e /var/service/cupsd ]; then
-        sudo ln -s /etc/sv/cupsd /var/service/cupsd
-    fi
-
-    if sv status cupsd >/dev/null 2>&1; then
-        echo "cupsd is already running."
-    else
-        sudo sv up cupsd
-    fi
-
-    echo "Fix Cachyos kernel bug so it shows up at boot."
-    #kernel fix
-    sudo cp /usr/lib/modules/6.18.5-1-cachyos/vmlinuz /boot/vmlinuz-6.18.5-1-cachyos
-    sudo depmod 6.18.5-1-cachyos
-    sudo dracut -f /boot/initramfs-6.18.5-1-cachyos.img 6.18.5-1-cachyos
-    sudo grub-mkconfig -o /boot/grub/grub.cfg
+    ./linux-cachyos-void-patch.sh
 }
-
-
 
 install_packages_dnf() {
     pkg_list+=(

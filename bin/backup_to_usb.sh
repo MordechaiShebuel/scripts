@@ -5,6 +5,33 @@
 
 set -e
 
+# Add a single directory
+# BACKUP_DIRS[downloads]="$USER_HOME/Downloads"
+
+# Or add multiple
+# BACKUP_DIRS[music]="$USER_HOME/Music"
+# BACKUP_DIRS[videos]="$USER_HOME/Videos"
+# BACKUP_DIRS[config]="$USER_HOME/.config"
+
+declare -A BACKUP_DIRS=(
+    # Personal Files
+    [documents]="$USER_HOME/Documents"
+
+    # Steam
+    [steam]="$USER_HOME/.steam"
+    # [steam_apps]="$USER_HOME/.local/share/Steam"  # Too slow with many games
+
+    # Zen Browser
+    [zen]="$USER_HOME/.zen"
+
+    # Brave Browser
+    [brave]="$USER_HOME/.config/BraveSoftware"
+
+    # Falkon Browser
+    [falkon]="$USER_HOME/.config/falkon"
+)
+
+
 # Color output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -94,22 +121,9 @@ backup_dir() {
 # Track if any backup failed
 FAILED=0
 
-# Personal Files
-backup_dir "$USER_HOME/Documents" "documents" || FAILED=1
-
-# Backup Steam
-backup_dir "$USER_HOME/.steam" "steam" || FAILED=1
-# This is too slow with a decent amount of games
-# backup_dir "$USER_HOME/.local/share/Steam" "steam_apps" || FAILED=1
-
-# Backup Zen Browser
-backup_dir "$USER_HOME/.zen" "zen" || FAILED=1
-
-# Backup Brave Browser
-backup_dir "$USER_HOME/.config/BraveSoftware" "brave" || FAILED=1
-
-# Backup Falkon Browser
-backup_dir "$USER_HOME/.config/falkon" "falkon" || FAILED=1
+for name in "${!BACKUP_DIRS[@]}"; do
+    backup_dir "${BACKUP_DIRS[$name]}" "$name" || FAILED=1
+done
 
 # Update latest symlink
 rm -f "$LATEST_LINK"

@@ -80,7 +80,7 @@ echo "Compression tool: $COMPRESSION"
 if [ ! command -v $COMMAND >/dev/null 2>&1; ]; then
     echo "Compression tool not found: $COMPRESSION"
 
-    ./install.sh "$COMPRESSION"
+    ./inst.sh "$COMPRESSION"
     if [ ! -x "$COMMAND" ]; then
         echo "Failed to install: $COMPRESSION"
         exit 1

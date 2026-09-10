@@ -104,7 +104,7 @@ def ensure_root():
 def check_required_apps(apps):
     for app in apps:
         if shutil.which(app) is None:
-            cmd = f"./install.sh {app}"
+            cmd = f"./inst.sh {app}"
             run(cmd)
 
 def install_apps(apps: list[str], in_cmd: str, distro: str):
@@ -184,7 +184,7 @@ def detect_distro():
             return "debian"
         if "void" in content.lower():
             return "void"
-    
+
     return "unknown"
 
 

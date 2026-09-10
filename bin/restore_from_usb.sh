@@ -5,6 +5,32 @@
 
 set -e
 
+# Add a single directory
+# BACKUP_DIRS[downloads]="$USER_HOME/Downloads"
+
+# Or add multiple
+# BACKUP_DIRS[music]="$USER_HOME/Music"
+# BACKUP_DIRS[videos]="$USER_HOME/Videos"
+# BACKUP_DIRS[config]="$USER_HOME/.config"
+
+declare -A BACKUP_DIRS=(
+    # Personal Files
+    [documents]="$USER_HOME/Documents"
+
+    # Steam
+    [steam]="$USER_HOME/.steam"
+    # [steam_apps]="$USER_HOME/.local/share/Steam"  # Too slow with many games
+
+    # Zen Browser
+    [zen]="$USER_HOME/.zen"
+
+    # Brave Browser
+    [brave]="$USER_HOME/.config/BraveSoftware"
+
+    # Falkon Browser
+    [falkon]="$USER_HOME/.config/falkon"
+)
+
 # Color output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -138,22 +164,10 @@ for backup_timestamp in "${RESTORE_BACKUPS[@]}"; do
 
     echo -e "${BLUE}Restoring from: $backup_timestamp${NC}"
 
-    # Personal Files
-    restore_dir "$backup_path/Documents" "$USER_HOME/Documents" "documents" || FAILED=1
+    for name in "${!BACKUP_DIRS[@]}"; do
+        backup_dir "${backup_path[$name]}" "$name" || FAILED=1
+    done
 
-    # Restore Steam
-    restore_dir "$backup_path/steam" "$USER_HOME/.steam" "steam" || FAILED=1
-
-    # Restore Zen Browser
-    restore_dir "$backup_path/zen_config" "$USER_HOME/.config/zen" "zen" || FAILED=1
-
-    # Restore Brave Browser
-    restore_dir "$backup_path/brave_config" "$USER_HOME/.config/BraveSoftware" "brave" || FAILED=1
-
-    # Restore Falkon Browser
-    restore_dir "$backup_path/falkon_config" "$USER_HOME/.config/falkon" "falkon" || FAILED=1
-
-    echo
 done
 
 echo -e "${BLUE}═══════════════════════════════════════${NC}"
