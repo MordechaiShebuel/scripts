@@ -8,7 +8,11 @@ sudo lpadmin -p "HP_LaserJet_Pro_M148f-M149f" \
     -m everywhere -E
 
 # Setup client scanner access through SANE:
+<<<<<<< Updated upstream
 echo -e "Enabling scanner sharing"
+=======
+Echo -e "Enabling scanner sharing"
+>>>>>>> Stashed changes
 echo server.lan | sudo tee /etc/sane.d/net.conf
 
 # Setup file-sharing client access:
