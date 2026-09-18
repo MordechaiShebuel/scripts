@@ -39,12 +39,12 @@ sudo rm -f "$SERVICE_LINK"
 sudo ln -s "$SERVICE_SOURCE" "$SERVICE_LINK"
 
 # Wait for runit to discover and start the service
-sleep 2
+sleep 10
 for _ in {1..15}; do
     if sudo sv status "$SERVICE_NAME" >/dev/null 2>&1; then
         echo "$(sudo sv status "$SERVICE_NAME")"
         echo "$SERVICE_NAME is running."
-        break
+        exit 0
     fi
 
     sleep 1

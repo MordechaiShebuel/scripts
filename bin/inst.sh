@@ -19,7 +19,7 @@ case "$ID" in
         sudo apt-get install -y "$pkg"
         ;;
 
-    void|vostok)
+    void|vostok|lazylinux)
         echo "Detected Void Linux"
 
         sudo xbps-install -S "$pkg"

@@ -425,7 +425,7 @@ case "$ID" in
         install_brave_debian
         ;;
 
-    void|vostok)
+    void|vostok|lazylinux)
         echo "Detected Void Linux"
 
         install_packages_xbps

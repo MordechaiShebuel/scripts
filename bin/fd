@@ -19,7 +19,7 @@ case "$ID" in
         apt-cache search "$pkg"
         ;;
 
-    void|vostok)
+    void|vostok|lazylinux)
         echo "Detected Void Linux"
 
         xbps-query -Rs "$pkg"

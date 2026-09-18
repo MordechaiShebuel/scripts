@@ -840,7 +840,10 @@ log "$ITL${BI_GRY}nym$RS${BI_GRN}VPN$RS ${BI}installer$RS\n"
 [[ "$BUILD_CHANNEL" = "dev" ]] && dev_setup
 _install
 
+cp $LOCALBIN/nym-vpn $LOCALBIN/nym-vpn-bak
+
 # Need to fix AppImage bug:
+# There is a strange bug in this, the "$ROOT" and $"EXTRACT_DIR" commands are turning into "" in created file.
 LOCALBIN="$HOME/bin" # Need to make sure you have path to this
 mkdir -p "$LOCALBIN"
 
@@ -868,7 +871,6 @@ if [ ! -x "$ROOT/AppRun" ]; then
 fi
 
 exec "$ROOT/AppRun" "$@"
-
 EOF
 chmod +x "$LOCALBIN/nym-vpn"
 

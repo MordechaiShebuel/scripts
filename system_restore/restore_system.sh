@@ -1,69 +1,201 @@
 #!/usr/bin/env bash
-# TODO: Try expanding other systems to make this platform agnostic
-# I'd love to try Void Linux next!
+# Version 3 of restore script, goal is to make it easier to add platforms.
+# Update with command line options
+# mode = client/server
+# gpu = amd/nvidia/intel
+# installed_apps_file = path to package list file, this is created prior to reinstall with bin/get_installed_apps.sh
 
-if [[ -r /etc/os-release ]]; then
-    . /etc/os-release
+set -Eeuo pipefail
+
+# Color output
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+YELLOW="\033[1;33m"
+BLUE="\033[0;34m"
+NC="\033[0m" # No Color
+
+mode="${1:-}"
+gpu="${2:-}"
+installed_apps_file="${3:-}"
+
+log() {
+  echo -e "$1"
+}
+
+if [[ -z "$mode" || -z "$gpu" || -z "$installed_apps_file" ]]; then
+    log "$YELLOW Usage:$NC $GREEN $0 <mode> <gpu> <installed_apps_file> $NC" >&2
+    exit 1
 fi
 
-case "$ID" in
-    openmandriva)
-        echo "OpenMandriva"
-        ;;
-    debian)
-        echo "Debian-based system"
-        ;;
-    void)
-        echo "Void Linux"
-        ;;
-    artix)
-        echo "Artix Linux"
-        ;;
-    *)
-        echo "Unsupported distribution: ${ID:-unknown}" >&2
-        exit 1
-        ;;
-esac
+if [[ $mode != "client" && $mode != "server" ]]; then
+    log "$YELLOW Invalid mode:$NC $RED $mode $NC" >&2
+    log "$YELLOW Valid modes:$NC $GREEN client, server $NC" >&2
+    exit 1
+fi
 
-pkg_list=("flameshot" "htop" "wget" "zsh" "gimp" "obs-studio" "git" "vlc" "curl" "ktorrent" "system-config-printer" "hplip" "smbclient" "bibletime" "zsh-syntax-highlighting")
-linux=$(uname -r)
+if [[ $gpu != "amd" && $gpu != "nvidia" && $gpu != "intel" ]]; then
+    log "${YELLOW}Invalid GPU:${NC} ${RED}$gpu${NC}" >&2
+    log "${YELLOW}Valid GPUs:${NC} ${GREEN}amd, nvidia, intel${NC}" >&2
+    exit 1
+fi
 
-if [[ "$ID" == "openmandriva" || "$ID_LIKE" == *rhel* ]]; then    # Open Mandriva
+if [[ ! -r "$installed_apps_file" ]]; then
+    log "${RED}Error: Package file not found or not readable: ${NC}$installed_apps_file" >&2
+    exit 1
+fi
 
-    # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "dvd+rw-tools" "lib64dvdnav4" "lib64dvdread" "lib64dvdcss")
+# Read distribution information.
+if [[ ! -r /etc/os-release ]]; then
+    log "${RED}Cannot determine the operating system.${NC}" >&2
+    exit 1
+fi
 
-    ../system_scripts/./update.sh
-    # IFS=' ' read -ra my_strings <<< "$pkg_list"
+. /etc/os-release
 
-for pkg in "${pkg_list[@]}"; do
-        if ! command -v "$pkg" >/dev/null 2>&1; then
-            sudo dnf in "$pkg"
+# Load installed packages from file
+log "${GREEN}Loading packages from: ${NC}$installed_apps_file"
+mapfile -t pkg_list < "$installed_apps_file"
+
+if ((${#pkg_list[@]} == 0)); then
+    log "${RED}Error: Package file is empty.${NC}" >&2
+    exit 1
+fi
+
+log "${GREEN}Loaded ${#pkg_list[@]} packages.${NC}"
+
+browser_installed() {
+    local browser
+
+    for browser in "$@"; do
+        if command -v "$browser" >/dev/null 2>&1; then
+            return 0
         fi
     done
 
-fi
+    return 1
+}
 
-if [[ "$ID" == "artix" || "$ID_LIKE" == *arch* ]]; then
-    # Pre-setup for Artix / enable multilib and arch support
-    pre_requisites=("pamac" "artix-archlinux-support" "doas" "trizen")
+install_zen() {
+    if browser_installed zen zen-browser; then
+        echo "Zen Browser is already installed."
+        return 0
+    fi
 
-    to_install=()
-    for pkg in ${pre_requisites[@]}; do
-        if ! pacman -Q "$pkg" &>/dev/null 2>&1; then
-            to_install+=("$pkg")
+    echo "Installing Zen Browser..."
+
+    if ! command -v curl >/dev/null 2>&1; then
+        echo "curl is required to install Zen Browser." >&2
+        return 1
+    fi
+
+    bash <(curl -fsSL \
+        https://raw.githubusercontent.com/MalikHw/zb-installer-script/main/install-zen.sh)
+
+    if browser_installed zen zen-browser; then
+        log "${GREEN}Zen Browser installed!${NC}"
+    else
+        echo "${YELLOW}Zen Browser installation failed.${NC}" >&2
+        return 1
+    fi
+}
+
+install_brave_debian() {
+    if browser_installed brave brave-browser; then
+        echo "Brave Browser is already installed."
+        return 0
+    fi
+
+    echo "Installing Brave Browser on Debian..."
+
+    sudo apt-get update
+    sudo apt-get install -y curl ca-certificates
+
+    sudo curl -fsSLo \
+        /usr/share/keyrings/brave-browser-archive-keyring.gpg \
+        https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+
+    sudo curl -fsSLo \
+        /etc/apt/sources.list.d/brave-browser-release.sources \
+        https://brave-browser-apt-release.s3.brave.com/brave-browser.sources
+
+    sudo apt-get update
+    sudo apt-get install -y brave-browser
+
+    if browser_installed brave brave-browser; then
+        log "${GREEN}Brave Browser installed!${NC}"
+    else
+        log "${RED}Brave Browser installation failed.${NC}" >&2
+        return 1
+    fi
+}
+
+install_brave_pacman() {
+    if browser_installed brave brave-browser; then
+        log "${YELLOW}Brave Browser is already installed.${NC}"
+        return 0
+    fi
+
+    log "Checking for a ${GREEN}Brave${NC} package in the configured repositories..."
+
+    local brave_package=""
+
+    if pacman -Si brave >/dev/null 2>&1; then
+        brave_package="brave"
+    elif pacman -Si brave-bin >/dev/null 2>&1; then
+        brave_package="brave-bin"
+    fi
+
+    if [[ -z "$brave_package" ]]; then
+        log "Brave Browser was not found in the configured pacman repositories."
+        log "Install a compatible Brave package manually, for example through an"
+        log "AUR helper, then run this script again."
+        return 1
+    fi
+
+    sudo pacman -Syu --needed "$brave_package"
+
+    if browser_installed brave brave-browser; then
+        echo "Brave Browser installed!"
+    else
+        echo "Brave Browser installation failed." >&2
+        return 1
+    fi
+}
+
+install_packages_apt() {
+    local package
+    local -a to_install=()
+
+    # Enable 32-bit packages for Steam and other 32-bit software.
+    sudo dpkg --add-architecture i386
+
+    sudo apt-get update
+
+    sudo apt-get upgrade
+
+    # Add contrib and non-free where the source format permits it.
+    if ! grep -RqsE '^[[:space:]]*(deb|Components:).*contrib' \
+        /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+
+        log "$YELLOW contrib was not detected automatically. $NC"
+        echo "$YELLOW Check your APT repositories if packages are unavailable. $NC"
+    fi
+
+    for package in "${pkg_list[@]}"; do
+        if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null |
+            grep -q "install ok installed"; then
+            to_install+=("$package")
         fi
     done
 
-    if [ ${#to_install[@]} -gt 0 ]; then
-        sudo pacman -S "${to_install[@]}"
+    if ((${#to_install[@]} > 0)); then
+        sudo apt-get install -y "${to_install[@]}"
+    else
+        echo "All Debian packages are already installed."
     fi
+}
 
-    if ! pacman -Q pamac &>/dev/null 2>&1; then
-        echo "Warning: pamac not installed. Unable to continue."
-        exit 1
-    fi
-
+install_packages_pacman() {
     # Enable lib32 and multilib
     output1=$(sudo ./enable_repo.sh lib32)
     output2=$(sudo ./enable_repo.sh extra)
@@ -78,150 +210,162 @@ if [[ "$ID" == "artix" || "$ID_LIKE" == *arch* ]]; then
         sudo pacman -Sy
     fi
 
-    # Artix
-    #update first
-    ../system_scripts/./update.sh
+    # update
+    sudo pacman -Syu
 
-    # Artix specific packages
-    pkg_list=("${pkg_list[@]}" "skanpage" "zed" "python-pipenv" "poco" "nss-mdns" "gvfs-smb" "samba" "kcalc" "steam" "base-devel" "opus" "cmake" "libdvdcss" "libdvdnav" "libdvdread" "fakeroot" "telegram-desktop" "vlc-plugins-all" "the_silver_searcher")
+    # --needed prevents reinstalling packages that are already installed.
+    sudo pacman -Syu --needed "${pkg_list[@]}"
+}
 
-    # Enable lib32 in config
-    # Artix [lib32] and Arch [multilib]
-    to_install=()
-    for pkg in ${pkg_list[@]}; do
-        # Check if app is already installed before trying to re-install it
-        # pamac install "${pkg}" --no-confirm
-        if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
-            to_install+=("$pkg")
-        fi
-    done
+install_packages_xbps() {
+    sudo xbps-install -Syu
 
-    if [ ${#to_install[@]} -gt 0 ]; then
-        pamac install "${to_install[@]}"
-    fi
+    # Needs a guard, don't do if done.
+    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" | sudo tee /etc/xbps.d/noid-xbps-repo.conf
+    echo 'repository=https://voidrepo.linuxnauta.com' | sudo tee /etc/xbps.d/linuxnauta.conf
+    echo "repository=https://repo.voiders.dev" | sudo tee /etc/xbps.d/voiders-dev-repo.conf
+    echo "repository=https://sourceforge.net/projects/neko-void/files/repo" | sudo tee /etc/xbps.d/neko-void.conf
 
-    current_shell=$(getent passwd "$USER" | cut -d: -f7)
-    if [ "$current_shell" != "$(which zsh)" ]; then
-        chsh -s $(which zsh)
-    fi
+    sudo xbps-install -Syu void-repo-nonfree void-repo-multilib
+    sudo xbps-install -Syu
 
-    # TODO:s ringracers error: -- Could NOT find Opus (missing: Opus_DIR) (should be fixed, need to test.)
-    aur_pkg_list=("pamac-tray-icon-plasma" "ente-auth-bin" "ringracers" "srb2-bin" "zen-browser-bin" "brave-bin" "zsh-syntax-highlighting" "collabora-office" "zsh-autocomplete-git")
+    sudo xbps-install -Su
 
-    to_install=()
-    for pkg in ${aur_pkg_list[@]}; do
-        if ! pamac list --installed --quiet | grep -xFq "$pkg"; then
-            to_install+=("$pkg")
-        fi
-    done
+    case $gpu in
+    amd)
+        sudo xbps-install -y mesa-vulkan-radeon mesa-vulkan-radeon-32bit LACT
+        ;;
+    nvidia)
+        sudo xbps-install -y mesa-vulkan-nvidia mesa-vulkan-nvidia-32bit
+        ;;
+    intel)
+        sudo xbps-install -y mesa-vulkan-intel mesa-vulkan-intel-32bit
+        ;;
+    esac
 
-    if [ ${#to_install[@]} -gt 0 ]; then
-        trizen -S "${to_install[@]}"
-    fi
+    local failed=()
 
-fi
-
-if [[ "$linux" == *"deb13"* ]]; then
-    # Tested this on PeppermintOS and Vendewolf
-    # Because Vendewolf uses Xlibre, this will require adding `Architectures: amd64` to
-    # /etc/apt/sources.list.d/xlibre-debian.sources
-
-    # Enable 32-bit repos
-    sudo dpkg --add-architecture i386
-    sudo apt update
-    # Vendewolf
-    # Check and add contrib repository if needed
-    if ! grep -q "contrib" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
-        echo "Adding contrib repository..."
-        sudo sed -i 's/^deb \(.*\) main$/deb \1 main contrib non-free/' /etc/apt/sources.list
-        sudo apt-get update
-    fi
-
-    # After installing
-    ../system_scripts/./update.sh
-
-    # PEPPERMINTOS SPECIFIC
-    sudo apt install task-kde-desktop
-    sudo apt install sddm
-    sudo dpkg-reconfigure sddm
-
-    # Linux specific packages
-    pkg_list=("${pkg_list[@]}" "python-is-python3" "pipenv" "vlc-plugins*" "libdvd-pkg" "silversearcher-ag" "steam-installer")
-
-    to_install=()
+    echo "Attempting to install packages for Void."
     for pkg in "${pkg_list[@]}"; do
-        if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null |
-             grep -q "install ok installed"; then
-            to_install+=("$pkg")
+        log "$YELLOW Installing: $NC $GREEN $pkg $NC"
+
+        if ! sudo xbps-install -y "$pkg"; then
+            failed+=("$pkg")
         fi
     done
 
-    if ((${#to_install[@]} > 0)); then
-        sudo apt-get install -y "${to_install[@]}"
+    if ((${#failed[@]})); then
+        log "$RED The following packages failed to install: $RED" >&2
+        log "$RED${failed[@]}$NC"
+        # exit 0 # Need a determination here not to hard fail.
     fi
 
-    # Zen Browser:
-    if ! command -v "zen-browser" >/dev/null 2>&1; then
-        bash <(curl -fsSL https://raw.githubusercontent.com/MalikHw/zb-installer-script/main/install-zen.sh)
-        echo "Zen Browser installed\!"
+    ./install_zeditor.sh
+
+    if xbps-query -p pkgver sddm >/dev/null 2>&1 &&
+    [ -L /var/service/sddm ] &&
+    sv status sddm >/dev/null 2>&1; then
+        log "$YELLOW SDDM is already installed and running. $NC"
     else
-        echo "Zen Browser already installed or could not be installed\!"
+        sudo xbps-install -S sddm
+
+        if xbps-query -p pkgver lightdm >/dev/null 2>&1 &&
+        [ -L /var/service/lightdm ]; then
+            log "$YELLOW Stopping and disabling LightDM... $NC"
+            sudo sv down lightdm
+            sudo rm -f /var/service/lightdm
+        fi
+
+        if [ ! -e /var/service/sddm ]; then
+            sudo ln -s /etc/sv/sddm /var/service/sddm
+        fi
+
+        sudo sv up sddm
     fi
 
-    # Brave Browser:
-    if ! command -v "brave" >/dev/null 2>&1; then
-        sudo apt update
-        sudo apt install curl ca-certificates -y
-        sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-        sudo curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources https://brave-browser-apt-release.s3.brave.com/brave-browser.sources
-        sudo apt update
-        sudo apt install brave-browser -y
-        echo "Brave Browser installed\!"
-    else
-        echo "Brave Browser already installed or could not be installed\!"
-    fi
+    ./setup_cron_void.sh $GREEN $NC
 
-    # Cinnamon:
-    # Menu → Settings → Keyboard → Layouts tab → click + to add English layout, then set it as default.
-fi
+    ./install_ente_auth.sh
 
-if [[ -d ~/.oh-my-zsh ]]; then
-    # do nothing
-    echo "Oh My ZSH already installed\!"
-else
-    echo "Installing OMZ\!"
-    if curl -fsSL "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" | sh; then
-        echo "OMZ Install complete."
-    else
-        echo "OMZ Install fails.">&2
+    ./install_avahi.sh
+
+    ./enable_cups.sh
+
+    ./linux-cachyos-void-patch.sh
+}
+
+install_packages_dnf() {
+    sudo dnf install -y "${pkg_list[@]}"
+    echo "server.lan" | sudo tee /etc/sane.d/net.conf
+}
+
+# Select the package manager based on /etc/os-release.
+case "$ID" in
+    debian|peppermint)
+        echo "Detected Debian-based system: $ID"
+
+        install_packages_apt
+
+        # Optional desktop setup for PeppermintOS.
+        if [[ "$ID" == "peppermint" ]]; then
+            sudo apt-get install -y task-kde-desktop sddm
+            sudo dpkg-reconfigure sddm
+        fi
+
+        install_zen
+        install_brave_debian
+        ;;
+
+    void|vostok|lazylinux)
+        echo "Detected Void Linux"
+
+        install_packages_xbps
+        # install_zen
+
+        # Brave availability varies depending on the configured Void
+        # repositories and whether an AUR-style helper is being used.
+        # install_brave_pacman || true
+        ;;
+
+    artix)
+        echo "Detected Artix Linux"
+
+        install_packages_pacman
+        install_zen
+        install_brave_pacman || true
+        ;;
+
+    openmandriva)
+        echo "Detected OpenMandriva"
+
+        install_packages_dnf
+        ;;
+
+    *)
+        echo "Unsupported distribution: ${ID:-unknown}" >&2
+        echo "Detected values:" >&2
+        echo "  ID=${ID:-unknown}" >&2
+        echo "  ID_LIKE=${ID_LIKE:-unknown}" >&2
         exit 1
-    fi
-fi
+        ;;
+esac
 
-sudo chsh -s "$(command -v zsh)" "$USER"
+case $mode in
+    server)
+        ./server_setup.sh
+        ;;
+    client)
+        ./client_setup.sh $USER
+        ;;
+esac
 
-if getent passwd "$USER" | grep -qE ':/bin/zsh$'; then
-    echo "Your login shell is set to zsh."
-else
-    echo "Your login shell is not set to zsh."
-fi
+./zsh_setup.sh $USER
 
-# Application that setups up Nym VPN and it's OpenRC Daemon (OLD METHOD)
-# python install_nym.py
-
-# Application that setups up
-# Artix path (Debian requires adding repo for Nym)
-
-# These are failing on the debian path, pipenv command not found
 if ! command -v "pipenv" >/dev/null 2>&1; then
     echo "pipenv not found, unable to install pipenv dependencies"
 else
     # Install Python dependencies via pipenv from the base directory
     pipenv install
-    # Application that setups up Nym VPN and it's OpenRC Daemon
-    pipenv run python setup_app.py --service-name nym-vpnd --apps nym-vpnd-bin,nym-vpn-app-bin,nym-vpnc-bin
-    # Application that setups up scanner sharing
-    pipenv run python sane_sharing.py
 
     # Application that setups up SSH and it's OpenRC Daemon
     pipenv run python setup_remote_ssh.py
@@ -229,26 +373,11 @@ else
     if ! command -v "nym-vpnd" >/dev/null 2>&1; then
         echo "nym-vpnd not found, unable to install nym-vpnd"
     fi
-    # Should check for sane_sharing success and ssh server success
-    #
-fi
-
-desired="/usr/share/zsh/plugins/zsh-syntax-highlighting"
-dest="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-
-if [ -L "$dest" ]; then
-    if [ "$(readlink "$dest")" = "$desired" ]; then
-        echo "Correct symlink already present"
-    else
-        echo "Symlink points to a different target ($(readlink "$dest")), updating..."
-        ln -sf "$desired" "$dest"
-    fi
-elif [ -e "$dest" ]; then
-    echo "A file or directory exists at $dest; not creating symlink"
-else
-    ln -s "$desired" "$dest"
-    echo "Symlink created"
 fi
 
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
-yes | /bin/cp -rf ../support/* ~/
+./bin_setup.sh
+
+echo "Restore script completed."
+
+echo "You should reboot now."

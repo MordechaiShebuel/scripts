@@ -15,20 +15,34 @@ set -e
 
 declare -A BACKUP_DIRS=(
     # Personal Files
-    [documents]="$USER_HOME/Documents"
+    [documents]="$HOME/Documents"
 
     # Steam
-    [steam]="$USER_HOME/.steam"
-    # [steam_apps]="$USER_HOME/.local/share/Steam"  # Too slow with many games
+    [steam]="$HOME/.steam"
 
     # Zen Browser
-    [zen]="$USER_HOME/.zen"
+    [zen]="$HOME/.zen"
 
-    # Brave Browser
-    [brave]="$USER_HOME/.config/BraveSoftware"
+    # Application Configurations
+    [app_configs]="$HOME/.config" # This will backup all installed applications
 
-    # Falkon Browser
-    [falkon]="$USER_HOME/.config/falkon"
+    # KDE / Plasma configuration
+    [kde_data]="$HOME/.local/share/plasma"
+    [kde_icons]="$HOME/.local/share/plasma_icons"
+    [kde_notes]="$HOME/.local/share/plasma_notes"
+    [kde_systemmonitor]="$HOME/.local/share/plasma-systemmonitor"
+    [kde_kwin]="$HOME/.local/share/kwin"
+    [kde_konsole]="$HOME/.local/share/konsole"
+    [kde_activity]="$HOME/.local/share/kactivitymanagerd"
+    [kde_dolphin]="$HOME/.local/share/dolphin"
+
+    # Bibletime
+    [bibletime_edit]="$HOME/.local/share/bibledit"
+    [bibletime]="$HOME/.bibletime"
+    [bibletime_sword]="$HOME/.sword"
+
+    # Installed Apps
+    [installed_apps]="$HOME/.local/share/installed_apps"
 )
 
 

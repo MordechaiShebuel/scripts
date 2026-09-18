@@ -40,13 +40,15 @@ echo "Enabling $SERVICE_NAME..."
 sudo rm -f "$SERVICE_LINK"
 sudo ln -s "$SERVICE_SOURCE" "$SERVICE_LINK"
 
+sleep 10
+
 for _ in {1..15}; do
     status="$(sudo sv status "$SERVICE_NAME" 2>&1 || true)"
 
     if [[ "$status" == run:* ]]; then
         echo "$status"
         echo "$SERVICE_NAME is running."
-        break
+        exit 0
     fi
 
     sleep 1
