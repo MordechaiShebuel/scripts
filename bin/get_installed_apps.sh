@@ -11,33 +11,35 @@ fi
 pkg=$1
 option=$2
 
+OUTPUT_DIR="$HOME/.local/share/installed_apps"
+
 # Create output directory if it doesn't exist
-mkdir -p "$HOME/.local/share"
+mkdir -p "$OUTPUT_DIR"
 
 # Select the package manager based on /etc/os-release.
 case "$ID" in
     debian|peppermint|devuan)
         echo "Detected Debian-based system: $ID"
 
-        dpkg-query -W -f='${Package}\n' > "$HOME/.local/share/.installed_apps"
+        dpkg-query -W -f='${Package}\n' > "$OUTPUT_DIR/installed_apps.txt"
         ;;
 
-    void|vostok)
+    void|vostok|lazylinux)
         echo "Detected Void Linux"
 
-        xbps-query --list-manual-pkgs > "$HOME/.local/share/.installed_apps"
+        xbps-query --list-manual-pkgs > "$OUTPUT_DIR/installed_apps.txt"
         ;;
 
     artix|arch|manjaro)
         echo "Detected Artix Linux"
 
-        pacman -Qqe > "$HOME/.local/share/.installed_apps"
+        pacman -Qqe > "$OUTPUT_DIR/installed_apps.txt"
         ;;
 
     openmandriva)
         echo "Detected OpenMandriva"
 
-        dnf list installed | awk '{print $1}' > "$HOME/.local/share/.installed_apps"
+        dnf list installed | awk '{print $1}' > "$OUTPUT_DIR/installed_apps.txt"
         ;;
 
     *)
@@ -49,4 +51,4 @@ case "$ID" in
         ;;
 esac
 
-echo "Generated package list: $HOME/.local/share/.installed_apps"
+echo "Generated package list: $OUTPUT_DIR/installed_apps.txt"
