@@ -13,7 +13,7 @@ set -e
 # BACKUP_DIRS[videos]="$USER_HOME/Videos"
 # BACKUP_DIRS[config]="$USER_HOME/.config"
 
-declare -A BACKUP_DIRS=(
+declare -A RESTORE_DIRS=(
     # Personal Files
     [documents]="$HOME/Documents"
 
@@ -37,21 +37,15 @@ declare -A BACKUP_DIRS=(
     [kde_dolphin]="$HOME/.local/share/dolphin"
 
     # Bibletime
-<<<<<<< Updated upstream
     [bibletime_edit]="$HOME/.local/share/bibledit"
     [bibletime]="$HOME/.bibletime"
     [bibletime_sword]="$HOME/.sword"
 
     # Installed Apps
     [installed_apps]="$HOME/.local/share/installed_apps"
-=======
-    [bibletime]="$HOME/.local/share/bibledit"
-    [bibletime]="$HOME/.bibletime"
-    [bibletime]="$HOME/.sword"
 
-    # Installed Apps
-    [installed_apps]="$HOME/.local/share/.installed_apps"
->>>>>>> Stashed changes
+    #SSH setups
+    [ssh]="$HOME/.ssh"
 )
 
 # Color output
@@ -96,10 +90,11 @@ echo -e "${BLUE}═════════════════════�
 echo
 
 # List available backups (excluding 'latest' symlink)
-BACKUPS=($(ls -1d "$BACKUP_ROOT"/*/ 2>/dev/null | grep -v '/latest$' | sed 's|.*/||; s|/$||' | sort))
+BACKUPS=($(ls -1d "$BACKUP_ROOT"/*/ 2>/dev/null | grep -v '/latest$' | xargs -n1 basename | sort))
 
 if [ ${#BACKUPS[@]} -eq 0 ]; then
-    echo -e "${RED}Error: No backups found${NC}"
+    echo -e "${RED}Error: No backups found at $BACKUP_ROOT${NC}"
+    echo -e "$(ls -1d "$BACKUP_ROOT"/*/)"
     exit 1
 fi
 
@@ -112,7 +107,13 @@ for i in "${!BACKUPS[@]}"; do
 done
 echo
 
-read -p "Restore from backup number (enter range like '1' or '1-3' for cumulative): " selection
+read -p "Restore from backup number (enter range like '1' or '1-3' for cumulative, or 'q' to quit): " BACKUP_SELECTION
+
+# Allow user to quit
+if [[ "$BACKUP_SELECTION" =~ ^[qQ]$ ]] || [[ "$BACKUP_SELECTION" == "quit" ]]; then
+    echo -e "${YELLOW}Restore cancelled.${NC}"
+    exit 0
+fi
 
 # Parse selection
 if [[ $selection =~ ^([0-9]+)(-([0-9]+))?$ ]]; then
@@ -187,8 +188,8 @@ for backup_timestamp in "${RESTORE_BACKUPS[@]}"; do
 
     echo -e "${BLUE}Restoring from: $backup_timestamp${NC}"
 
-    for name in "${!BACKUP_DIRS[@]}"; do
-        backup_dir "${backup_path[$name]}" "$name" || FAILED=1
+    for name in "${!RESTORE_DIRS[@]}"; do
+        restore_dir "${backup_path[$name]}" "$name" || FAILED=1
     done
 
 done

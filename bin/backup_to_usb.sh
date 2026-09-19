@@ -5,6 +5,9 @@
 
 set -e
 
+# Refresh installed_apps
+./get_installed_apps.sh
+
 # Add a single directory
 # BACKUP_DIRS[downloads]="$USER_HOME/Downloads"
 
@@ -37,21 +40,15 @@ declare -A BACKUP_DIRS=(
     [kde_dolphin]="$HOME/.local/share/dolphin"
 
     # Bibletime
-<<<<<<< Updated upstream
     [bibletime_edit]="$HOME/.local/share/bibledit"
     [bibletime]="$HOME/.bibletime"
     [bibletime_sword]="$HOME/.sword"
 
     # Installed Apps
     [installed_apps]="$HOME/.local/share/installed_apps"
-=======
-    [bibletime]="$HOME/.local/share/bibledit"
-    [bibletime]="$HOME/.bibletime"
-    [bibletime]="$HOME/.sword"
 
-    # Installed Apps
-    [installed_apps]="$HOME/.local/share/.installed_apps"
->>>>>>> Stashed changes
+    #SSH setups
+    [ssh]="$HOME/.ssh"
 )
 
 
