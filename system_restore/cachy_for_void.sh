@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
+#
+LINUX_SRC="$HOME/src"
+LINUX_VERSION="v7.1"
 # DEPENDENCIES
 xbps-install -Syu --repository=https://repo-de.voidlinux.org/current/ base-devel git bc kmod elfutils-devel bash cpio xz lz4 zstd flex bison openssl-devel curl pahole tar python3 patch wget rsync -y
 
 # CLONE REPO
-git clone --depth 1 --branch v7.1 https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux-src
-cd linux-src
+git clone --depth 1 --branch $LINUX_VERSION https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git $LINUX_SRC
+cd $LINUX_SRC
 sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = -cachy/' Makefile
 
 # Apply config
