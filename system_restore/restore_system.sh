@@ -92,15 +92,9 @@ install_zen() {
         https://raw.githubusercontent.com/MalikHw/zb-installer-script/main/install-zen.sh)
 
     if browser_installed zen zen-browser; then
-<<<<<<< Updated upstream
         log "${GREEN}Zen Browser installed!${NC}"
     else
         echo "${YELLOW}Zen Browser installation failed.${NC}" >&2
-=======
-        echo "Zen Browser installed!"
-    else
-        echo "Zen Browser installation failed." >&2
->>>>>>> Stashed changes
         return 1
     fi
 }
@@ -128,34 +122,20 @@ install_brave_debian() {
     sudo apt-get install -y brave-browser
 
     if browser_installed brave brave-browser; then
-<<<<<<< Updated upstream
         log "${GREEN}Brave Browser installed!${NC}"
     else
         log "${RED}Brave Browser installation failed.${NC}" >&2
-=======
-        echo "${GREEN}Brave Browser installed!${NC}"
-    else
-        echo "${RED}Brave Browser installation failed.${NC}" >&2
->>>>>>> Stashed changes
         return 1
     fi
 }
 
 install_brave_pacman() {
     if browser_installed brave brave-browser; then
-<<<<<<< Updated upstream
         log "${YELLOW}Brave Browser is already installed.${NC}"
         return 0
     fi
 
     log "Checking for a ${GREEN}Brave${NC} package in the configured repositories..."
-=======
-        echo "${YELLOW}Brave Browser is already installed.${NC}"
-        return 0
-    fi
-
-    echo "Checking for a ${GREEN}Brave${NC} package in the configured repositories..."
->>>>>>> Stashed changes
 
     local brave_package=""
 
@@ -166,15 +146,9 @@ install_brave_pacman() {
     fi
 
     if [[ -z "$brave_package" ]]; then
-<<<<<<< Updated upstream
         log "Brave Browser was not found in the configured pacman repositories."
         log "Install a compatible Brave package manually, for example through an"
         log "AUR helper, then run this script again."
-=======
-        echo "Brave Browser was not found in the configured pacman repositories."
-        echo "Install a compatible Brave package manually, for example through an"
-        echo "AUR helper, then run this script again."
->>>>>>> Stashed changes
         return 1
     fi
 
@@ -246,17 +220,31 @@ install_packages_pacman() {
 install_packages_xbps() {
     sudo xbps-install -Syu
 
-<<<<<<< Updated upstream
-    # Needs a guard, don't do if done.
-=======
->>>>>>> Stashed changes
-    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" | sudo tee /etc/xbps.d/noid-xbps-repo.conf
-    echo 'repository=https://voidrepo.linuxnauta.com' | sudo tee /etc/xbps.d/linuxnauta.conf
-    echo "repository=https://repo.voiders.dev" | sudo tee /etc/xbps.d/voiders-dev-repo.conf
-    echo "repository=https://sourceforge.net/projects/neko-void/files/repo" | sudo tee /etc/xbps.d/neko-void.conf
+# Configure third-party repositories and install the required repository packages
+# only if this has not already been done.
+if ! {
+    test -f /etc/xbps.d/noid-xbps-repo.conf &&
+    test -f /etc/xbps.d/linuxnauta.conf &&
+    test -f /etc/xbps.d/voiders-dev-repo.conf &&
+    test -f /etc/xbps.d/neko-void.conf &&
+    sudo xbps-query -p pkgver void-repo-nonfree >/dev/null 2>&1 &&
+    sudo xbps-query -p pkgver void-repo-multilib >/dev/null 2>&1
+}; then
+    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" |
+        sudo tee /etc/xbps.d/noid-xbps-repo.conf >/dev/null
+
+    echo "repository=https://voidrepo.linuxnauta.com" |
+        sudo tee /etc/xbps.d/linuxnauta.conf >/dev/null
+
+    echo "repository=https://repo.voiders.dev" |
+        sudo tee /etc/xbps.d/voiders-dev-repo.conf >/dev/null
+
+    echo "repository=https://sourceforge.net/projects/neko-void/files/repo" |
+        sudo tee /etc/xbps.d/neko-void.conf >/dev/null
 
     sudo xbps-install -Syu void-repo-nonfree void-repo-multilib
-<<<<<<< Updated upstream
+fi
+
     sudo xbps-install -Syu
 
     sudo xbps-install -Su
@@ -275,25 +263,6 @@ install_packages_xbps() {
 
     local failed=()
 
-=======
-    sudo xbps-install -Syu void-repo-multilib-nonfree
-    sudo xbps-install -Su
-
-    case $gpu in
-    amd)
-        sudo xbps-install -y mesa-vulkan-radeon mesa-vulkan-radeon-32bit LACT
-        ;;
-    nvidia)
-        sudo xbps-install -y mesa-vulkan-nvidia mesa-vulkan-nvidia-32bit
-        ;;
-    intel)
-        sudo xbps-install -y mesa-vulkan-intel mesa-vulkan-intel-32bit
-        ;;
-    esac
-
-    local failed=()
-
->>>>>>> Stashed changes
     echo "Attempting to install packages for Void."
     for pkg in "${pkg_list[@]}"; do
         log "$YELLOW Installing: $NC $GREEN $pkg $NC"
@@ -305,7 +274,6 @@ install_packages_xbps() {
 
     if ((${#failed[@]})); then
         log "$RED The following packages failed to install: $RED" >&2
-<<<<<<< Updated upstream
         log "$RED${failed[@]}$NC"
         # exit 0 # Need a determination here not to hard fail.
     fi
