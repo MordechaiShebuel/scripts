@@ -5,7 +5,7 @@ SRC="$HOME/src"
 LINUX_SRC="$SRC/linux"
 CACHY_PATCH_SRC="$SRC/cachy-patches"
 
-LINUX_VERSION="v7.2.6"
+LINUX_VERSION="v7.2.7"
 OLD_KERNEL="$(uname -r)"
 
 KVER="${LINUX_VERSION#v}"
@@ -127,6 +127,7 @@ echo "Building kernel: $KERNEL_RELEASE"
 make -j"$(nproc)" bzImage modules
 
 # Install modules
+sudo -v
 sudo make modules_install
 
 # Install kernel image
