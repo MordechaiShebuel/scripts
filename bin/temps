@@ -86,7 +86,7 @@ while true; do
         "${gpu:-N/A}" \
         "${minimum[GPU]:-N/A}" \
         "${maximum[GPU]:-N/A}"
-    printf '│ FREQ   │ %-7s │ %-7s │ %-7s │\n' \
+    printf '│ POWER  │ %-7s │ %-7s │ %-7s │\n' \
         "${ppt:-N/A}W" \
         "${minimum[PPT]:-N/A}W" \
         "${maximum[PPT]:-N/A}W"

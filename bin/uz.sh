@@ -40,31 +40,37 @@ mime_type=$(file -b --mime-type "$archive")
 
 case "$mime_type" in
     application/zip)
-        unzip "$archive"
+        COMMAND=unzip
         ;;
 
     application/x-tar)
-        tar -xvf "$archive"
+        COMMAND=tar
+	ARGUMENT="-xvf"
         ;;
 
     application/gzip | application/x-gzip)
-        tar -xzvf "$archive"
+        COMMAND=tar
+	ARGUMENT="-xzvf"
         ;;
 
     application/x-bzip2 | application/x-bzip)
-        tar -xjvf "$archive"
+        COMMAND=tar
+	ARGUMENT="-xjvf"
         ;;
 
     application/x-xz)
-        tar -xJvf "$archive"
+        COMMAND=tar
+	ARGUMENT="-xJvf"
         ;;
 
     application/x-7z-compressed)
-        7z x "$archive"
+        COMMAND=7z
+	ARGUMENT=x
         ;;
 
     application/x-rar | application/vnd.rar)
-        unrar x "$archive"
+        COMMAND=unrar
+	AGUMENT=x
         ;;
 
     *)
@@ -87,5 +93,5 @@ if [ ! command -v $COMMAND >/dev/null 2>&1; ]; then
     fi
 fi
 
-echo "Extracting: $1"
-$COMMAND $ARGUMENT "$1"
+echo "Extracting: $archive"
+$COMMAND $ARGUMENT "$archive"
