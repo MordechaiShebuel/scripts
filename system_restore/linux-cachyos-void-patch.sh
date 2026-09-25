@@ -1,7 +1,9 @@
 #!/bin/bash
 KVER="6.18.5-1-cachyos"
-SRC="/usr/lib/modules/$KVER/vmlinuz"
-DST="/boot/vmlinuz-$KVER"
+SRC_K="/usr/lib/modules/$KVER/vmlinuz"
+SRC_C="/usr/lib/modules/$KVER/.config"
+DST_K="/boot/vmlinuz-$KVER"
+DST_C="/boot/config-$KVER"
 INITRAMFS="/boot/initramfs-$KVER.img"
 
 [ -f "$SRC" ] || {
@@ -9,7 +11,8 @@ INITRAMFS="/boot/initramfs-$KVER.img"
     exit 1
 }
 
-sudo cp -- "$SRC" "$DST" &&
+sudo cp -- "$SRC_K" "$DST_K" &&
+sudo cp -- "$SRC_C" "$DST_C" &&
 sudo depmod "$KVER" &&
 sudo dracut --force "$INITRAMFS" "$KVER" &&
 sudo test -s "$INITRAMFS" &&

@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+#
+# CONSTANTS
+CPU="k10temp-pci-00c3"
+GPU="amdgpu-pci-0800"
+NVME="nvme-pci-0100"
+
+interval=5
+
+cleanup() {
+    tput cnorm 2>/dev/null
+    printf '\n'
+}
+
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
+
+declare -A minimum
+declare -A maximum
+
+while getopts "n:" opt; do
+    case "$opt" in
+        n) interval="$OPTARG" ;;
+        *) echo "Usage: $0 [-n seconds]"; exit 1 ;;
+    esac
+done
+
+get_sensor_value() {
+    local chip="$1"
+    local sensor="$2"
+
+    sensors "$chip" 2>/dev/null |
+        awk -v sensor="$sensor" '$1 == sensor { print $2; exit }'
+}
+
+update_min_max() {
+    local name="$1"
+    local value="$2"
+
+    [[ -z "$value" ]] && return
+
+    # Remove units and symbols for numeric comparison
+    local number
+    number=$(printf '%s\n' "$value" | sed 's/[^0-9.-]//g')
+
+    [[ -z "$number" ]] && return
+
+    if [[ -z "${minimum[$name]}" ]]; then
+        minimum[$name]="$value"
+        maximum[$name]="$value"
+        return
+    fi
+
+    if awk -v a="$number" -v b="${minimum[$name]//[^0-9.-]/}" \
+        'BEGIN { exit !(a < b) }'; then
+        minimum[$name]="$value"
+    fi
+
+    if awk -v a="$number" -v b="${maximum[$name]//[^0-9.-]/}" \
+        'BEGIN { exit !(a > b) }'; then
+        maximum[$name]="$value"
+    fi
+}
+
+while true; do
+    cpu=$(get_sensor_value "$CPU" "Tctl:")
+    gpu=$(get_sensor_value "$GPU" "edge:")
+    ppt=$(get_sensor_value "$GPU" "PPT:")
+    nvme=$(get_sensor_value "$NVME" "Composite:")
+
+    update_min_max CPU "$cpu"
+    update_min_max GPU "$gpu"
+    update_min_max PPT "$ppt"
+    update_min_max NVME "$nvme"
+
+    clear
+
+    printf '┌────────┬─────────┬─────────┬─────────┐\n'
+    printf '│ Sensor │ Current │ Min     │ Max     │\n'
+    printf '├────────┼─────────┼─────────┼─────────┤\n'
+    printf '│ CPU    │ %-7s │ %-7s │ %-7s │\n' \
+        "${cpu:-N/A}" \
+        "${minimum[CPU]:-N/A}" \
+        "${maximum[CPU]:-N/A}"
+    printf '│ GPU    │ %-7s │ %-7s │ %-7s │\n' \
+        "${gpu:-N/A}" \
+        "${minimum[GPU]:-N/A}" \
+        "${maximum[GPU]:-N/A}"
+    printf '│ FREQ   │ %-7s │ %-7s │ %-7s │\n' \
+        "${ppt:-N/A}W" \
+        "${minimum[PPT]:-N/A}W" \
+        "${maximum[PPT]:-N/A}W"
+    printf '│ NVME   │ %-7s │ %-7s │ %-7s │\n' \
+        "${nvme:-N/A}" \
+        "${minimum[NVME]:-N/A}" \
+        "${maximum[NVME]:-N/A}"
+    printf '└────────┴─────────┴─────────┴─────────┘\n'
+
+    sleep "$interval"
+done
