@@ -2,6 +2,17 @@
 # Omarchy on Void?!
 # HELL YES!
 # Backup current .zshrc
+# VERSION 0.2 - install works, loads with noctalia
+# BUGS: What doesn't work
+# FIXED: SUPER+D doesn't open launcher - most of the other binds are working
+# IP: Theming is not consistent, QT apps are still in light mode, even with colors theming in QT5/QT6 (used qt6ct)
+# Sound is not functioning - this could be similar to the problem I was having with COSMIC.
+# Applications that have a SUDO style popup, that log in prompt is not appearing. (EX: VPN app)
+
+# Further improvements:
+# INSTALL floating dock
+# can I get extension store from Omarchy working?
+
 cp $HOME/.zshrc $HOME/.zshrc-bak
 
 # Change the creepy anime fetish background
@@ -19,22 +30,25 @@ fi
 # Update repos
 sudo xbps-install -S
 
+# DISABLE THIS SECTION, custom hyprland repo is having ABI issues
+
 # Setup hyprland repo if necessary
-if [[ ! $(command -v hyprland) ]]; then
-    echo "hyprland not found, setting up repo."
-    echo "repository=https://raw.githubusercontent.com/sofijacom/hyprland-void/repository-x86_64-glibc" | sudo tee /etc/xbps.d/hyprland-void.conf
-    sudo xbps-install -S hyprland
-fi
+# if [[ ! $(command -v hyprland) ]]; then
+#    echo "hyprland not found, setting up repo."
+#    echo "repository=https://raw.githubusercontent.com/sofijacom/hyprland-void/repository-x86_64-glibc" | sudo tee /etc/xbps.d/hyprland-void.conf
+#    sudo xbps-install -S hyprland
+# fi
 
 # Install Hyprland and dependencies
 sudo xbps-install -S \
-    hyprland waybar swaylock swayidle grim wl-clipboard \
+    hyprland hyprland-guiutils waybar swaylock \
+    swayidle grim wl-clipboard wofi\
     mako rofi-wayland wofi wl-clipboard wlr-randr \
     xdg-desktop-portal-hyprland xdg-desktop-portal \
     alacritty kitty foot neovim thunar \
     brightnessctl playerctl pamixer \
     network-manager-applet blueman \
-    polkit-gnome gnome-keyring \
+    polkit-gnome gnome-keyring papirus-icon-theme \
     qt5ct qt6ct qt5-styleplugins \
     xorg-server-xwayland xorg-fonts
 
@@ -56,36 +70,79 @@ mkdir -p ~/.config/hypr
 
 # Create Hyprland config
 tee ~/.config/hypr/hyprland.conf <<'EOF'
-# Wallpaper
-exec-once = swww init
-exec-once = swww img ~/.config/wallpapers/wallpaper.jpg
+# ============================================================================
+# HYPRLAND CONFIG - Omarchy on Void (Compatible with older Hyprland versions)
+# ============================================================================
 
-# Set DISPLAY manually (runit doesn't handle this automatically)
-exec-once = export DISPLAY=:0
+# Monitor configuration
+monitor = ,preferred,auto,1
 
-# Start services directly (no systemctl)
+# ============================================================================
+# AUTOSTART
+# ============================================================================
+
+exec-once = noctalia
 exec-once = waybar
 exec-once = swayidle -w timeout 300 'swaylock -f' before-sleep 'swaylock -f'
 exec-once = mako
 exec-once = nm-applet --indicator
 exec-once = blueman-applet
 exec-once = /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+exec-once = swww init
+exec-once = swww img ~/.config/wallpapers/wallpaper.jpg
 
-# Keybinds
-$mainMod = SUPER
+# ============================================================================
+# INPUT CONFIGURATION (Older Hyprland compatible)
+# ============================================================================
 
-bind = $mainMod, RETURN, exec, alacritty
-bind = $mainMod, D, exec, wofi --show drun
-bind = $mainMod, Q, killactive,
-bind = $mainMod, F, fullscreen, 1
+input {
+    kb_layout = us
+    follow_mouse = 1
+    sensitivity = 0
+}
 
-# Keybinds
+# ============================================================================
+# GENERAL
+# ============================================================================
+
+general {
+    gaps_in = 5
+    gaps_out = 10
+    border_size = 2
+    col.active_border = 0xff89b4fa
+    col.inactive_border = 0xff45475a
+    layout = dwindle
+    allow_tearing = false
+}
+
+decoration {
+    rounding = 10
+}
+
+animations {
+    enabled = true
+    bezier = myBezier, 0.05, 0.9, 0.1, 1.05
+    animation = windows, 1, 5, myBezier
+    animation = windowsOut, 1, 5, default, popin 80%
+    animation = border, 1, 10, default
+    animation = borderangle, 1, 8, default
+    animation = fade, 1, 5, default
+    animation = workspaces, 1, 6, default
+}
+
+dwindle {
+    preserve_split = true
+}
+
+# KEYBINDS
+# ============================================================================
+
 $mainMod = SUPER
 
 # Terminal
-bind = $mainMod, RETURN, exec, alacritty
+bind = $mainMod, Return, exec, alacritty
 
-# App Launcher (wofi)
+# App Launcher
 bind = $mainMod, D, exec, wofi --show drun
 
 # Close window
@@ -94,19 +151,44 @@ bind = $mainMod, Q, killactive,
 # Fullscreen
 bind = $mainMod, F, fullscreen, 1
 
-# Workspaces
+# Toggle floating
+bind = $mainMod, Space, togglefloating,
+
+# Move focus with arrow keys
+bind = $mainMod, left, movefocus, l
+bind = $mainMod, right, movefocus, r
+bind = $mainMod, up, movefocus, u
+bind = $mainMod, down, movefocus, d
+
+# Workspaces (1-5)
 bind = $mainMod, 1, workspace, 1
 bind = $mainMod, 2, workspace, 2
 bind = $mainMod, 3, workspace, 3
 bind = $mainMod, 4, workspace, 4
 bind = $mainMod, 5, workspace, 5
 
-# Move windows between workspaces
+# Move windows to workspaces
 bind = $mainMod SHIFT, 1, movetoworkspace, 1
 bind = $mainMod SHIFT, 2, movetoworkspace, 2
 bind = $mainMod SHIFT, 3, movetoworkspace, 3
 bind = $mainMod SHIFT, 4, movetoworkspace, 4
 bind = $mainMod SHIFT, 5, movetoworkspace, 5
+
+# Volume control (if available)
+bind = , XF86AudioRaiseVolume, exec, pamixer -i 5
+bind = , XF86AudioLowerVolume, exec, pamixer -d 5
+bind = , XF86AudioMute, exec, pamixer -t
+
+# Brightness control (if available)
+bind = , XF86MonBrightnessUp, exec, brightnessctl set +10%
+bind = , XF86MonBrightnessDown, exec, brightnessctl set 10%-
+
+# Screenshot
+bind = $mainMod, Print, exec, grim -g "$(slurp)" - | wl-copy
+bind = , Print, exec, grim ~/Pictures/screenshot-$(date +%s).png
+
+# Lock screen
+bind = $mainMod CTRL, L, exec, swaylock -f
 EOF
 
 # Create Waybar config directory if it doesn't exist
@@ -158,12 +240,8 @@ sudo xbps-install -S \
     qt6-svg-devel \
     qt6-tools
 
-git clone https://github.com/quickshell-mirror/quickshell.git ~/quickshell
-cd ~/quickshell
-cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release
-cmake --install build
-sudo make install
-
+# Noctalia shell based option:
+sudo xbps-install -S noctalia
 
 # Install swww (wallpaper utility)
 sudo xbps-install -S swww

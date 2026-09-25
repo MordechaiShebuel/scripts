@@ -18,20 +18,49 @@ I'm developing a pattern of querying the LLM for code generation / debugging and
   - There has been a lot of drama in the Artix forums surrounding Xlibre and SonicDE. They aren't wrong that both are alpha state right now with bugs. However, the response and over reaction by the Artix team and completely pulling support for these projects has been a source of frustration for me. I've read numerous forum posts regarding this topic, and accusations from the Artix team that personal attacks were made. They never provided evidence, not once I've asked for it, never seen it. 
   - The over reaction and sudden pulling of support for these projects is affirms my platform agnostic goal in this repo. If one project dies or DEIS going woke (and I honestly consider what happened here a symptom of wokeness) then you have a way to get back up and running quickly on another system. I've expanded the Devuan (Deb13) section accordingly, and the related support Python scripts. I've done some testing with Vendefoul/wolf and Peppermint, which are both Devuan-based and should work with this repo. It truly makes me sad Artix was my favorite distro, I had it installed on all my computers, even my server.
 
+- Update September 25th, 20206:
+  - Lots done this past month, switched to Void Linux, got scripts up to work with that as well
+  - Been testing other desktops in Void, the Xlibre repo is broken, trying to open an issue there
+  - SonicDE is also extremely buggy, not sure how to file a bug on the issue as nothing is working
+  - Cosmic has no sound, think this is related to how Void/Vostok do Pipewire out of the box
+  - Hyprland, got this working with Noctalia, there are still some quirks, issues after running that script
+    - Sound doesn't work (Pipewire issue like Cosmic)
+    - Admin pop ups (like for Nym) aren't working
+    - QT apps are not themed correctly, they are all in light mode. Tried several fixes, not working still
+
 ## restore_system.sh
 - This became my primary focus, get this working and if something goes wrong it's easy to restore the system to a prior working state.
 - Current iteration tries to minimize password inputs
 - If something happens during install, it should not try to re-install applications. 
 - Had to patch in an NTP fix, Artix wasn't automatically updating time via NTP. This caused Nym to fail, fix is to download ntp-client, set up service and patch service. 
   - Long term this should have a python file to aid in automation.
+- Latest version requires a list of apps to function properly, I kept the deprecated versions with an _ in front
 
-## install_nym.py
+# Applications
+
+## Games
+
+### Sonic Robo Blast 2
+- Run install script ./applications/games/install_srb2.sh
+- Presently is void specific, build libraries may vary per distro
+- Should result in runnable game 
+
+## Nym-Vpn installers
+
+### nym_install
+- This was a stock SystemD installer, it now uses Runit
+- This should work with any system that uses Runit, Devuan, Void, Artix.
+- Made a few other improvements over their stock installer, version is settable at top of script
+
+### install_nym.py
 - Run with `python install_nym.py`
     - Will escalate to root priveleges as needed.
 1. Uses trizen (through install script, could be made platform agnostic for OMLx and Vendewolf) to install nym-vpn and nym-vpnd
 2. Creates OpenRC script
 3. Starts OpenRC script
 - If there is an issue while running the script, it will restore to the state that existed before running it.
+
+# DevOps
 
 ## Platform agnostic DevOps
 - These currently support OpenMandriva, Devuan/Vendewolf and Artix. These are also mirrored to the `support` directory (not stored in repo) and copied to the $HOME folder when you run the `restore_system.sh` script.
