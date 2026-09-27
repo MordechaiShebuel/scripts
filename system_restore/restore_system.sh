@@ -310,6 +310,10 @@ fi
     ./enable_cups.sh
 
     ./linux-cachyos-void-patch.sh
+
+    # VOSTOK FIX
+    sudo rm /etc/sddm.conf.d/vostok.conf
+
 }
 
 install_packages_dnf() {

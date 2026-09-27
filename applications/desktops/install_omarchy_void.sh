@@ -2,7 +2,7 @@
 # Omarchy on Void?!
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.2 - install works, loads with noctalia
+# VERSION 0.3 - install works, loads with noctalia
 # BUGS: What doesn't work
 # FIXED: SUPER+D doesn't open launcher - most of the other binds are working
 # IP: Theming is not consistent, QT apps are still in light mode, even with colors theming in QT5/QT6 (used qt6ct)
@@ -10,14 +10,14 @@
 # Applications that have a SUDO style popup, that log in prompt is not appearing. (EX: VPN app)
 
 # Further improvements:
-# INSTALL floating dock
+# IP: INSTALL floating dock
 # can I get extension store from Omarchy working?
 
 cp $HOME/.zshrc $HOME/.zshrc-bak
 
 # Change the creepy anime fetish background
 # Install a nice wallpaper (example)
-mkdir -p ~/.config/wallpapers
+mkdir -p ~/.config/wallpapersa
 wget -O ~/.config/wallpapers/wallpaper.jpg https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80
 
 
@@ -33,37 +33,32 @@ sudo xbps-install -S
 # DISABLE THIS SECTION, custom hyprland repo is having ABI issues
 
 # Setup hyprland repo if necessary
-# if [[ ! $(command -v hyprland) ]]; then
-#    echo "hyprland not found, setting up repo."
-#    echo "repository=https://raw.githubusercontent.com/sofijacom/hyprland-void/repository-x86_64-glibc" | sudo tee /etc/xbps.d/hyprland-void.conf
-#    sudo xbps-install -S hyprland
-# fi
+if ! {
+    test -f /etc/xbps.d/00-repository-main.conf
+}; then
+    echo "hyprland installer: setting up repo."
+    echo "1i repository=https://mirror.black-hole.dev/x86_64/" |
+        sudo tee /etc/xbps.d/00-repository-main.conf >/dev/null
+    sudo xbps-install -S
+fi
 
 # Install Hyprland and dependencies
 sudo xbps-install -S \
-    hyprland hyprland-guiutils waybar swaylock \
-    swayidle grim wl-clipboard wofi\
-    mako rofi-wayland wofi wl-clipboard wlr-randr \
-    xdg-desktop-portal-hyprland xdg-desktop-portal \
-    alacritty kitty foot neovim thunar \
-    brightnessctl playerctl pamixer \
-    network-manager-applet blueman \
-    polkit-gnome gnome-keyring papirus-icon-theme \
-    qt5ct qt6ct qt5-styleplugins \
-    xorg-server-xwayland xorg-fonts
+     hyprland hyprland-guiutils swaylock \
+     swayidle grim wl-clipboard kvantum\
+     mako wofi wl-clipboard wlr-randr \
+     xdg-desktop-portal-hyprland xdg-desktop-portal \
+     alacritty foot neovim Thunar \
+     brightnessctl playerctl pamixer \
+     network-manager-applet blueman \
+     polkit-gnome gnome-keyring papirus-icon-theme \
+     qt6ct hyprland-qt-support \
+     xorg-server-xwayland xorg-fonts hyprpolkitagent \
+     noctalia swww plank
 
 # Install recommended fonts
 sudo xbps-install -S \
-    ttf-jetbrains-mono ttf-font-awesome ttf-nerd-fonts-symbols \
-    ttf-ubuntu-font-family
-
-# Clone Omarchy config (using a working fork)
-if [[ ! -d ~/.config/Omarchy ]]; then
-    git clone https://github.com/gh0stzk/Omarchy.git ~/.config/Omarchy || \
-    git clone https://github.com/omacom/omadots.git ~/.config/Omarchy
-    cd ~/.config/Omarchy
-    ./install.sh
-fi
+    ttf-jetbrains-mono font-awesome
 
 # Create Hyprland configs directory if it doesn't exist
 mkdir -p ~/.config/hypr
@@ -81,15 +76,19 @@ monitor = ,preferred,auto,1
 # AUTOSTART
 # ============================================================================
 
-exec-once = noctalia
-exec-once = waybar
-exec-once = swayidle -w timeout 300 'swaylock -f' before-sleep 'swaylock -f'
-exec-once = mako
-exec-once = nm-applet --indicator
-exec-once = blueman-applet
-exec-once = /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
-exec-once = swww init
-exec-once = swww img ~/.config/wallpapers/wallpaper.jpg
+exec-once = pipewire &
+exec-once = pipewire-pulse &
+exec-once = wireplumber &
+exec-once = noctalia &
+exec-once = waybar &
+exec-once = plank &
+exec-once = swayidle -w timeout 300 'swaylock -f' before-sleep 'swaylock -f' &
+exec-once = mako &
+exec-once = nm-applet --indicator &
+exec-once = /usr/bin/octoxbps-notifier &
+exec-once = hyprpolkitagent &
+exec-once = swww init &
+exec-once = swww img ~/.config/wallpapers/wallpaper.jpg &
 
 # ============================================================================
 # INPUT CONFIGURATION (Older Hyprland compatible)
@@ -138,12 +137,14 @@ dwindle {
 # ============================================================================
 
 $mainMod = SUPER
+$secondMod = ALT
 
 # Terminal
 bind = $mainMod, Return, exec, alacritty
 
 # App Launcher
 bind = $mainMod, D, exec, wofi --show drun
+bind = $secondMod, SPACE, wofi --show drun
 
 # Close window
 bind = $mainMod, Q, killactive,
@@ -200,7 +201,7 @@ tee ~/.config/waybar/config <<'EOF'
   "layer": "top",
   "modules-left": ["hyprland/workspaces", "hyprland/window"],
   "modules-center": ["tray"],
-  "modules-right": ["network", "cpu", "memory", "temperature", "battery", "clock"],
+  "modules-right": ["network", "cpu", "memory", "temperature", "clock"],
   "tray-position": "right"
 }
 EOF
@@ -208,12 +209,29 @@ EOF
 # Create Waybar style file
 tee ~/.config/waybar/style.css <<'EOF'
 * {
-    font-family: "JetBrainsMono Nerd Font";
+    font-family: "CaskaydiaCove Nerd Font";
     font-size: 12px;
     background-color: #282828;
     color: #ebdbb2;
 }
 EOF
+
+cat >> ~/.zshrc <<'EOF'
+
+# QT Platform and Theme Configuration
+export QT_QPA_PLATFORMTHEME=qt6ct
+export QT_QPA_PLATFORM=wayland
+export QT_STYLE_OVERRIDE=kvantum
+export QT_AUTO_SCREEN_SCALE_FACTOR=1
+
+# QT5 Support (if still using QT5 apps)
+export QT5_QPA_PLATFORMTHEME=qt5ct
+
+# Wayland-specific (important for Hyprland)
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=0
+export QT_QPA_PLATFORM_PLUGIN_PATH=/usr/lib/qt6/plugins
+EOF
+
 
 # Setup runit services
 echo "Setting up runit services..."
@@ -224,27 +242,6 @@ sudo ln -sf /etc/sv/blueman /var/service/ 2>/dev/null
 if [[ ! -f ~/.xinitrc ]]; then
     echo "exec Hyprland" > ~/.xinitrc
 fi
-
-echo "Installing quickshell"
-sudo xbps-install -S \
-    cmake ninja gcc gcc-objc++ \
-    pkg-config \
-    wayland-devel \
-    libxkbcommon-devel \
-    libinput-devel \
-    libseat-devel \
-    qt6-shadertools \
-    qt6-base-devel \
-    qt6-declarative-devel \
-    qt6-wayland-devel \
-    qt6-svg-devel \
-    qt6-tools
-
-# Noctalia shell based option:
-sudo xbps-install -S noctalia
-
-# Install swww (wallpaper utility)
-sudo xbps-install -S swww
 
 echo "Installation complete!"
 echo "You can now start Hyprland by running 'startx' or configure your display manager."
