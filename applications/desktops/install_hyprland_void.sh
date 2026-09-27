@@ -2,8 +2,10 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.40 - install works, loads with noctalia
+# VERSION 0.41 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
+# Added functional screenshots, it wasn't working with the package list before.
+# Cleaned up packages that aren't needed, still need to do more review here.
 # IP: Theming is not consistent, QT apps are still in light mode, even with colors theming in QT5/QT6 (used qt6ct)
 #   Theme is dark, but web pages aren't detecting this and not displaying in dark mode.
 #   Dolphin looks like ass. Screen is dark, fonts are black
@@ -45,13 +47,13 @@ fi
 # Install Hyprland and dependencies
 sudo xbps-install -S \
      hyprland hyprland-guiutils swaylock \
-     swayidle grim wl-clipboard kvantum\
+     swayidle grim grimshot slurp wl-clipboard kvantum\
      mako wofi wl-clipboard wlr-randr \
      xdg-desktop-portal-hyprland xdg-desktop-portal \
-     alacritty foot neovim Thunar \
+     alacritty Thunar \
      brightnessctl playerctl pamixer \
      network-manager-applet blueman \
-     polkit-gnome gnome-keyring papirus-icon-theme \
+     gnome-keyring papirus-icon-theme \
      qt6ct hyprland-qt-support \
      xorg-server-xwayland xorg-fonts hyprpolkitagent \
      noctalia swww crystal-dock ttf-jetbrains-mono font-awesome
