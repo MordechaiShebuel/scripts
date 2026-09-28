@@ -2,21 +2,26 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.41 - install works, loads with noctalia
+# VERSION 0.43 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
-# Cleaned up packages that aren't needed, still need to do more review here.
+# Cleaned up packages that aren't needed, still need to do more review here!
+# Switched from soon to be obsolete .conf to .lua
+# Got DBUS properly working, system tray bug now fixed
 # IP: Theming is not consistent, QT apps are still in light mode, even with colors theming in QT5/QT6 (used qt6ct)
 #   Theme is dark, but web pages aren't detecting this and not displaying in dark mode.
 #   Dolphin looks like ass. Screen is dark, fonts are black
-
+# CURRENT BUGS:
+# Fixed: Apps (like Nym-VPN) not minimizing to tray, was working on compiling solution
+#   hyperland-minimizer (Won't need to work on this project now)
+# - Lockscreen needs serious improvements, bg image? remove while watching video or playing game?
 # Further improvements:
 # can I get extension store from Omarchy working?
 # IP: Kvantum fixed outer window theming and pop-up dialogs, inner theming is still light mode.
-# Lock screen is too vague, no image
-# Need to improve Nym-Vpn launcher, presently having to launch from console.
-# Add Nym-Vpn to autostart
-# Will need to convert setup for 0.57 migration, need to research
+# FIXED: Lock screen is too vague, no image - Switched to hyprlock
+# FIXED: Need to improve Nym-Vpn launcher, presently having to launch from console. (Wasn't hyprland related, not sure how KDE launchers were working)
+# FIXED: Add Nym-Vpn to autostart
+# FIXED: Will need to convert setup for 0.57 migration, need to research
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -46,8 +51,8 @@ fi
 
 # Install Hyprland and dependencies
 sudo xbps-install -S \
-     hyprland hyprland-guiutils swaylock \
-     swayidle grim grimshot slurp wl-clipboard kvantum\
+     hyprland hyprland-guiutils hyprlock \
+     swayidle grim grimshot slurp kvantum\
      mako wofi wl-clipboard wlr-randr \
      xdg-desktop-portal-hyprland xdg-desktop-portal \
      alacritty Thunar \
@@ -65,7 +70,7 @@ mkdir -p ~/.config/hypr
 tee "$HOME/.config/hypr/show-shortcuts.sh" < hyprland/show-shortcuts.sh
 
 # Create Hyprland config
-tee "$HOME/.config/hypr/hyprland.conf" < hyprland/hyprland.conf
+tee "$HOME/.config/hypr/hyprland.lua" < hyprland/hyprland.lua
 
 # Fix alacritty settings
 # Create Alacritty config file
@@ -95,6 +100,9 @@ sudo ln -sf /etc/sv/blueman /var/service/ 2>/dev/null
 if [[ ! -f ~/.xinitrc ]]; then
     echo "exec Hyprland" > ~/.xinitrc
 fi
+
+echo "Apply fix to dbus-session"
+hyprland/./fix_dbus.sh
 
 echo "Installation complete!"
 echo "You can now start Hyprland by running 'startx' or configure your display manager."
