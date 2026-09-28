@@ -2,23 +2,23 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.44 - install works, loads with noctalia
+# VERSION 0.45 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
 # Cleaned up packages that aren't needed, still need to do more review here!
 # Switched from soon to be obsolete .conf to .lua
 # Got DBUS properly working, system tray bug now fixed
 # refixed audio after converting to LUA, missed that the LLM cut that out of my script.
-# IP: Theming is not consistent, QT apps are still in light mode, even with colors theming in QT5/QT6 (used qt6ct)
+# FIXED: Theming is not consistent, QT apps are still in light mode, even with colors theming in QT5/QT6 (used qt6ct)
 #   Theme is dark, but web pages aren't detecting this and not displaying in dark mode.
-#   Dolphin looks like ass. Screen is dark, fonts are black
+#   Dolphin looks like GREAT. Screen is dark, fonts are white
 # CURRENT BUGS:
 # Fixed: Apps (like Nym-VPN) not minimizing to tray, was working on compiling solution
 #   hyperland-minimizer (Won't need to work on this project now)
-# - Lockscreen needs serious improvements, bg image? remove while watching video or playing game?
 # Further improvements:
 # can I get extension store from Omarchy working?
-# IP: Kvantum fixed outer window theming and pop-up dialogs, inner theming is still light mode.
+# FIXED: Kvantum fixed outer window theming and pop-up dialogs, inner theming is still light mode.
+#   - Created script to fix most theming issues, I'd say over 95%, only seeing issues in a few apps now
 # FIXED: Lock screen is too vague, no image - Switched to hyprlock
 # FIXED: Need to improve Nym-Vpn launcher, presently having to launch from console. (Wasn't hyprland related, not sure how KDE launchers were working)
 # FIXED: Add Nym-Vpn to autostart
@@ -104,6 +104,9 @@ fi
 
 echo "Apply fix to dbus-session"
 hyprland/./fix_dbus.sh
+
+echo "Apply fixes for QT theming"
+hyprland/./fix_qt_theming.sh
 
 echo "Installation complete!"
 echo "You can now start Hyprland by running 'startx' or configure your display manager."

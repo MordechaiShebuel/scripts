@@ -8,6 +8,9 @@ hl.monitor({
 })
 
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
+hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
+hl.env("QT_STYLE_OVERRIDE", "kvantum")
+hl.env("QTWEBENGINE_CHROMIUM_FLAGS", "--blink-settings=forceDarkModeEnabled=true")
 
 hl.config({
     general = {
@@ -23,6 +26,7 @@ hl.config({
     },
     decoration = {
         rounding = 10,
+        inactive_opacity = 0.85,
     },
     input = {
         kb_layout = "us",
@@ -31,6 +35,14 @@ hl.config({
     },
     dwindle = {
         preserve_split = true,
+    },
+    animations = {
+        enabled = true,
+        animation = {
+            "windows, 1, 7, default",
+            "windowsOut, 1, 7, default, popin 80%",
+            "fade, 1, 7, myBezier",
+        },
     },
 })
 
@@ -85,7 +97,7 @@ hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }))
 -- Workspaces 1-5 + move window to workspace
 for i = 1, 5 do
     hl.bind(mainMod .. " + " .. i,           hl.dsp.focus({ workspace = i }))
-    hl.bind(mainMod .. " + SHIFT + " .. i, eyes to see  hl.dsp.window.move({ workspace = i }))
+    hl.bind(mainMod .. " + SHIFT + " .. i,   hl.dsp.window.move({ workspace = i }))
 end
 
 -- Volume
