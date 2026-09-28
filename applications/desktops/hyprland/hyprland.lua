@@ -76,8 +76,8 @@ local secondMod = "ALT"
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("alacritty"))
 
 -- App Launcher
-hl.bind(mainMod .. " + D",      hl.dsp.exec_cmd("wofi --show drun"))
-hl.bind(secondMod .. " + SPACE", hl.dsp.exec_cmd("wofi --show drun"))
+hl.bind(mainMod .. " + D",      hl.dsp.exec_cmd("walker"))
+hl.bind(secondMod .. " + SPACE", hl.dsp.exec_cmd("walker"))
 
 -- Close window
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())

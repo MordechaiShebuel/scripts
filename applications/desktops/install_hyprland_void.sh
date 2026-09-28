@@ -2,13 +2,14 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.45 - install works, loads with noctalia
+# VERSION 0.46 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
 # Cleaned up packages that aren't needed, still need to do more review here!
 # Switched from soon to be obsolete .conf to .lua
 # Got DBUS properly working, system tray bug now fixed
 # refixed audio after converting to LUA, missed that the LLM cut that out of my script.
+# Switched launcher from Wofi to Walker. Walker by default looks better, and was easy to theme.
 # FIXED: Theming is not consistent, QT apps are still in light mode, even with colors theming in QT5/QT6 (used qt6ct)
 #   Theme is dark, but web pages aren't detecting this and not displaying in dark mode.
 #   Dolphin looks like GREAT. Screen is dark, fonts are white
@@ -54,7 +55,7 @@ fi
 sudo xbps-install -S \
      hyprland hyprland-guiutils hyprlock \
      swayidle grim grimshot slurp kvantum\
-     wofi wl-clipboard wlr-randr \
+     walker wl-clipboard wlr-randr \
      xdg-desktop-portal-hyprland xdg-desktop-portal \
      alacritty Thunar \
      brightnessctl playerctl pamixer \
@@ -107,6 +108,9 @@ hyprland/./fix_dbus.sh
 
 echo "Apply fixes for QT theming"
 hyprland/./fix_qt_theming.sh
+
+echo "Apply theme fixes for walker"
+hyprland/./setup_walker_theme.sh
 
 echo "Installation complete!"
 echo "You can now start Hyprland by running 'startx' or configure your display manager."

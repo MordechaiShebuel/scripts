@@ -1,0 +1,46 @@
+@define-color foreground #cdd6f4;
+@define-color background #11111b;
+@define-color color1 #89b4fa;
+
+#window {
+  color: @foreground;
+}
+
+#box {
+  background: @background;
+  border: 2px solid @color1;
+  border-radius: 10px;
+  padding: 32px;
+
+  box-shadow:
+    0 19px 38px rgba(0, 0, 0, 0.30),
+    0 15px 12px rgba(0, 0, 0, 0.22);
+}
+
+#search {
+  background: #181825;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+#prompt,
+#clear,
+#input,
+#typeahead {
+  color: @foreground;
+}
+
+child {
+  padding: 8px;
+  border-radius: 8px;
+}
+
+child:selected,
+child:hover {
+  background: alpha(@color1, 0.22);
+  border: 1px solid @color1;
+}
+
+#sub {
+  color: #a6adc8;
+}
