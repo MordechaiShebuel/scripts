@@ -44,7 +44,8 @@ hl.window_rule({
 -- Autostart
 hl.on("hyprland.start", function()
     -- Keep this list short while testing
-    hl.exec_cmd("mako")
+    hl.exec_cmd("/usr/bin/pipewire")
+    hl.exec_cmd("/usr/bin/pipewire -c pipewire-pulse.conf")
     hl.exec_cmd("noctalia")
     hl.exec_cmd("swayidle -w before-sleep 'hyprlock'")
     hl.exec_cmd("nm-applet --indicator")
@@ -84,7 +85,7 @@ hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }))
 -- Workspaces 1-5 + move window to workspace
 for i = 1, 5 do
     hl.bind(mainMod .. " + " .. i,           hl.dsp.focus({ workspace = i }))
-    hl.bind(mainMod .. " + SHIFT + " .. i,   hl.dsp.window.move({ workspace = i }))
+    hl.bind(mainMod .. " + SHIFT + " .. i, eyes to see  hl.dsp.window.move({ workspace = i }))
 end
 
 -- Volume
@@ -109,3 +110,6 @@ hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd("swaylock -f"))
 hl.bind(mainMod .. " + slash",
     hl.dsp.exec_cmd("~/.config/hypr/show-shortcuts.sh", { float = true, center = true })
 )
+
+-- Reload Hyprland config
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))

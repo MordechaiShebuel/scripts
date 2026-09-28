@@ -2,12 +2,13 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.43 - install works, loads with noctalia
+# VERSION 0.44 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
 # Cleaned up packages that aren't needed, still need to do more review here!
 # Switched from soon to be obsolete .conf to .lua
 # Got DBUS properly working, system tray bug now fixed
+# refixed audio after converting to LUA, missed that the LLM cut that out of my script.
 # IP: Theming is not consistent, QT apps are still in light mode, even with colors theming in QT5/QT6 (used qt6ct)
 #   Theme is dark, but web pages aren't detecting this and not displaying in dark mode.
 #   Dolphin looks like ass. Screen is dark, fonts are black
@@ -53,7 +54,7 @@ fi
 sudo xbps-install -S \
      hyprland hyprland-guiutils hyprlock \
      swayidle grim grimshot slurp kvantum\
-     mako wofi wl-clipboard wlr-randr \
+     wofi wl-clipboard wlr-randr \
      xdg-desktop-portal-hyprland xdg-desktop-portal \
      alacritty Thunar \
      brightnessctl playerctl pamixer \
