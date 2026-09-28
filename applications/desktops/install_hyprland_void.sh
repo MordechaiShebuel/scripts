@@ -24,6 +24,7 @@
 # FIXED: Need to improve Nym-Vpn launcher, presently having to launch from console. (Wasn't hyprland related, not sure how KDE launchers were working)
 # FIXED: Add Nym-Vpn to autostart
 # FIXED: Will need to convert setup for 0.57 migration, need to research
+# Need to revisit QT Icons, text is better, general theme matches Hyprland/Noctalia - icons are black on grey, making them difficult to see.
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -65,6 +66,9 @@ sudo xbps-install -S \
      xorg-server-xwayland xorg-fonts hyprpolkitagent \
      noctalia swww crystal-dock ttf-jetbrains-mono font-awesome
 
+# Make directory for screenshots:
+mkdir -P "$HOME/Pictures/screenshots"
+
 # Create Hyprland configs directory if it doesn't exist
 mkdir -p ~/.config/hypr
 
@@ -73,6 +77,9 @@ tee "$HOME/.config/hypr/show-shortcuts.sh" < hyprland/show-shortcuts.sh
 
 # Create Hyprland config
 tee "$HOME/.config/hypr/hyprland.lua" < hyprland/hyprland.lua
+
+# Create hyprlock settings
+tee "$HOME/.config/hypr/hyprlock.lua" < hyprlock.lua
 
 # Fix alacritty settings
 # Create Alacritty config file

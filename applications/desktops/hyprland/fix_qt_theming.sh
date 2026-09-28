@@ -30,6 +30,9 @@ for conf in ~/.config/dolphinrc ~/.config/falkon/falkon.conf ~/.config/kdeglobal
     fi
 done
 
+# Set ICON to Papirus-Dark
+sed -i 's/icon_theme=.*/icon_theme=Papirus-Dark/' ~/.config/qt6ct/qt6ct.conf
+
 echo ""
 echo "Done! Restart Dolphin and Falkon for the changes to take effect."
 echo "You can do:  killall dolphin falkon; dolphin & falkon &"

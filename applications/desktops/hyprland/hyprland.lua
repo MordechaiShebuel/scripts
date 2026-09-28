@@ -112,11 +112,11 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"), { lo
 -- Screenshots
 hl.bind(mainMod .. " + Print",                 hl.dsp.exec_cmd("grimshot --notify save area"))
 hl.bind(secondMod .. " + CTRL + SHIFT + 4",    hl.dsp.exec_cmd("grimshot --notify copy area"))
-hl.bind(secondMod .. " + SHIFT + 4",           hl.dsp.exec_cmd("grimshot --notify save area ~/Pictures/screenshot-$(date +%s).png"))
+hl.bind(secondMod .. " + SHIFT + 4",           hl.dsp.exec_cmd("grimshot --notify save area ~/Pictures/screenshots/screenshot-$(date +%s).png"))
 hl.bind(secondMod .. " + Print",               hl.dsp.exec_cmd("grimshot --notify save output"))
 
 -- Lock screen
-hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd("swaylock -f"))
+hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd("hyprlock --grace 5"))
 
 -- Shortcut help screen
 hl.bind(mainMod .. " + slash",
