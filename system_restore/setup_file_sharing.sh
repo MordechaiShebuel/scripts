@@ -26,7 +26,7 @@ if [[ -z "$USER_HOME" || ! -d "$USER_HOME" ]]; then
 fi
 
 MOUNT_POINT="$USER_HOME/shared/local-server"
-FSTAB_LINE="$SERVER:/ $MOUNT_POINT nfs defaults,_netdev,timeo=50,retrans=2 0 0"
+FSTAB_LINE="$SERVER:/ $MOUNT_POINT nfs defaults,_netdev,nofail,timeo=50,retrans=2 0 0"
 
 # Create the mount-point directory if necessary
 if [ ! -d "$MOUNT_POINT" ]; then
@@ -66,28 +66,85 @@ fi
 echo "Creating cron job for shared mount check"
 # Create Chron job to mount if lost
 SCRIPT="/usr/local/sbin/check-shared-mount"
-CRON_LINE="*/5 * * * * /usr/local/sbin/check-shared-mount"
+CRON_LINE="*/2 * * * * /usr/local/sbin/check-shared-mount"
 
 # Create the mount-check script if it does not exist
 if [ ! -e "$SCRIPT" ]; then
     tee "$SCRIPT" >/dev/null <<EOF
 #!/bin/sh
 
-MOUNTPOINT="/home/${USERNAME}/shared/local-server"
+MOUNTPOINT="/home/mshalom/shared/local-server"
 LOGFILE="/var/log/check-shared-mount.log"
+LOCKDIR="/run/check-shared-mount.lock"
+SERVER="10.0.0.147"
 
-if ! /usr/bin/mountpoint -q "\$MOUNTPOINT"; then
-    printf '%s: Mount is unavailable; attempting to mount it\n' "\$(date)" >> "\$LOGFILE"
+if ! mkdir "$LOCKDIR" 2>/dev/null; then
+    exit 0
+fi
 
-    if /usr/bin/mount "\$MOUNTPOINT" >> "\$LOGFILE" 2>&1; then
-        printf '%s: Mount succeeded\n' "\$(date)" >> "\$LOGFILE"
+trap 'rmdir "$LOCKDIR"' EXIT INT TERM
+
+log() {
+    printf '%s: %s\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOGFILE"
+}
+
+vpn_active() {
+    /usr/bin/ip link show tun0 >/dev/null 2>&1 ||
+    /usr/bin/ip link show tun1 >/dev/null 2>&1
+}
+
+is_mounted() {
+    /usr/bin/mountpoint -q "$MOUNTPOINT"
+}
+
+# Disconnect the NFS mount whenever either VPN tunnel is active.
+if vpn_active; then
+    if is_mounted; then
+        log "VPN active; lazily unmounting NFS share"
+        /usr/bin/umount -l "$MOUNTPOINT" >> "$LOGFILE" 2>&1
     else
-        printf '%s: Mount failed\n' "\$(date)" >> "\$LOGFILE"
+        log "VPN active; NFS share is not mounted"
+    fi
+    exit 0
+fi
+
+# If it is mounted, check if it's responding.
+if is_mounted; then
+    if /usr/bin/timeout 5 /usr/bin/stat "$MOUNTPOINT/." \
+        >/dev/null 2>&1; then
+        log "NFS mount is healthy and responding"
+        exit 0
+    else
+        # Mount is stale; unmount it before retrying
+        log "NFS mount is stale; lazily unmounting"
+        /usr/bin/umount -l "$MOUNTPOINT" >> "$LOGFILE" 2>&1
+        sleep 2
+    fi
+fi
+
+# Do not mount unless TCP/2049 is accepting connections.
+if ! /usr/bin/timeout 5 /usr/bin/nc -z "$SERVER" 2049 \
+    >/dev/null 2>&1; then
+    log "NFS port 2049 is unavailable; skipping mount"
+    exit 0
+fi
+
+if ! is_mounted; then
+    log "NFS share is not mounted; attempting to mount it"
+
+    if /usr/bin/timeout -k 2 20 /usr/bin/mount "$MOUNTPOINT" \
+        >> "$LOGFILE" 2>&1; then
+        log "Mount succeeded"
+    else
+        log "Mount failed or timed out"
     fi
 fi
 EOF
 
     chmod 755 "$SCRIPT"
+    sudo touch /var/log/check-shared-mount.log
+    sudo chmod 644 /var/log/check-shared-mount.log
     echo "Created: $SCRIPT"
 else
     echo "$SCRIPT already exists; leaving it unchanged"

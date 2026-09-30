@@ -852,7 +852,7 @@ tee "$LOCALBIN/nym-vpn" <<'EOF'
 
 set -e
 
-EXTRACT_DIR="/home/mbuel/.cache/nym-vpn-appimage"
+EXTRACT_DIR="$HOME/.cache/nym-vpn-appimage"
 APPIMAGE="/usr/bin/NymVPN.AppImage"
 ROOT="$EXTRACT_DIR/squashfs-root"
 

@@ -5,6 +5,39 @@
 
 set -e
 
+# Color output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Arguments
+USB_PATH="${1:?Error: USB path required as first argument}"
+USERNAME="${2:-$USER}"
+HOSTNAME="${3:-$(hostname)}"
+
+# Validate USB path
+if [ ! -d "$USB_PATH" ]; then
+    echo -e "${RED}Error: USB path '$USB_PATH' does not exist${NC}"
+    exit 1
+fi
+
+# Check if user exists
+if ! id "$USERNAME" &>/dev/null; then
+    echo -e "${RED}Error: User '$USERNAME' does not exist${NC}"
+    exit 1
+fi
+
+USER_HOME="/home/$USERNAME"
+BACKUP_ROOT="$USB_PATH/$HOSTNAME/$USERNAME"
+CURRENT_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="$BACKUP_ROOT/$CURRENT_TIMESTAMP"
+LATEST_LINK="$BACKUP_ROOT/latest"
+
+# Create backup directory structure
+mkdir -p "$BACKUP_DIR"
+
 # Refresh installed_apps
 ./get_installed_apps.sh
 
@@ -50,40 +83,6 @@ declare -A BACKUP_DIRS=(
     #SSH setups
     [ssh]="$HOME/.ssh"
 )
-
-
-# Color output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Arguments
-USB_PATH="${1:?Error: USB path required as first argument}"
-USERNAME="${2:-$USER}"
-HOSTNAME="${3:-$(hostname)}"
-
-# Validate USB path
-if [ ! -d "$USB_PATH" ]; then
-    echo -e "${RED}Error: USB path '$USB_PATH' does not exist${NC}"
-    exit 1
-fi
-
-# Check if user exists
-if ! id "$USERNAME" &>/dev/null; then
-    echo -e "${RED}Error: User '$USERNAME' does not exist${NC}"
-    exit 1
-fi
-
-USER_HOME="/home/$USERNAME"
-BACKUP_ROOT="$USB_PATH/$HOSTNAME/$USERNAME"
-CURRENT_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="$BACKUP_ROOT/$CURRENT_TIMESTAMP"
-LATEST_LINK="$BACKUP_ROOT/latest"
-
-# Create backup directory structure
-mkdir -p "$BACKUP_DIR"
 
 echo -e "${BLUE}═══════════════════════════════════════${NC}"
 echo -e "${YELLOW}Starting incremental backup${NC}"
@@ -144,6 +143,21 @@ FAILED=0
 for name in "${!BACKUP_DIRS[@]}"; do
     backup_dir "${BACKUP_DIRS[$name]}" "$name" || FAILED=1
 done
+
+# Do not leave an invalid backup behind
+if [ "$BACKED_UP" -eq 0 ]; then
+    echo "No valid source directories were found."
+    echo "No backup was created and 'latest' was not changed."
+    rm -rf "$TEMP_BACKUP_DIR"
+    exit 1
+fi
+
+# Do not publish a backup if a fatal rsync error occurred
+if [ "$FAILED" -ne 0 ]; then
+    echo "Backup failed. Removing incomplete backup."
+    rm -rf "$TEMP_BACKUP_DIR"
+    exit 1
+fi
 
 # Update latest symlink
 rm -f "$LATEST_LINK"
