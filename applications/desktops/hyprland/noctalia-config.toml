@@ -152,6 +152,19 @@ app_icon_colorize = false
 font_family = "Noto Sans"
 polkit_agent = true
 
+    [shell.screenshot]
+    save_to_file         = true
+    directory            = "~/Pictures/screenshots"
+    filename_pattern     = "screenshot_%Y%m%d_%H%M%S"
+    copy_to_clipboard    = true
+    freeze_screen        = true
+    confirm_region       = false
+    remember_last_region = false
+    show_cursor          = false
+    annotate             = true
+    close_on_copy        = true
+    close_on_save        = true
+
     [shell.launcher.providers.emoji]
     global = true
 

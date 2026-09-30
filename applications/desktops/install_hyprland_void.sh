@@ -2,7 +2,7 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.47 - install works, loads with noctalia
+# VERSION 0.48 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
 # Cleaned up packages that aren't needed, still need to do more review here!
@@ -11,10 +11,13 @@
 # refixed audio after converting to LUA, missed that the LLM cut that out of my script.
 # Switched launcher from Wofi to Walker. Walker by default looks better, and was easy to theme.
 # Using Noctalia launcher, polkit, and dock. Massive clean up in startup script, and theme uniformity
-#
+# Switched terminal emulator from alacritty to ghostty, allows for goal of emulating MacOS keybindings
+# Switched screenshots to use Noctalia's built-in toolchain
+
 # Current Feature Requests:
 # Compare Omarchy shortcuts to my own, take what seems like it could work
 # Add screenshots to help screen
+# Finish mapping relevant MacOS shortcuts to key bindings
 
 # CURRENT BUGS:
 
@@ -48,17 +51,14 @@ fi
 # Install Hyprland and dependencies
 sudo xbps-install -S \
      hyprland hyprland-guiutils \
-     grim grimshot slurp kvantum\
-     wl-clipboard wlr-randr \
+     kvantum wl-clipboard wlr-randr \
      xdg-desktop-portal-hyprland xdg-desktop-portal \
-     xdg-desktop-portal-gtk alacritty Thunar \
+     xdg-desktop-portal-gtk ghostty Thunar \
      brightnessctl playerctl pamixer \
-     blueman \
-     gnome-keyring papirus-icon-theme \
+     blueman gnome-keyring papirus-icon-theme \
      qt6ct hyprland-qt-support \
-     xorg-server-xwayland xorg-fonts hyprpolkitagent \Changed SwayLock to HyprLock.
-     Update to QT theming that seems to fix icon issues with dark themes.
-     noctalia swww crystal-dock ttf-jetbrains-mono font-awesome
+     xorg-server-xwayland xorg-fonts \
+     noctalia ttf-jetbrains-mono font-awesome
 
 # Make directory for screenshots:
 mkdir -P "$HOME/Pictures/screenshots"
@@ -69,17 +69,16 @@ mkdir -p ~/.config/hypr
 # Copy shortcut helper
 tee "$HOME/.config/hypr/show-shortcuts.sh" < hyprland/show-shortcuts.sh
 
-# Create Hyprland config
+# Create/update Hyprland config
 tee "$HOME/.config/hypr/hyprland.lua" < hyprland/hyprland.lua
 
-# Create hyprlock settings
+# Create/update hyprlock settings
 tee "$HOME/.config/hypr/hyprlock.lua" < hyprlock.lua
 
-# Fix alacritty settings
-# Create Alacritty config file
-tee "$HOME/.config/alacritty/alacritty.toml" < hyprland/alacritty.toml
+# Create/update ghostty settings
+tee "$HOME/.config/ghostty/config" < hyprland/ghostty-config
 
-# Create Noctalia Config
+# Create/update Noctalia Config
 tee "$HOME/.config/noctalia/noctalia-config.toml" < hyprland/noctalia-config.toml
 
 cat >> ~/.zshrc <<'EOF'
