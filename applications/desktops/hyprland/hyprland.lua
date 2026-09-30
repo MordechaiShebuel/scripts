@@ -1,5 +1,28 @@
 -- ~/.config/hypr/hyprland.lua
 
+local function send_shortcut_once(mods, key)
+    return function()
+        hl.dispatch(hl.dsp.send_key_state({
+            mods = mods,
+            key = key,
+            state = "down",
+            window = "activewindow",
+        }))
+
+        hl.timer(function()
+            hl.dispatch(hl.dsp.send_key_state({
+                mods = mods,
+                key = key,
+                state = "up",
+                window = "activewindow",
+            }))
+        end, {
+            timeout = 50,
+            type = "oneshot",
+        })
+    end
+end
+
 hl.monitor({
     output   = "",
     mode     = "preferred",
@@ -47,10 +70,13 @@ hl.config({
 })
 
 hl.window_rule({
-    name  = "hyprland-shortcuts",
-    match = { title = "^Hyprland Shortcuts$" },  -- adjust if the real title is different
-    float = true,
-    center = true,
+  name  = "hyprland-shortcuts",
+  match = {
+    class = "com.mitchellh.ghostty",
+    title = "^Hyprland Shortcuts$",
+  },
+  float  = true,
+  center = true,
 })
 
 -- Autostart
@@ -83,7 +109,7 @@ hl.bind(mainMod .. " + W", hl.dsp.window.close())
 hl.bind(mainMod .. " + CTRL + F", hl.dsp.window.fullscreen({ mode = 1 }))
 
 -- Toggle floating
-hl.bind(mainMod .. " + Space", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + ALT + Space", hl.dsp.window.float({ action = "toggle" }))
 
 -- Move focus with arrow keys
 hl.bind(mainMod .. " + left",          hl.dsp.focus({ direction = "left" }))
@@ -131,23 +157,27 @@ hl.bind(mainMod .. " + CTRL + SHIFT + 3",
 hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd("noctalia msg session lock"))
 
 -- Shortcut help screen
-hl.bind(mainMod .. " + slash",
-    hl.dsp.exec_cmd("~/.config/hypr/show-shortcuts.sh", { float = true, center = true }))
+hl.bind(mainMod .. " + h",
+  hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/show-shortcuts.sh"))
+-- hl.bind(mainMod .. " + h",
+--     hl.dsp.exec_cmd("notify-send test"))
 
 -- Reload Hyprland config
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
 
 -- Mac-style overlays (Super = Cmd equivalent)
 -- Duck.ai recommendation, doesn't work.
-hl.bind(mainMod .. " + c", hl.dsp.send_shortcut({ mods = "CTRL", key = "Insert" }))   -- copy
-hl.bind(mainMod .. " + x", hl.dsp.send_shortcut({ mods = "CTRL", key = "x" }))        -- cut
-hl.bind(mainMod .. " + v", hl.dsp.send_shortcut({ mods = "SHIFT", key = "Insert" }))  -- paste
-hl.bind(mainMod .. " + s", hl.dsp.send_shortcut({ mods = "CTRL", key = "s" }))        -- save
-hl.bind(mainMod .. " + t", hl.dsp.send_shortcut({ mods = "CTRL", key = "t" }))        -- new tab
-hl.bind(mainMod .. " + p", hl.dsp.send_shortcut({ mods = "CTRL", key = "p" }))       -- print
-hl.bind(mainMod .. " + f", hl.dsp.send_shortcut({ mods = "CTRL", key = "f" }))        -- find
-hl.bind(mainMod .. " + z", hl.dsp.send_shortcut({ mods = "CTRL", key = "z" }))        -- undo
-hl.bind(mainMod .. " + a", hl.dsp.send_shortcut({ mods = "CTRL", key = "a" }))        -- select-all
-hl.bind(mainMod .. " + CTRL + q", hl.dsp.exec_cmd("noctalia msg session lock"))       -- lock screen
+hl.bind(mainMod .. " + b", send_shortcut_once("CTRL", "b"))   -- app specific, close browser bar in coding apps
+hl.bind(mainMod .. " + c", send_shortcut_once("CTRL", "Insert"))   -- copy
+hl.bind(mainMod .. " + x", send_shortcut_once("CTRL", "x"))        -- cut
+hl.bind(mainMod .. " + v", send_shortcut_once("SHIFT", "Insert" ))  -- paste
+hl.bind(mainMod .. " + s", send_shortcut_once("CTRL", "s"))        -- save
+hl.bind(mainMod .. " + t", send_shortcut_once("CTRL", "t"))        -- new tab
+hl.bind(mainMod .. " + p", send_shortcut_once("CTRL", "p"))       -- print
+hl.bind(mainMod .. " + f", send_shortcut_once("CTRL", "f"))        -- find
+hl.bind(mainMod .. " + z", send_shortcut_once("CTRL", "z"))        -- undo
+hl.bind(mainMod .. " + a", send_shortcut_once("CTRL", "a"))        -- select-all
+hl.bind(mainMod .. " + slash", send_shortcut_once("CTRL", "slash"))        -- app specfic for code editors, enable remark / disable remark
 hl.bind(mainMod .. " + ALT + q", hl.dsp.window.kill())       -- Force kill app
 hl.bind(mainMod .. " + ALT + escape", hl.dsp.window.kill())       -- Force kill app
+hl.bind(mainMod .. " + CTRL + q", hl.dsp.exec_cmd("noctalia msg session lock"))      -- lock screen

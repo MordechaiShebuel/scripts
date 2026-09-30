@@ -28,10 +28,5 @@ SUPER + CTRL + L     Lock screen
 
 EOF
 
-alacritty -T "Hyprland Shortcuts" -e bash -c "
-  cat '$tmp'
-  printf '\nPress any key to close...'
-  read -n 1
-"
-
+ghostty --class=hyprland-shortcuts --title="Hyprland Shortcuts" -e less "$tmp"
 rm -f "$tmp"
