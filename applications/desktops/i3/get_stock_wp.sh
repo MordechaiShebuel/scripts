@@ -1,5 +1,5 @@
 # Replace the stock Hyprland wallpaper
-printf 'Replace stock Hyprland photo with something safer? [Y/n] '
+printf 'Retrieve a stock default wallpaper? [Y/n] '
 read -r answer
 
 case "$answer" in
@@ -9,7 +9,7 @@ case "$answer" in
     *)
         wallpaper_dir="$HOME/Pictures/wallpapers"
         wallpaper_file="$wallpaper_dir/wallpaper.jpg"
-        wallpaper_url='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80'
+        wallpaper_url='https://wallpapers.com/images/featured/most-beautiful-nature-pictures-hdb30wtkjbn08xlf.jpg'
 
         mkdir -p "$wallpaper_dir"
 

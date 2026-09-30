@@ -2,7 +2,7 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.48 - install works, loads with noctalia
+# VERSION 0.4.91 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
 # Cleaned up packages that aren't needed, still need to do more review here!
@@ -13,14 +13,21 @@
 # Using Noctalia launcher, polkit, and dock. Massive clean up in startup script, and theme uniformity
 # Switched terminal emulator from alacritty to ghostty, allows for goal of emulating MacOS keybindings
 # Switched screenshots to use Noctalia's built-in toolchain
+# Fixed bug I created by switching from Alacritty to Ghostty, help screen not displaying
 
 # Current Feature Requests:
 # Compare Omarchy shortcuts to my own, take what seems like it could work
 # Add screenshots to help screen
 # Finish mapping relevant MacOS shortcuts to key bindings
+# Make an actual app for help instead of just a terminal
 
 # CURRENT BUGS:
-
+# Help screen needs updated with latest shortcuts
+# IP: Occasionaly activating keybind (mac style overlays) results in a looping affect in key presses
+#   Potentially fixed, need to do some more testing
+# DONE: SUPER+SPACE had two actions assigned, was wondering why it wasn't doing what I expected, thought I misunderstood what "floating" meant.
+#   - Fixed
+# GHOSTTY is having strange rendering issues with ssh.
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -33,7 +40,7 @@ echo "Updating System before beginning"
 sudo xbps-install -Syu
 
 # First backup shell config
-hyprland/./backup_shell_config.sh
+../../bin/./backup_shell_config.sh
 
 # Change background?
 hyprland/./get_safe_wp.sh
@@ -81,6 +88,7 @@ tee "$HOME/.config/ghostty/config" < hyprland/ghostty-config
 # Create/update Noctalia Config
 tee "$HOME/.config/noctalia/noctalia-config.toml" < hyprland/noctalia-config.toml
 
+# TODO: this needs to check to see if these are already added, probably should be encapsulated in it's own script
 cat >> ~/.zshrc <<'EOF'
 # QT Platform and Theme Configuration
 export QT_QPA_PLATFORMTHEME=kvantum

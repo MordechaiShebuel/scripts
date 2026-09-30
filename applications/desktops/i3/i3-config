@@ -1,0 +1,75 @@
+set $mod Mod4
+
+font pango:JetBrains Mono 10
+
+# Terminal and launcher
+bindsym $mod+Return exec zutty
+bindsym $mod+d exec rofi -show drun
+bindsym $mod+Shift+d exec rofi -show run
+
+# Window management
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+
+bindsym $mod+f fullscreen toggle
+bindsym $mod+Shift+space floating toggle
+
+# Workspaces
+set $ws1 "1"
+set $ws2 "2"
+set $ws3 "3"
+set $ws4 "4"
+set $ws5 "5"
+
+bindsym $mod+1 workspace $ws1
+bindsym $mod+2 workspace $ws2
+bindsym $mod+3 workspace $ws3
+bindsym $mod+4 workspace $ws4
+bindsym $mod+5 workspace $ws5
+
+bindsym $mod+Shift+1 move container to workspace $ws1
+bindsym $mod+Shift+2 move container to workspace $ws2
+bindsym $mod+Shift+3 move container to workspace $ws3
+bindsym $mod+Shift+4 move container to workspace $ws4
+bindsym $mod+Shift+5 move container to workspace $ws5
+
+# Layouts
+bindsym $mod+e layout toggle split
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+
+# i3 controls
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'Exit i3?' -b 'Yes' 'i3-msg exit'"
+
+# Useful hardware controls
+bindsym XF86AudioRaiseVolume exec --no-startup-id pamixer -i 5
+bindsym XF86AudioLowerVolume exec --no-startup-id pamixer -d 5
+bindsym XF86AudioMute exec --no-startup-id pamixer -t
+
+bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl set +5%
+bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 5%-
+
+# Use Polybar rather than i3bar
+bar {
+    mode invisible
+}
+
+# Authentication agent
+exec --no-startup-id /usr/libexec/xfce-polkit
+
+# Compositor
+exec --no-startup-id picom
+
+# Desktop components
+exec_always --no-startup-id sh -c 'pkill -x polybar; polybar macos'
+exec_always --no-startup-id plank
+exec --no-startup-id feh --no-fehbg --bg-fill "$HOME/Pictures/wallpapers/wallpaper.jpg"
