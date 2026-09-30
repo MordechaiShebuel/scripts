@@ -59,12 +59,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("/usr/bin/pipewire")
     hl.exec_cmd("/usr/bin/pipewire -c pipewire-pulse.conf")
     hl.exec_cmd("noctalia")
-    hl.exec_cmd("swayidle -w before-sleep 'hyprlock'")
     hl.exec_cmd("nm-applet --indicator")
-    hl.exec_cmd("/usr/libexec/hyprpolkitagent")
     hl.exec_cmd("swww-daemon")
-    hl.exec_cmd("sleep 1 && swww img ~/Pictures/wallpapers/wallpaper.jpg")
-    hl.exec_cmd("QT_QPA_PLATFORMTHEME=qt6ct crystal-dock")
     hl.exec_cmd("nym-vpn")
     hl.exec_cmd("~/.config/hypr/show-shortcuts.sh")
 end)
@@ -76,11 +72,12 @@ local secondMod = "ALT"
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("alacritty"))
 
 -- App Launcher
-hl.bind(mainMod .. " + D",      hl.dsp.exec_cmd("walker"))
-hl.bind(secondMod .. " + SPACE", hl.dsp.exec_cmd("walker"))
+hl.bind(mainMod .. " + D",      hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"))
+hl.bind(secondMod .. " + SPACE", hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"))
 
 -- Close window
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
+hl.bind(mainMod .. " + W", hl.dsp.window.close())
 
 -- Fullscreen (1 = maximize)
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
@@ -89,10 +86,12 @@ hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
 hl.bind(mainMod .. " + Space", hl.dsp.window.float({ action = "toggle" }))
 
 -- Move focus with arrow keys
-hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
-hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
-hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "up" }))
-hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }))
+hl.bind(mainMod .. " + left",          hl.dsp.focus({ direction = "left" }))
+hl.bind(mainMod .. " + TAB",           hl.dsp.focus({ direction = "left" }))
+hl.bind(mainMod .. " + right",         hl.dsp.focus({ direction = "right" }))
+hl.bind(mainMod .. " + SHIFT + TAB",   hl.dsp.focus({ direction = "right" }))
+hl.bind(mainMod .. " + up",            hl.dsp.focus({ direction = "up" }))
+hl.bind(mainMod .. " + down",          hl.dsp.focus({ direction = "down" }))
 
 -- Workspaces 1-5 + move window to workspace
 for i = 1, 5 do
@@ -112,16 +111,22 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"), { lo
 -- Screenshots
 hl.bind(mainMod .. " + Print",                 hl.dsp.exec_cmd("grimshot --notify save area"))
 hl.bind(secondMod .. " + CTRL + SHIFT + 4",    hl.dsp.exec_cmd("grimshot --notify copy area"))
-hl.bind(secondMod .. " + SHIFT + 4",           hl.dsp.exec_cmd("grimshot --notify save area ~/Pictures/screenshots/screenshot-$(date +%s).png"))
+hl.bind(secondMod .. " + SHIFT + 4",           hl.dsp.exec_cmd("grimshot --notify save area ~/Pictures/screenshot-$(date +%s).png"))
 hl.bind(secondMod .. " + Print",               hl.dsp.exec_cmd("grimshot --notify save output"))
 
 -- Lock screen
-hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd("hyprlock --grace 5"))
+hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd("noctalia msg session lock"))
 
 -- Shortcut help screen
 hl.bind(mainMod .. " + slash",
-    hl.dsp.exec_cmd("~/.config/hypr/show-shortcuts.sh", { float = true, center = true })
-)
+    hl.dsp.exec_cmd("~/.config/hypr/show-shortcuts.sh", { float = true, center = true }))
 
 -- Reload Hyprland config
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
+
+-- Mac-style save/copy/cut/paste (Super = Cmd equivalent)
+-- Duck.ai recommendation, doesn't work.
+hl.bind(mainMod .. " + s",             hl.dsp.exec_cmd("xdotool key ctrl+s"))
+hl.bind(mainMod .. " + c",             hl.dsp.exec_cmd("xdotool key ctrl+c"))
+hl.bind(mainMod .. " + x",             hl.dsp.exec_cmd("xdotool key ctrl+x"))
+hl.bind(mainMod .. " + v",             hl.dsp.exec_cmd("xdotool key ctrl+v"))
