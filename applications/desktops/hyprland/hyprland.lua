@@ -60,7 +60,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("/usr/bin/pipewire -c pipewire-pulse.conf")
     hl.exec_cmd("noctalia")
     hl.exec_cmd("nm-applet --indicator")
-    hl.exec_cmd("swww-daemon")
+    hl.exec_cmd("octoxbps-notifier")
     hl.exec_cmd("nym-vpn")
     hl.exec_cmd("~/.config/hypr/show-shortcuts.sh")
 end)
@@ -69,18 +69,18 @@ local mainMod   = "SUPER"
 local secondMod = "ALT"
 
 -- Terminal
-hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("alacritty"))
+hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("ghostty"))
 
 -- App Launcher
 hl.bind(mainMod .. " + D",      hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"))
-hl.bind(secondMod .. " + SPACE", hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"))
 
 -- Close window
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + W", hl.dsp.window.close())
 
 -- Fullscreen (1 = maximize)
-hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
+hl.bind(mainMod .. " + CTRL + F", hl.dsp.window.fullscreen({ mode = 1 }))
 
 -- Toggle floating
 hl.bind(mainMod .. " + Space", hl.dsp.window.float({ action = "toggle" }))
@@ -108,11 +108,24 @@ hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("pamixer -t"),   { locked = true
 hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl set +10%"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"), { locked = true, repeating = true })
 
--- Screenshots
-hl.bind(mainMod .. " + Print",                 hl.dsp.exec_cmd("grimshot --notify save area"))
-hl.bind(secondMod .. " + CTRL + SHIFT + 4",    hl.dsp.exec_cmd("grimshot --notify copy area"))
-hl.bind(secondMod .. " + SHIFT + 4",           hl.dsp.exec_cmd("grimshot --notify save area ~/Pictures/screenshot-$(date +%s).png"))
-hl.bind(secondMod .. " + Print",               hl.dsp.exec_cmd("grimshot --notify save output"))
+local ipc = "noctalia msg "
+
+-- macOS-style screenshots (secondMod ≈ Cmd)
+-- ⌘⇧3  full screen (focused output)
+hl.bind(mainMod .. " + SHIFT + 3",
+  hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen"))
+
+-- ⌘⇧4  region
+hl.bind(mainMod .. " + CTRL + SHIFT + 4",
+  hl.dsp.exec_cmd(ipc .. "screenshot-region"))
+
+-- Multi-monitor: picker (≈ “choose display”)
+hl.bind(mainMod .. " + SHIFT + 5",
+  hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen pick"))
+
+-- All monitors as one image
+hl.bind(mainMod .. " + CTRL + SHIFT + 3",
+    hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen all"))
 
 -- Lock screen
 hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd("noctalia msg session lock"))
@@ -124,9 +137,17 @@ hl.bind(mainMod .. " + slash",
 -- Reload Hyprland config
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
 
--- Mac-style save/copy/cut/paste (Super = Cmd equivalent)
+-- Mac-style overlays (Super = Cmd equivalent)
 -- Duck.ai recommendation, doesn't work.
-hl.bind(mainMod .. " + s",             hl.dsp.exec_cmd("xdotool key ctrl+s"))
-hl.bind(mainMod .. " + c",             hl.dsp.exec_cmd("xdotool key ctrl+c"))
-hl.bind(mainMod .. " + x",             hl.dsp.exec_cmd("xdotool key ctrl+x"))
-hl.bind(mainMod .. " + v",             hl.dsp.exec_cmd("xdotool key ctrl+v"))
+hl.bind(mainMod .. " + c", hl.dsp.send_shortcut({ mods = "CTRL", key = "Insert" }))   -- copy
+hl.bind(mainMod .. " + x", hl.dsp.send_shortcut({ mods = "CTRL", key = "x" }))        -- cut
+hl.bind(mainMod .. " + v", hl.dsp.send_shortcut({ mods = "SHIFT", key = "Insert" }))  -- paste
+hl.bind(mainMod .. " + s", hl.dsp.send_shortcut({ mods = "CTRL", key = "s" }))        -- save
+hl.bind(mainMod .. " + t", hl.dsp.send_shortcut({ mods = "CTRL", key = "t" }))        -- new tab
+hl.bind(mainMod .. " + p", hl.dsp.send_shortcut({ mods = "CTRL", key = "p" }))       -- print
+hl.bind(mainMod .. " + f", hl.dsp.send_shortcut({ mods = "CTRL", key = "f" }))        -- find
+hl.bind(mainMod .. " + z", hl.dsp.send_shortcut({ mods = "CTRL", key = "z" }))        -- undo
+hl.bind(mainMod .. " + a", hl.dsp.send_shortcut({ mods = "CTRL", key = "a" }))        -- select-all
+hl.bind(mainMod .. " + CTRL + q", hl.dsp.exec_cmd("noctalia msg session lock"))       -- lock screen
+hl.bind(mainMod .. " + ALT + q", hl.dsp.window.kill())       -- Force kill app
+hl.bind(mainMod .. " + ALT + escape", hl.dsp.window.kill())       -- Force kill app
