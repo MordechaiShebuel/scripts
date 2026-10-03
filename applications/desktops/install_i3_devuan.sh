@@ -1,5 +1,6 @@
 #!/bin/bash
-# dwm on Devuan?! (Inspired by DHH and Hyprland and Chris Titus)
+# i3 on Devuan?! (Inspired by DHH and Hyprland and Chris Titus)
+# After seeing how well tiling plugin works on XFCE, I may not spend much more time on this
 # HELL YES!
 # Backup current .zshrc
 # VERSION 0.0.9 - install works, loads with noctalia
@@ -77,6 +78,7 @@ export MOZ_ENABLE_WAYLAND=0
 EOF
 
 # TODO: this needs to check to see if these are already added, probably should be encapsulated in it's own script
+# TODO: kvantum is not available on Devuan
 cat >> ~/.zshrc <<'EOF'
 # QT Platform and Theme Configuration
 export QT_QPA_PLATFORMTHEME=kvantum
@@ -86,10 +88,6 @@ export QT_AUTO_SCREEN_SCALE_FACTOR=1
 
 # QT5 Support (if still using QT5 apps)
 export QT5_QPA_PLATFORMTHEME=kvantum
-
-# Wayland-specific (important for Hyprland)
-export QT_WAYLAND_DISABLE_WINDOWDECORATION=0
-export QT_QPA_PLATFORM_PLUGIN_PATH=/usr/lib/qt6/plugins
 EOF
 
 echo "Installation complete!"
