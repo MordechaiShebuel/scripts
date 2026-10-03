@@ -5,7 +5,7 @@ SRC="$HOME/src"
 LINUX_SRC="$SRC/linux"
 CACHY_PATCH_SRC="$SRC/cachy-patches"
 
-LINUX_VERSION="v7.2.7"
+LINUX_VERSION="v7.2.8"
 OLD_KERNEL="$(uname -r)"
 
 KVER="${LINUX_VERSION#v}"
@@ -32,7 +32,7 @@ require_space_gib "$HOME/src" 16 # 25 is recommended amount of space free
 
 ## Download and Apply Patches
 PATCH_GROUPS=(
-    cachyos-fixes-patches-v8
+    cachyos-fixes-patches-v9
     cpu-cachyos-patches
     bore-patches
     # gaming-sched-patches-v2
@@ -71,6 +71,9 @@ fi
 
 cd "$LINUX_SRC"
 mkdir -p patches
+# clean prior potential builds
+git reset --hard "$LINUX_VERSION"
+git clean -fdx
 
 # Download patches individually instead of entire repo
 for PATCH_GROUP in "${PATCH_GROUPS[@]}"; do
@@ -83,10 +86,6 @@ for PATCH_GROUP in "${PATCH_GROUPS[@]}"; do
         }
     done
 done
-
-# clean prior potential builds
-git reset --hard "$LINUX_VERSION"
-git clean -fdx
 
 # Set local kernel suffix
 sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = -cachy/' Makefile
@@ -160,6 +159,9 @@ echo "Building kernel: $KERNEL_RELEASE"
 
 # Build once
 make -j$(($(nproc)/2)) bzImage modules
+
+# NEED TO PAUSE HERE WAIT FOR HUMAN
+read -p "Compile portion completed, Press [Enter] key to continue with kernel install..."   
 
 # Install modules
 sudo -v
