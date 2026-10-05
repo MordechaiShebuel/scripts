@@ -1,3 +1,4 @@
+#!/bin/bash
 # Read distribution information.
 if [[ ! -r /etc/os-release ]]; then
     echo "Cannot determine the operating system." >&2

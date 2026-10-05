@@ -2,7 +2,7 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.4.93 - install works, loads with noctalia
+# VERSION 0.4.94 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
 # Cleaned up packages that aren't needed, still need to do more review here!
@@ -20,24 +20,13 @@
 # DONE: Add screenshots to help screen
 # DONE: Finish mapping relevant MacOS shortcuts to key bindings
 # DONE: Make an actual app for help instead of just a terminal
-# Use Noctalia / greetd instead of sddm
+# Use Noctalia / greetd or lightdm instead of sddm
+#   This has been a massive headache - I think I may have it narrowed down to an agetty conflict, out of tokens.
 # DONE: Make shortcut for logout/restart/shutdown popup that is currently activated from panel
 
 # CURRENT BUGS:
-# DONE: Help screen needs updated with latest shortcuts
-#   Made dynamic app, needs a little more work but it reads shortcuts without having to edit a second file.
-# DONE: Occasionaly activating keybind (mac style overlays) results in a looping affect in key presses
-#   Potentially fixed, need to do some more testing
-#   Haven't seen this issue resurface
-# DONE: SUPER+SPACE had two actions assigned, was wondering why it wasn't doing what I expected, thought I misunderstood what "floating" meant.
-#   - Fixed
-# IP: GHOSTTY is having strange rendering issues with ssh.
-#   Fix required sending a manual command to host computer
-#   infocmp -x xterm-ghostty | ssh mshalom@server.lan 'mkdir -p ~/.terminfo && tic -x -'
-# DONE: ON a "slow" load, it displays the anime background, need to change that
-#   Changed all three pictures, setup script to do so.
-# DONE: HOW DO I ENABLE NUM LOCK?
-#   Have a possible fix in place, after reboot will know if it worked
+# Headphones in Steam don't seem to work, but unplugged and speakers did
+#   Headphones work with other apps, Zen - Youtube.
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -115,6 +104,11 @@ EOF
 
 echo "Apply fixes for QT theming"
 hyprland/./fix_qt_theming.sh
+
+echo "Fix GTK themes"
+sudo xbps-install -S nwg-look gnome-themes-extra
+
+# You'll need to run nwg-look to set this to a dark theme
 
 # Setup runit services
 echo "Setting up runit services..."
