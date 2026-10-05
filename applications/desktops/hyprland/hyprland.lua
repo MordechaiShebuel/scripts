@@ -96,10 +96,10 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("/usr/bin/pipewire")
     hl.exec_cmd("/usr/bin/pipewire -c pipewire-pulse.conf")
     hl.exec_cmd("noctalia")
-    hl.exec_cmd("nm-applet --indicator")
+    hl.exec_cmd("nohup steam >/dev/null 2>&1 &")
     hl.exec_cmd("octoxbps-notifier")
     hl.exec_cmd("nym-vpn")
-    hl.exec_cmd("~/.config/hypr/show-shortcuts.sh")
+    hl.exec_cmd(os.getenv("HOME") .. "$HOME/.config/hypr/keybind_viewer $HOME/.config/hypr/hyprland.lua")
 end)
 
 local mainMod   = "SUPER"
