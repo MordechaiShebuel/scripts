@@ -23,6 +23,40 @@ local function send_shortcut_once(mods, key)
     end
 end
 
+local function active_window_is_terminal()
+  local window = hl.get_active_window()
+    if not window then
+        return false
+    end
+
+  if window.class == "rio" or  window.class == "com.mitchellh.ghostty" then
+	return true
+  end
+
+  for _, tag in ipairs(window.tags or {}) do
+    if tag:gsub("%*$", "") == "terminal" then
+      return true
+    end
+  end
+
+  return false
+end
+
+local function universal_clipboard_shortcut(
+  default_mods,
+  default_key,
+  terminal_mods,
+  terminal_key
+)
+  return function()
+    if active_window_is_terminal() then
+      send_shortcut_once(terminal_mods, terminal_key)()
+    else
+      send_shortcut_once(default_mods, default_key)()
+    end
+  end
+end
+
 hl.monitor({
     output   = "DP-3",
     mode     = "1920x1080@100",
@@ -197,9 +231,9 @@ hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
 -- Mac-style overlays (Super = Cmd equivalent)
 -- Duck.ai recommendation, doesn't work.
 hl.bind(mainMod .. " + b", send_shortcut_once("CTRL", "b"))   -- app specific, close browser bar in coding apps
-hl.bind(mainMod .. " + c", send_shortcut_once("CTRL", "Insert"))   -- copy
+hl.bind(mainMod .. " + c", universal_clipboard_shortcut("CTRL", "C", "CTRL SHIFT", "C"))   -- copy
 hl.bind(mainMod .. " + x", send_shortcut_once("CTRL", "x"))        -- cut
-hl.bind(mainMod .. " + v", send_shortcut_once("SHIFT", "Insert" ))  -- paste
+hl.bind(mainMod .. " + v", universal_clipboard_shortcut("CTRL", "V", "CTRL SHIFT", "V"))  -- paste
 hl.bind(mainMod .. " + s", send_shortcut_once("CTRL", "s"))        -- save
 hl.bind(mainMod .. " + t", send_shortcut_once("CTRL", "t"))        -- new tab
 hl.bind(mainMod .. " + p", send_shortcut_once("CTRL", "p"))        -- print
