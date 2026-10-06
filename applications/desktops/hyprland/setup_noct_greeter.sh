@@ -74,16 +74,19 @@ else
 fi
 
 # Disable SDDM if running
-if [[ -L /var/service/sddm ]]; then
-    echo "[*] Disabling SDDM..."
-    rm /var/service/sddm
-fi
+# if [[ -L /var/service/sddm ]]; then
+#     echo "[*] Disabling SDDM..."
+#     rm /var/service/sddm
+# fi
 
 cat > /etc/greetd/config.toml << EOF
 [default_session]
 command = "$greeter_cmd"
 user = "greeter"
-vt = 1
+vt = 8
+
+[general]
+log_level = "debug"
 EOF
 
 # Enable greetd

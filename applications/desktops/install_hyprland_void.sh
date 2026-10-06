@@ -2,7 +2,7 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.4.94 - install works, loads with noctalia
+# VERSION 0.4.95 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
 # Cleaned up packages that aren't needed, still need to do more review here!
@@ -12,6 +12,7 @@
 # Switched launcher from Wofi to Walker. Walker by default looks better, and was easy to theme.
 # Using Noctalia launcher, polkit, and dock. Massive clean up in startup script, and theme uniformity
 # Switched terminal emulator from alacritty to ghostty, allows for goal of emulating MacOS keybindings
+# Changed this to RIO, ghostty is just not performant enough for the desktop I want, alacritty not feature rich enough
 # Switched screenshots to use Noctalia's built-in toolchain
 # Fixed bug I created by switching from Alacritty to Ghostty, help screen not displaying
 
@@ -27,6 +28,7 @@
 # CURRENT BUGS:
 # Headphones in Steam don't seem to work, but unplugged and speakers did
 #   Headphones work with other apps, Zen - Youtube.
+#   Not really sure what's going on here, have to manually select HDMI sink, then USB sink
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -56,7 +58,7 @@ sudo xbps-install -S \
      hyprland hyprland-guiutils \
      kvantum wl-clipboard wlr-randr \
      xdg-desktop-portal-hyprland xdg-desktop-portal \
-     xdg-desktop-portal-gtk ghostty Thunar \
+     xdg-desktop-portal-gtk rio Thunar \
      brightnessctl playerctl pamixer \
      blueman gnome-keyring papirus-icon-theme \
      qt6ct hyprland-qt-support \
@@ -76,11 +78,20 @@ cp hyprland/keybind_viewer "$HOME/.config/hypr/keybind_viewer"
 # Create/update Hyprland config
 cp hyprland/hyprland.lua "$HOME/.config/hypr/hyprland.lua"
 
+cp hyprland/keybind_viewer "$HOME/.config/hypr/keybind_viewer"
+chmod +x "$HOME/.config/hypr/keybind_viewer"z
+
 # Create/update hyprlock settings
-cp hyprland/hyprlock.lua "$HOME/.config/hypr/hyprlock.lua"
+# cp hyprland/hyprlock.lua "$HOME/.config/hypr/hyprlock.lua"
 
 # Create/update ghostty settings
-cp hyprland/ghostty-config "$HOME/.config/ghostty/config"
+# cp hyprland/ghostty-config "$HOME/.config/ghostty/config"
+
+# Create/update alacritty settings
+# cp hyprland/alacritty.toml "$HOME/.config/alacritty/alacritty.toml"
+
+# create/update alacritty settings
+cp hyprland/rio-config.toml "$HOME/.config/rio/config.toml"
 
 # Create/update Noctalia Config
 cp hyprland/noctalia-config.toml "$HOME/.config/noctalia/noctalia-config.toml"

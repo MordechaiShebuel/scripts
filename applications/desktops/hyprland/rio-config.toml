@@ -1,0 +1,32 @@
+# See the full configuration reference: https://rioterm.com/docs/config
+comfirm-before-quit = false
+confirm-before-quit = false
+
+[navigation]
+mode = "Tab"
+use-split = true
+hide-if-single = true
+
+[bindings]
+keys = [
+  # Tabs (matching your Ghostty binds)
+  { key = "t", with = "super", action = "CreateTab" },
+  { key = "t", with = "super | shift", action = "CreateTab" },
+  { key = "w", with = "super", action = "CloseSplitOrTab" },
+  { key = "w", with = "super | shift", action = "CloseSplitOrTab" },
+
+  # Splits
+  { key = "Enter", with = "super | shift", action = "SplitRight" },
+  { key = "\\", with = "super | shift", action = "SplitDown" },
+
+  # Resize splits (approximate of your Ghostty resize)
+  { key = "Right", with = "super | alt", action = "MoveDividerRight" },
+  { key = "Left", with = "super | alt", action = "MoveDividerLeft" },
+]
+
+[fonts]
+size = 16          # default is usually 14 — bump by 1 point (or try 16)
+
+[window]
+opacity = 0.90     # slightly transparent (1.0 = fully opaque, 0.0 = fully transparent)
+blur = true      # optional: soft blur behind the window (Hyprland supports this)

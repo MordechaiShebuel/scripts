@@ -1,0 +1,8 @@
+[keyboard]
+bindings = [
+  { key = "C", mods = "Super", action = "Copy" },
+  { key = "V", mods = "Super", action = "Paste" },
+  { key = "Insert", mods = "Shift", action = "PasteSelection" },
+  { key = "N", mods = "Super", action = "CreateNewWindow" },
+  { key = "Q", mods = "Super|Alt", action = "Quit" },
+]
