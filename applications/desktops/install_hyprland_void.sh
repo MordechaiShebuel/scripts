@@ -2,7 +2,7 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.4.95 - install works, loads with noctalia
+# VERSION 0.4.96 - install works, loads with noctalia
 # Beta version worthy, function desktop, has dock, sound and help screen.
 # Added functional screenshots, it wasn't working with the package list before.
 # Cleaned up packages that aren't needed, still need to do more review here!
@@ -21,7 +21,7 @@
 # DONE: Add screenshots to help screen
 # DONE: Finish mapping relevant MacOS shortcuts to key bindings
 # DONE: Make an actual app for help instead of just a terminal
-# Use Noctalia / greetd or lightdm instead of sddm
+# DONE: Use Noctalia / greetd or lightdm instead of sddm
 #   This has been a massive headache - I think I may have it narrowed down to an agetty conflict, out of tokens.
 # DONE: Make shortcut for logout/restart/shutdown popup that is currently activated from panel
 
@@ -97,27 +97,16 @@ cp hyprland/rio-config.toml "$HOME/.config/rio/config.toml"
 cp hyprland/noctalia-config.toml "$HOME/.config/noctalia/noctalia-config.toml"
 
 echo "Modifying zshrc for QT theme fix"
-# TODO: this needs to check to see if these are already added, probably should be encapsulated in it's own script
-cat >> ~/.zshrc <<'EOF'
-# QT Platform and Theme Configuration
-export QT_QPA_PLATFORMTHEME=kvantum
-export QT_QPA_PLATFORM=wayland
-export QT_STYLE_OVERRIDE=kvantum
-export QT_AUTO_SCREEN_SCALE_FACTOR=1
-
-# QT5 Support (if still using QT5 apps)
-export QT5_QPA_PLATFORMTHEME=kvantum
-
-# Wayland-specific (important for Hyprland)
-export QT_WAYLAND_DISABLE_WINDOWDECORATION=0
-export QT_QPA_PLATFORM_PLUGIN_PATH=/usr/lib/qt6/plugins
-EOF
+hyprland/./modify_zshrc.sh
 
 echo "Apply fixes for QT theming"
 hyprland/./fix_qt_theming.sh
 
 echo "Fix GTK themes"
 sudo xbps-install -S nwg-look gnome-themes-extra
+
+echo "Setting up new greeter"
+sudo hyprland/./setup_greetd_greeter.sh
 
 # You'll need to run nwg-look to set this to a dark theme
 
