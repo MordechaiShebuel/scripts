@@ -100,7 +100,7 @@ hl.config({
     },
     dwindle = {
         preserve_split = true,
-    },y myself rather than listening to a prerecorded tech podcast. This isn't about substituting humans, but trading passive
+    },
     animations = {
         enabled = true,
         animation = {
@@ -135,6 +135,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("nym-vpn")
     hl.exec_cmd(os.getenv("HOME") .. "$HOME/.config/hypr/keybind_viewer $HOME/.config/hypr/hyprland.lua")
 end)
+
+-- KEY BINDS
 
 local mainMod   = "SUPER"
 local secondMod = "ALT"
@@ -181,7 +183,6 @@ for i = 1, 5 do
     hl.bind(mainMod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
 end
 
--- TODO: this didnt stop system from powering off
 -- Intercept Power button
 hl.bind(
     "XF86PowerOff",
@@ -223,8 +224,6 @@ hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd("noctalia msg panel-toggle sess
 -- Shortcut help screen
 hl.bind(mainMod .. " + h",
   hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/keybind_viewer $HOME/.config/hypr/hyprland.lua"))
--- hl.bind(mainMod .. " + h",
---     hl.dsp.exec_cmd("notify-send test"))
 
 -- Reload Hyprland config
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
