@@ -29,6 +29,10 @@
 # Headphones in Steam don't seem to work, but unplugged and speakers did
 #   Headphones work with other apps, Zen - Youtube.
 #   Not really sure what's going on here, have to manually select HDMI sink, then USB sink
+# RIO SSH bug:
+# Last login: Tue Oct  6 15:22:58 2026 from 10.0.0.203
+# user@system:~$ htop
+# ncurses: cannot initialize terminal type ($TERM="xterm-rio"); exiting
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -39,6 +43,8 @@ fi
 echo "Updating System before beginning"
 # Update repos and system first
 sudo xbps-install -Syu
+
+TERMINAL="rio" # can be manually set
 
 # First backup shell config
 ../../bin/./backup_shell_config.sh
@@ -58,7 +64,7 @@ sudo xbps-install -S \
      hyprland hyprland-guiutils \
      kvantum wl-clipboard wlr-randr \
      xdg-desktop-portal-hyprland xdg-desktop-portal \
-     xdg-desktop-portal-gtk rio Thunar \
+     xdg-desktop-portal-gtk $TERMINAL Thunar \
      brightnessctl playerctl pamixer \
      blueman gnome-keyring papirus-icon-theme \
      qt6ct hyprland-qt-support \
@@ -81,16 +87,14 @@ cp hyprland/hyprland.lua "$HOME/.config/hypr/hyprland.lua"
 cp hyprland/keybind_viewer "$HOME/.config/hypr/keybind_viewer"
 chmod +x "$HOME/.config/hypr/keybind_viewer"z
 
-# Create/update hyprlock settings
-# cp hyprland/hyprlock.lua "$HOME/.config/hypr/hyprlock.lua"
-
+# TODO: Let the user choose which terminal they want as as first step
 # Create/update ghostty settings
 # cp hyprland/ghostty-config "$HOME/.config/ghostty/config"
 
 # Create/update alacritty settings
 # cp hyprland/alacritty.toml "$HOME/.config/alacritty/alacritty.toml"
 
-# create/update alacritty settings
+# create/update rio settings
 cp hyprland/rio-config.toml "$HOME/.config/rio/config.toml"
 
 # Create/update Noctalia Config
@@ -108,7 +112,7 @@ sudo xbps-install -S nwg-look gnome-themes-extra
 echo "Setting up new greeter"
 sudo hyprland/./setup_greetd_greeter.sh
 
-# You'll need to run nwg-look to set this to a dark theme
+echo "You'll need to run nwg-look to set this to a dark theme"
 
 # Setup runit services
 echo "Setting up runit services..."

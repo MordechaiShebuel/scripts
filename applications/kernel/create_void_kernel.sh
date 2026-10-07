@@ -1,7 +1,33 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-SRC="$HOME/src"
+if [[ -d /src ]]; then
+    # Container build
+    SRC=/src
+else
+    # Native host build
+    SRC="${SRC:-"$HOME/src"}"
+fi
+
+if [[ "$(id -u)" -eq 0 || "$(id -un)" == "builder" ]]; then
+    SUDO=()
+    KERNEL_CONFIG=/home/builder/config
+else
+    command -v sudo >/dev/null 2>&1 || {
+        echo "Error: sudo is required for privileged operations." >&2
+        exit 1
+    }
+
+    sudo -v
+    SUDO=(sudo)
+fi
+
+export SRC
+cd "$SRC"
+
+echo "Source directory: $SRC"
+echo "Build user: $(id -un)"
+
 LINUX_SRC="$SRC/linux"
 CACHY_PATCH_SRC="$SRC/cachy-patches"
 
@@ -11,24 +37,33 @@ OLD_KERNEL="$(uname -r)"
 KVER="${LINUX_VERSION#v}"
 K_V="${KVER%.*}"
 
+CONTAINER_BUILD=${2:-false}
+
 require_space_gib() {
     local path="$1"
     local required_gib="$2"
     local available_kib
 
-    available_kib=$(df -Pk "$path" | awk 'NR==2 {print $4}')
+    available_kib="$(df -Pk "$path" | awk 'NR == 2 { print $4 }')"
+
+    if [[ -z "$available_kib" || ! "$available_kib" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: could not determine available space on $path" >&2
+        exit 1
+    fi
 
     if (( available_kib < required_gib * 1024 * 1024 )); then
-        echo "ERROR: insufficient free space on $(df -P "$path" | awk 'NR==2 {print $6}')" >&2
+        local mountpoint
+        mountpoint="$(df -P "$path" | awk 'NR == 2 { print $6 }')"
+
+        echo "ERROR: insufficient free space on $mountpoint" >&2
         echo "Required: at least ${required_gib} GiB" >&2
         echo "Available: $((available_kib / 1024 / 1024)) GiB" >&2
         exit 1
     fi
 }
 
-mkdir -p $SRC
-
-require_space_gib "$HOME/src" 16 # 25 is recommended amount of space free
+mkdir -p "$SRC"
+require_space_gib "$SRC" 16 # 25 is recommended amount of space free
 
 ## Download and Apply Patches
 PATCH_GROUPS=(
@@ -44,12 +79,14 @@ PATCH_FILES=(
     0001-linux7.2-bore6.8.0.patch
 )
 
-# Dependencies
-sudo xbps-install -Syu \
-    base-devel git bc kmod elfutils-devel bash cpio xz lz4 zstd \
-    flex bison openssl-devel curl pahole tar python3 patch wget rsync \
-    dracut grub -y
+if [[ "$CONTAINER_BUILD" == "false" ]]; then
+    # Dependencies
+    "${SUDO[@]}" xbps-install -Syu \
+        base-devel git bc kmod elfutils-devel bash cpio xz lz4 zstd \
+        flex bison openssl-devel curl pahole tar python3 patch wget rsync \
+        dracut grub -y
 
+fi
 # Clone kernel source
 if [ ! -d "$LINUX_SRC/.git" ]; then
     echo "Fetching Linux $LINUX_VERSION into $SRC"
@@ -70,11 +107,14 @@ if [ ! -d "$LINUX_SRC/.git" ]; then
 fi
 
 cd "$LINUX_SRC"
-mkdir -p patches
+
 # clean prior potential builds
 git reset --hard "$LINUX_VERSION"
 git clean -fdx
 
+mkdir -p patches
+
+# This needs to rethought out, it tries downlaading nine times for three files
 # Download patches individually instead of entire repo
 for PATCH_GROUP in "${PATCH_GROUPS[@]}"; do
     for PATCH_FILE in "${PATCH_FILES[@]}"; do
@@ -116,20 +156,42 @@ echo "All patches applied successfully!"
 # Configure kernel
 echo "Configuring kernel..."
 
-if [ -r "/boot/config-$OLD_KERNEL" ]; then
-    echo "Using config from: /boot/config-$OLD_KERNEL"
-    cp "/boot/config-$OLD_KERNEL" .config
+CONFIG_FILE="${KERNEL_CONFIG:-}"
+echo "Config File: ${CONFIG_FILE}"
+if [[ -n "$CONFIG_FILE" && -r "$CONFIG_FILE" ]]; then
+    echo "Using supplied config from: $CONFIG_FILE"
+    cp "$CONFIG_FILE" .config
+elif [[ -r "/boot/config-$(uname -r)" && \
+        ! -e /.containerenv && \
+        ! -e /.dockerenv ]]; then
+    CONFIG_FILE="/boot/config-$(uname -r)"
+    echo "Using host config from: $CONFIG_FILE"
+    cp "$CONFIG_FILE" .config
 else
-    echo "No existing kernel config found; using x86_64 defconfig"
+    echo "Using x86_64_defconfig"
     make x86_64_defconfig
 fi
 
+STAGE="$(mktemp -d)"
+
+echo "Kernel release: $KERNEL_RELEASE"
+echo "Staging modules in: $STAGE/modules"
+
+make -C "$HOME/src/linux" -j"$(nproc)" modules
+make -C "$HOME/src/linux" modules_install \
+  INSTALL_MOD_PATH="$STAGE/modules"
+
+test -d "$STAGE/modules/lib/modules/$KERNEL_RELEASE"
+
+MODDIR="$STAGE/modules/lib/modules/$KERNEL_RELEASE"
+
+rm -f "$MODDIR/build" "$MODDIR/source"
 # Preserve the original configuration.
 cp .config .config.before-localmodconfig
 
 # Trim drivers not used by the running system.
 # Load old config
-cp "/boot/config-$OLD_KERNEL" .config
+# cp "/boot/config-$OLD_KERNEL" .config
 
 # Force NVMe drivers to be built-in (=y), not modules (=m)
 ./scripts/config -e CONFIG_NVME
@@ -142,8 +204,30 @@ cp "/boot/config-$OLD_KERNEL" .config
 ./scripts/config -e CONFIG_EXT4_FS_POSIX_ACL
 
 # Apply your customizations
-./scripts/config -e CONFIG_MZEN3 2>/dev/null || true
+set_cpu_arch() {
+    local arch="${1:-ZEN3}"
+
+    case "$arch" in
+        ZEN)
+            ./scripts/config -e CONFIG_MZEN
+            ;;
+        ZEN2)
+            ./scripts/config -e CONFIG_MZEN2
+            ;;
+        ZEN3)
+            ./scripts/config -e CONFIG_MZEN3
+            ;;
+        *)
+            # Non-Zen CPU or unrecognized — just proceed
+            ;;
+    esac
+}
+
+echo "Configuring CPU architecture"
+set_cpu_arch "${1:-ZEN3}"
+
 ./scripts/config -e CONFIG_DRM_HDCP
+
 ./scripts/config -e CONFIG_DRM_HDCP_HELPER
 
 # SKIP localmodconfig entirely — it removes needed drivers
@@ -158,12 +242,20 @@ KERNEL_RELEASE="$(make -s kernelrelease)"
 echo "Building kernel: $KERNEL_RELEASE"
 
 # Build once
+make clean
 make -j$(($(nproc)/2)) bzImage modules
 
 # NEED TO PAUSE HERE WAIT FOR HUMAN
-read -p "Compile portion completed, Press [Enter] key to continue with kernel install..."   
+read -p "Compile portion completed, Press [Enter] key to continue with kernel install..."
 
 # Install modules
+# # ONLY DO INSTALL LOCALLY!
+if [[ "$CONTAINER_BUILD" == "TRUE" ]]; then
+    echo "CONTAINER BUILD COMPLETED!"
+    exit 0
+fi
+
+# THESE COMMANDS SHOULD NOT RUN IN CONTAINER
 sudo -v
 sudo make modules_install
 
