@@ -26,7 +26,7 @@ if [[ -z "$USER_HOME" || ! -d "$USER_HOME" ]]; then
 fi
 
 MOUNT_POINT="$USER_HOME/shared/local-server"
-FSTAB_LINE="$SERVER:/ $MOUNT_POINT nfs defaults,_netdev,nofail,timeo=50,retrans=2 0 0"
+FSTAB_LINE="$SERVER:/ $MOUNT_POINT nfs defaults,_netdev,timeo=50,retrans=2 0 0"
 
 # Create the mount-point directory if necessary
 if [ ! -d "$MOUNT_POINT" ]; then

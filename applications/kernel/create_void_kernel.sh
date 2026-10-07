@@ -174,18 +174,6 @@ fi
 
 STAGE="$(mktemp -d)"
 
-echo "Kernel release: $KERNEL_RELEASE"
-echo "Staging modules in: $STAGE/modules"
-
-make -C "$HOME/src/linux" -j"$(nproc)" modules
-make -C "$HOME/src/linux" modules_install \
-  INSTALL_MOD_PATH="$STAGE/modules"
-
-test -d "$STAGE/modules/lib/modules/$KERNEL_RELEASE"
-
-MODDIR="$STAGE/modules/lib/modules/$KERNEL_RELEASE"
-
-rm -f "$MODDIR/build" "$MODDIR/source"
 # Preserve the original configuration.
 cp .config .config.before-localmodconfig
 
@@ -226,9 +214,16 @@ set_cpu_arch() {
 echo "Configuring CPU architecture"
 set_cpu_arch "${1:-ZEN3}"
 
+# DRM crap
 ./scripts/config -e CONFIG_DRM_HDCP
-
 ./scripts/config -e CONFIG_DRM_HDCP_HELPER
+
+# Strongly recommended for size + boot reliability
+./scripts/config -e CONFIG_MODULES          # keep modules support
+./scripts/config -d CONFIG_DEBUG_INFO       # or at least
+./scripts/config -d CONFIG_DEBUG_INFO_REDUCED
+./scripts/config -e CONFIG_MODULE_COMPRESS
+./scripts/config -e CONFIG_MODULE_COMPRESS_ZSTD   # Compress Modules
 
 # SKIP localmodconfig entirely — it removes needed drivers
 # Instead, use olddefconfig to handle new config options
@@ -257,7 +252,8 @@ fi
 
 # THESE COMMANDS SHOULD NOT RUN IN CONTAINER
 sudo -v
-sudo make modules_install
+sudo make -C "$HOME/src/linux" modules_install \
+  INSTALL_MOD_STRIP=1
 
 # Install kernel image
 sudo cp "arch/x86/boot/bzImage" \
