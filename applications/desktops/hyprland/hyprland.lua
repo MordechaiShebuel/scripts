@@ -100,7 +100,7 @@ hl.config({
     },
     dwindle = {
         preserve_split = true,
-    },
+    },y myself rather than listening to a prerecorded tech podcast. This isn't about substituting humans, but trading passive
     animations = {
         enabled = true,
         animation = {
@@ -181,6 +181,7 @@ for i = 1, 5 do
     hl.bind(mainMod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
 end
 
+-- TODO: this didnt stop system from powering off
 -- Intercept Power button
 hl.bind(
     "XF86PowerOff",

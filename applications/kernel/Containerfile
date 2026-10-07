@@ -1,0 +1,30 @@
+FROM docker.io/voidlinux/voidlinux:latest
+
+RUN mkdir -p /etc/xbps.d && \
+    printf '%s\n' \
+      'repository=https://repo-default.voidlinux.org/current' \
+      > /etc/xbps.d/00-repository-main.conf
+
+# Update XBPS (sometimes necessary)
+RUN xbps-install -S
+RUN xbps-install -uy xbps
+RUN xbps-install -Syu
+
+# Install all kernel build dependencies
+RUN xbps-install -y \
+    base-devel git bc kmod elfutils-devel bash cpio xz lz4 zstd \
+    flex bison openssl-devel curl pahole tar python3 patch wget rsync \
+    dracut grub -y
+
+# Create build user (optional, but cleaner)
+RUN useradd -m -s /bin/bash builder
+WORKDIR /home/builder
+
+# Copy your build script into the container
+COPY create_void_kernel.sh /home/builder/
+RUN chmod +x /home/builder/create_void_kernel.sh
+
+# Get config
+COPY .config /home/builder/config
+
+USER builder
