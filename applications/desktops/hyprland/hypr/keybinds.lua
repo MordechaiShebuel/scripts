@@ -1,4 +1,5 @@
 -- Helper Functions
+
 local function send_shortcut_once(mods, key)
     return function()
         hl.dispatch(hl.dsp.send_key_state({
@@ -56,110 +57,120 @@ local function universal_clipboard_shortcut(
   end
 end
 
+local function bindWithDescription(keyBinding, action, description, options)
+    -- Store the description
+    if not _commandRegistry then
+        _commandRegistry = {}
+    end
+
+    table.insert(_commandRegistry, {
+        key = keyBinding,
+        action = action,
+        description = description,
+        options = options
+    })
+
+    -- Bind with optional config
+    if options then
+        hl.bind(keyBinding, action, options)
+    else
+        hl.bind(keyBinding, action)
+    end
+end
+
 -- Constants
 local mainMod   = "SUPER"
-local secondMod = "ALT"
 local ipc = "noctalia msg "
 
 -- KEY BINDS
 -- Terminal
-hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("rio"))
+bindWithDescription(mainMod .. " + Return", hl.dsp.exec_cmd("rio"), "Open Terminal Window")
 
 -- App Launcher
-hl.bind(mainMod .. " + D",     hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"))
-hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"))
+bindWithDescription(mainMod .. " + D", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")
+bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")
 
 -- Launch file explorer
-hl.bind(mainMod .. " + E",     hl.dsp.exec_cmd("thunar"))
+bindWithDescription(mainMod .. " + E", hl.dsp.exec_cmd("Thunar"), "Open Application Launcher")
 
 -- Close window
-hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-hl.bind(mainMod .. " + W", hl.dsp.window.close())
+bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")-- hl.bind(mainMod .. " + Q", hl.dsp.window.close())
+bindWithDescription(mainMod .. " + Q", hl.dsp.window.close(), "Close the current window")
+bindWithDescription(mainMod .. " + W", hl.dsp.window.close(), "Close the current window")
 
--- Fullscreen (1 = maximize)
-hl.bind(mainMod .. " + CTRL + F", hl.dsp.window.fullscreen({ mode = 1 }))
+-- Toggle Fullscreen (1 = maximize)
+bindWithDescription(mainMod .. " SHIFT + F", hl.dsp.window.fullscreen({ mode = 1 }), "Toggle Fullscreen for Window")
 
 -- Toggle floating
-hl.bind(mainMod .. " + ALT + Space", hl.dsp.window.float({ action = "toggle" }))
+bindWithDescription(mainMod .. " ALT + SPACE", hl.dsp.window.float({ action = "toggle" }), "Toggle Float for Window")
 
 -- Scroll through existing workspaces with mainMod + scroll
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
+bindWithDescription(mainMod .. " + mouse_down", hl.dsp.docus({ workspace = "e+1" }), "Cycle through open windows forward")
+bindWithDescription(mainMod .. " + mouse_up", hl.dsp.docus({ workspace = "e-1" }), "Cycle through open windows backward")
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
-hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
-hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+bindWithDescription(mainMod .. " + mouse:272", hl.dsp.window.drag(), "Left Click to drag window with mouse", { mouse = true })
+bindWithDescription(mainMod .. " + mouse:273", hl.dsp.window.drag(), "Right Click to resize window with mouse", { mouse = true })
 
 -- Move focus with arrow keys
-hl.bind(mainMod .. " + TAB",           hl.dsp.exec_cmd(ipc .. "window-switcher hold"))
-hl.bind(mainMod .. " + left",          hl.dsp.focus({ direction = "left" }))
-hl.bind(mainMod .. " + right",         hl.dsp.focus({ direction = "right" }))
-hl.bind(mainMod .. " + up",            hl.dsp.focus({ direction = "up" }))
-hl.bind(mainMod .. " + down",          hl.dsp.focus({ direction = "down" }))
+bindWithDescription(mainMod .. " + TAB", hl.dsp.exec_cmd(ipc .. "window-switcher hold"), "Window switcher")
+bindWithDescription(mainMod .. " + left", hl.dsp.focus({ direction = "left" }), "Focus window to the left")
+bindWithDescription(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), "Focus window to the right")
+bindWithDescription(mainMod .. " + up", hl.dsp.focus({ direction = "up" }), "Focus window above")
+bindWithDescription(mainMod .. " + down", hl.dsp.focus({ direction = "down" }), "Focus window below")
 
 -- Workspaces 1-5 + move window to workspace
 for i = 1, 5 do
-    hl.bind(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }))
-    hl.bind(mainMod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
+    bindWithDescription(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }), "Switch to workspace " .. i)
+    bindWithDescription(mainMod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }), "Move window to workspace " .. i)
 end
 
 -- Intercept Power button
-hl.bind(
-    "XF86PowerOff",
-    hl.dsp.exec_cmd("noctalia msg panel-toggle session"),
-    { locked = true }
-)
+bindWithDescription("XF86PowerOff", hl.dsp.exec_cmd("noctalia msg panel-toggle session"), "Toggle session panel", { locked = true })
 
 -- Volume
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("pamixer -i 5"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("pamixer -d 5"), { locked = true, repeating = true })
-hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("pamixer -t"),   { locked = true })
+bindWithDescription("XF86AudioRaiseVolume", hl.dsp.exec_cmd("pamixer -i 5"), "Increase volume", { locked = true, repeating = true })
+bindWithDescription("XF86AudioLowerVolume", hl.dsp.exec_cmd("pamixer -d 5"), "Decrease volume", { locked = true, repeating = true })
+bindWithDescription("XF86AudioMute", hl.dsp.exec_cmd("pamixer -t"), "Toggle mute", { locked = true })
 
 -- Brightness
-hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl set +10%"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"), { locked = true, repeating = true })
-
+bindWithDescription("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set +10%"), "Increase brightness", { locked = true, repeating = true })
+bindWithDescription("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"), "Decrease brightness", { locked = true, repeating = true })
 
 -- macOS-style screenshots (secondMod ≈ Cmd)
 -- ⌘⇧3  full screen (focused output)
-hl.bind(mainMod .. " + SHIFT + 3",
-  hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen"))
+bindWithDescription(mainMod .. " + SHIFT + 3", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen"), "Screenshot focused monitor")
 
 -- ⌘⇧4  region
-hl.bind(mainMod .. " + CTRL + SHIFT + 4",
-  hl.dsp.exec_cmd(ipc .. "screenshot-region"))
+bindWithDescription(mainMod .. " + CTRL + SHIFT + 4", hl.dsp.exec_cmd(ipc .. "screenshot-region"), "Screenshot region")
 
--- Multi-monitor: picker (≈ “choose display”)
-hl.bind(mainMod .. " + SHIFT + 5",
-  hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen pick"))
+-- Multi-monitor: picker (≈ "choose display")
+bindWithDescription(mainMod .. " + SHIFT + 5", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen pick"), "Screenshot with monitor picker")
 
 -- All monitors as one image
-hl.bind(mainMod .. " + CTRL + SHIFT + 3",
-    hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen all"))
+bindWithDescription(mainMod .. " + CTRL + SHIFT + 3", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen all"), "Screenshot all monitors")
 
 -- Lock screen
-hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd(ipc .. "panel-toggle session"))
+bindWithDescription(mainMod .. " + ALT + L", hl.dsp.exec_cmd(ipc .. "panel-toggle session"), "Lock screen")
 
 -- Shortcut help screen
-hl.bind(mainMod .. " + h",
-  hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/keybind_viewer $HOME/.config/hypr/keybinds.lua"))
+bindWithDescription(mainMod .. " + h", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/keybind_viewer $HOME/.config/hypr/keybinds.lua"), "Show keybind help")
 
 -- Reload Hyprland config
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
+bindWithDescription(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"), "Reload Hyprland config")
 
 -- Mac-style overlays (Super = Cmd equivalent)
--- Duck.ai recommendation, doesn't work.
-hl.bind(mainMod .. " + b", send_shortcut_once("CTRL", "b"))   -- app specific, close browser bar in coding apps
-hl.bind(mainMod .. " + c", universal_clipboard_shortcut("CTRL", "C", "CTRL SHIFT", "C"))   -- copy
-hl.bind(mainMod .. " + x", send_shortcut_once("CTRL", "x"))        -- cut
-hl.bind(mainMod .. " + v", universal_clipboard_shortcut("CTRL", "V", "CTRL SHIFT", "V"))  -- paste
-hl.bind(mainMod .. " + s", send_shortcut_once("CTRL", "s"))        -- save
-hl.bind(mainMod .. " + t", send_shortcut_once("CTRL", "t"))        -- new tab
-hl.bind(mainMod .. " + p", send_shortcut_once("CTRL", "p"))        -- print
-hl.bind(mainMod .. " + f", universal_clipboard_shortcut("CTRL", "F", "CTRL SHIFT", "F"))        -- find
-hl.bind(mainMod .. " + z", send_shortcut_once("CTRL", "z"))        -- undo
-hl.bind(mainMod .. " + a", send_shortcut_once("CTRL", "a"))        -- select-all
-hl.bind(mainMod .. " + slash", send_shortcut_once("CTRL", "slash"))        -- app specfic for code editors, enable remark / disable remark
-hl.bind(mainMod .. " + ALT + q", hl.dsp.window.kill())            -- Force kill app
-hl.bind(mainMod .. " + ALT + escape", hl.dsp.window.kill())       -- Force kill app
-hl.bind(mainMod .. " + CTRL + l", hl.dsp.exec_cmd("noctalia msg session lock"))      -- lock screen
+bindWithDescription(mainMod .. " + B", send_shortcut_once("CTRL", "b"), "Close the sidebar (Zed/VsCode/etc)")
+bindWithDescription(mainMod .. " + c", universal_clipboard_shortcut("CTRL", "C", "CTRL SHIFT", "C"), "Copy")
+bindWithDescription(mainMod .. " + x", send_shortcut_once("CTRL", "x"), "Cut")
+bindWithDescription(mainMod .. " + v", universal_clipboard_shortcut("CTRL", "V", "CTRL SHIFT", "V"), "Paste")
+bindWithDescription(mainMod .. " + s", send_shortcut_once("CTRL", "s"), "Save")
+bindWithDescription(mainMod .. " + t", send_shortcut_once("CTRL", "t"), "New tab")
+bindWithDescription(mainMod .. " + p", send_shortcut_once("CTRL", "p"), "Print")
+bindWithDescription(mainMod .. " + f", universal_clipboard_shortcut("CTRL", "F", "CTRL SHIFT", "F"), "Find")
+bindWithDescription(mainMod .. " + z", send_shortcut_once("CTRL", "z"), "Undo")
+bindWithDescription(mainMod .. " + a", send_shortcut_once("CTRL", "a"), "Select all")
+bindWithDescription(mainMod .. " + slash", send_shortcut_once("CTRL", "slash"), "Toggle comment (code editors)")
+bindWithDescription(mainMod .. " + ALT + q", hl.dsp.window.kill(), "Force kill application")
+bindWithDescription(mainMod .. " + ALT + escape", hl.dsp.window.kill(), "Force kill application")
+bindWithDescription(mainMod .. " + CTRL + l", hl.dsp.exec_cmd("noctalia msg session lock"), "Lock screen")
