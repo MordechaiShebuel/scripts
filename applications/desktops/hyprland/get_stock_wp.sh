@@ -5,13 +5,15 @@ read -r answer
 wallpaper_dir="$HOME/Pictures/wallpapers"
 mkdir -p "$wallpaper_dir"
 
-wallpaper_url0='https://wallpapers.com/images/featured/most-beautiful-nature-pictures-hdb30wtkjbn08xlf.jpg'
-wallpaper_url1='https://wallpapercave.com/wp/wp3162131.jpg'
-wallpaper_url2='https://wallpapercave.com/wp/wp6844174.jpg'
-
-wallpaper_home0="$wallpaper_dir/wall0.png"
-wallpaper_home1="$wallpaper_dir/wall1.png"
-wallpaper_home2="$wallpaper_dir/wall2.png"
+declare -A wallpapers
+wallpapers=(
+  ["$wallpaper_dir/wall0.png"]="https://wallpapers.com/images/featured/most-beautiful-nature-pictures-hdb30wtkjbn08xlf.jpg"
+  ["$wallpaper_dir/wall1.png"]="https://wallpapercave.com/wp/wp3162131.jpg"
+  ["$wallpaper_dir/wall2.png"]="https://wallpapercave.com/wp/wp6844174.jpg"
+  ["$wallpaper_dir/wall3.png"]="https://wallpapercave.com/uwp/uwp4920179.jpeg"
+  ["$wallpaper_dir/wall4.png"]="https://wallpapercave.com/wp/wp16495094.webp"
+  ["$wallpaper_dir/wall5.png"]="https://wallpapercave.com/uwp/uwp4920180.jpeg"
+)
 
 download_wallpaper() {
     url="$1"
@@ -26,9 +28,9 @@ download_wallpaper() {
 }
 
 # Always download the wallpapers to ~/Pictures/wallpapers
-download_wallpaper "$wallpaper_url0" "$wallpaper_home0"
-download_wallpaper "$wallpaper_url1" "$wallpaper_home1"
-download_wallpaper "$wallpaper_url2" "$wallpaper_home2"
+for destination in "${!wallpapers[@]}"; do
+  download_wallpaper "${wallpapers[$destination]}" "$destination"
+done
 
 case "$answer" in
     [yY]|[yY][eE][sS])

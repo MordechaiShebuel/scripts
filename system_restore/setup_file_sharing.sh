@@ -70,7 +70,7 @@ CRON_LINE="*/2 * * * * /usr/local/sbin/check-shared-mount"
 
 # Create the mount-check script if it does not exist
 if [ ! -e "$SCRIPT" ]; then
-    tee "$SCRIPT" >/dev/null <<EOF
+    tee "$SCRIPT" >/dev/null <<'EOF'
 #!/bin/sh
 
 MOUNTPOINT="/home/mshalom/shared/local-server"
@@ -143,9 +143,9 @@ fi
 EOF
 
     chmod 755 "$SCRIPT"
-    sudo touch /var/log/check-shared-mount.log
-    sudo chmod 644 /var/log/check-shared-mount.log
-    echo "Created: $SCRIPT"
+    touch /var/log/check-shared-mount.log
+    chmod 644 /var/log/check-shared-mount.log
+    "Created: $SCRIPT"
 else
     echo "$SCRIPT already exists; leaving it unchanged"
 fi
@@ -154,7 +154,7 @@ fi
 if ! crontab -l 2>/dev/null | grep -Fqx "$CRON_LINE"; then
     (
         crontab -l 2>/dev/null
-        sudo printf '%s\n' "$CRON_LINE"
+        printf '%s\n' "$CRON_LINE"
     ) | crontab -
 
     echo "Cron job added"

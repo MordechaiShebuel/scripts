@@ -66,17 +66,11 @@ mkdir -p "$SRC"
 require_space_gib "$SRC" 16 # 25 is recommended amount of space free
 
 ## Download and Apply Patches
-PATCH_GROUPS=(
-    cachyos-fixes-patches-v9
-    cpu-cachyos-patches
-    bore-patches
-    # gaming-sched-patches-v2
-)
-
-PATCH_FILES=(
-    0001-cachyos-fixes-patches.patch
-    0001-CACHY-Add-x86_64-ISA-and-Zen4-compiler-optimizations.patch
-    0001-linux7.2-bore6.8.0.patch
+declare -A PATCHES=(
+    [cachyos-fixes-patches-v9]="0001-cachyos-fixes-patches.patch"
+    [cpu-cachyos-patches]="0001-CACHY-Add-x86_64-ISA-and-Zen4-compiler-optimizations.patch"
+    [bore-patches]="0001-linux7.2-bore6.8.0.patch"
+    # [gaming-sched-patches-v2]="your-patch-file.patch"
 )
 
 if [[ "$CONTAINER_BUILD" == "false" ]]; then
@@ -116,15 +110,13 @@ mkdir -p patches
 
 # This needs to rethought out, it tries downlaading nine times for three files
 # Download patches individually instead of entire repo
-for PATCH_GROUP in "${PATCH_GROUPS[@]}"; do
-    for PATCH_FILE in "${PATCH_FILES[@]}"; do
-        echo "Downloading $PATCH_FILE from $PATCH_GROUP..."
-        wget -O "patches/$PATCH_FILE" \
-            "https://github.com/sirlucjan/kernel-patches/raw/refs/heads/master/$K_V/$PATCH_GROUP/$PATCH_FILE" || {
-            echo "Failed to download: $PATCH_FILE from $PATCH_GROUP" >&2
-            continue
-        }
-    done
+for PATCH_GROUP in "${!PATCHES[@]}"; do
+    PATCH_FILE=${PATCHES[$PATCH_GROUP]}
+
+    echo "Downloading $PATCH_FILE from $PATCH_GROUP..."
+    wget -O "patches/$PATCH_FILE" \
+        "https://github.com/sirlucjan/kernel-patches/raw/refs/heads/master/$K_V/$PATCH_GROUP/$PATCH_FILE" ||
+        echo "Failed to download: $PATCH_FILE from $PATCH_GROUP" >&2
 done
 
 # Set local kernel suffix
@@ -220,13 +212,20 @@ set_cpu_arch "${1:-ZEN3}"
 
 # Strongly recommended for size + boot reliability
 ./scripts/config -e CONFIG_MODULES          # keep modules support
-./scripts/config -d CONFIG_DEBUG_INFO       # or at least
-./scripts/config -d CONFIG_DEBUG_INFO_REDUCED
+scripts/config --disable CONFIG_DEBUG_INFO \
+                         --disable CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT \
+                         --disable CONFIG_DEBUG_INFO_REDUCED \
+                         --disable CONFIG_DEBUG_INFO_BTF \
+                         --disable CONFIG_DEBUG_VM \
+                         --disable CONFIG_DEBUG_KERNEL \
+                         --disable CONFIG_PROVE_LOCKING \
+                         --disable CONFIG_LOCK_STAT \
+                         --disable CONFIG_LATENCYTOP
+./scripts/config -e CONFIG_CC_OPTIMIZE_FOR_SIZE
 ./scripts/config -e CONFIG_MODULE_COMPRESS
 ./scripts/config -e CONFIG_MODULE_COMPRESS_ZSTD   # Compress Modules
 
-# SKIP localmodconfig entirely — it removes needed drivers
-# Instead, use olddefconfig to handle new config options
+# olddefconfig to handle new config options
 make olddefconfig
 
 echo "Configuration entries:"
