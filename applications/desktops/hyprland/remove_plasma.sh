@@ -8,29 +8,44 @@ echo "==> Removing Plasma desktop, frameworks and agents..."
 
 
 
-sudo xbps-remove -R \
-  kde-plasma \
-  plasma-framework \
-  plasma5support \
-  plasma-desktop \
-  polkit-kde-agent \
-  flatpak-kcm \
+sudo xbps-remove -y \
+  bluedevil \
   discover \
-  plasma-workspace \
-  kwin \
-  plasma-wayland-protocols \
-  breeze-icons \
-  breeze \
+  dolphin \
+  flatpak-kcm \
+  gwenview \
   kdeconnect \
   kdeconnect-kde \
+  kde-plasma \
   kdeplasma-addons \
+  kglobalshortcuts \
+  konsole \
+  kscreen \
+  kscreenlocker \
+  kworkspace \
+  kio-extras \
+  kwin \
+  kwin-x11 \
+  libplasma \
+  milou \
+  plasma-activities \
+  plasma-activities-stats \
+  plasma-desktop \
+  plasma-framework \
   plasma-nm \
   plasma-pa \
+  plasma-wayland-protocols \
+  plasma-workspace \
+  plasma-workspace-x11 \
+  plasma5support \
+  polkit-kde-agent \
+  powerdevil \
   pulseaudio-qt \
+  sddm \
+  sddm-kcm \
+  systemsettings \
   xdg-desktop-portal-kde \
-  kscreen \
-  kglobalshortcuts
-
+  flatpak
 
 # BUG:
 # Removes SDDM and without alternate setup, this will cause boot issues

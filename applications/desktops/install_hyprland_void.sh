@@ -2,37 +2,20 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.4.96 - install works, loads with noctalia
-# Beta version worthy, function desktop, has dock, sound and help screen.
-# Added functional screenshots, it wasn't working with the package list before.
-# Cleaned up packages that aren't needed, still need to do more review here!
-# Switched from soon to be obsolete .conf to .lua
-# Got DBUS properly working, system tray bug now fixed
-# refixed audio after converting to LUA, missed that the LLM cut that out of my script.
-# Switched launcher from Wofi to Walker. Walker by default looks better, and was easy to theme.
-# Using Noctalia launcher, polkit, and dock. Massive clean up in startup script, and theme uniformity
-# Switched terminal emulator from alacritty to ghostty, allows for goal of emulating MacOS keybindings
-# Changed this to RIO, ghostty is just not performant enough for the desktop I want, alacritty not feature rich enough
-# Switched screenshots to use Noctalia's built-in toolchain
-# Fixed bug I created by switching from Alacritty to Ghostty, help screen not displaying
+# VERSION 0.5.0 - Official Beta
+# General cleanup after installing it on two other computers
 
-# Current Feature Requests:
-# Compare Omarchy shortcuts to my own, take what seems like it could work
-# DONE: Add screenshots to help screen
-# DONE: Finish mapping relevant MacOS shortcuts to key bindings
-# DONE: Make an actual app for help instead of just a terminal
-# DONE: Use Noctalia / greetd or lightdm instead of sddm
-#   This has been a massive headache - I think I may have it narrowed down to an agetty conflict, out of tokens.
-# DONE: Make shortcut for logout/restart/shutdown popup that is currently activated from panel
+# Current Feature Requests:\
+# 1. Needs to have per user setup copies, for multi-user systems
+#   Implemented, need to test - seems to work
+# 2. Give user more choice! Maybe they don't want Noctalia, or want different dock?
+# 3. Separate out hypr settings, look at Omacom as an example. This way making a change won't override all settings'
+#   Implemented, need to test - This also seems to be working
+#   Some of these are very system specific like Monitor
 
 # CURRENT BUGS:
-# Headphones in Steam don't seem to work, but unplugged and speakers did
-#   Headphones work with other apps, Zen - Youtube.
-#   Not really sure what's going on here, have to manually select HDMI sink, then USB sink
-# RIO SSH bug:
-# Last login: Tue Oct  6 15:22:58 2026 from 10.0.0.203
-# user@system:~$ htop
-# ncurses: cannot initialize terminal type ($TERM="xterm-rio"); exiting
+# Steam Big Picture is wonky, this is a known issue with Hyprland
+#  Trying some window rule improvements to see if I can resolve
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -45,9 +28,6 @@ echo "Updating System before beginning"
 sudo xbps-install -Syu
 
 TERMINAL="rio" # can be manually set
-
-# First backup shell config
-../../bin/./backup_shell_config.sh
 
 # Setup hyprland repo if necessary
 if ! {
@@ -71,37 +51,8 @@ sudo xbps-install -S \
      xorg-server-xwayland xorg-fonts \
      noctalia ttf-jetbrains-mono font-awesome
 
-echo "Creating configs!"
-# Make directory for screenshots:
-mkdir -P "$HOME/Pictures/screenshots"
-
-# Create Hyprland configs directory if it doesn't exist
-mkdir -p ~/.config/hypr
-
-# Copy shortcut helper
-cp hyprland/keybind_viewer "$HOME/.config/hypr/keybind_viewer"
-
-# Create/update Hyprland config
-cp hyprland/hyprland.lua "$HOME/.config/hypr/hyprland.lua"
-
-cp hyprland/keybind_viewer "$HOME/.config/hypr/keybind_viewer"
-chmod +x "$HOME/.config/hypr/keybind_viewer"z
-
-# TODO: Let the user choose which terminal they want as as first step
-# Create/update ghostty settings
-# cp hyprland/ghostty-config "$HOME/.config/ghostty/config"
-
-# Create/update alacritty settings
-# cp hyprland/alacritty.toml "$HOME/.config/alacritty/alacritty.toml"
-
-# create/update rio settings
-cp hyprland/rio-config.toml "$HOME/.config/rio/config.toml"
-
-# Create/update Noctalia Config
-cp hyprland/noctalia-config.toml "$HOME/.config/noctalia/noctalia-config.toml"
-
-echo "Modifying zshrc for QT theme fix"
-hyprland/./modify_zshrc.sh
+# update user configs
+./hyperland/./update_user.sh
 
 echo "Apply fixes for QT theming"
 hyprland/./fix_qt_theming.sh
@@ -123,10 +74,6 @@ sudo ln -sf /etc/sv/blueman /var/service/ 2>/dev/null
 if [[ ! -f ~/.xinitrc ]]; then
     echo "exec Hyprland" > ~/.xinitrc
 fi
-
-echo "Get some wallpapers"
-# Change background?
-hyprland/./get_stock_wp.sh
 
 echo "Apply fix to dbus-session"
 hyprland/./fix_dbus.sh

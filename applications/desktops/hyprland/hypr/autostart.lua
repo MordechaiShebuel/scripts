@@ -1,0 +1,10 @@
+hl.on("hyprland.start", function()
+    -- Kesend_shortcut_onceep this list short while testing
+    hl.exec_cmd("/usr/bin/pipewire")
+    hl.exec_cmd("/usr/bin/pipewire -c pipewire-pulse.conf")
+    hl.exec_cmd("noctalia")
+    hl.exec_cmd("nohup steam -silent >/dev/null 2>&1 &")
+    hl.exec_cmd("octoxbps-notifier")
+    hl.exec_cmd(os.getenv("HOME") .. "/bin/nym-vpn")
+    hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/keybind_viewer $HOME/.config/hypr/keybinds.lua")
+end)
