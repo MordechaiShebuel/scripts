@@ -99,14 +99,14 @@ bindWithDescription(mainMod .. " + Q", hl.dsp.window.close(), "Close the current
 bindWithDescription(mainMod .. " + W", hl.dsp.window.close(), "Close the current window")
 
 -- Toggle Fullscreen (1 = maximize)
-bindWithDescription(mainMod .. " SHIFT + F", hl.dsp.window.fullscreen({ mode = 1 }), "Toggle Fullscreen for Window")
+bindWithDescription(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = 1 }), "Toggle Fullscreen for Window")
 
 -- Toggle floating
-bindWithDescription(mainMod .. " ALT + SPACE", hl.dsp.window.float({ action = "toggle" }), "Toggle Float for Window")
+bindWithDescription(mainMod .. " + ALT + SPACE", hl.dsp.window.float({ action = "toggle" }), "Toggle Float for Window")
 
 -- Scroll through existing workspaces with mainMod + scroll
-bindWithDescription(mainMod .. " + mouse_down", hl.dsp.docus({ workspace = "e+1" }), "Cycle through open windows forward")
-bindWithDescription(mainMod .. " + mouse_up", hl.dsp.docus({ workspace = "e-1" }), "Cycle through open windows backward")
+bindWithDescription(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), "Cycle through open windows forward")
+bindWithDescription(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }), "Cycle through open windows backward")
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
 bindWithDescription(mainMod .. " + mouse:272", hl.dsp.window.drag(), "Left Click to drag window with mouse", { mouse = true })
