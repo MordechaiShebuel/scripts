@@ -23,47 +23,45 @@ podman run --rm -it \
   void-kernel-builder \
   bash -c 'cd /src && exec bash /home/builder/create_void_kernel.sh "$CPU_ARCH" TRUE'
 
-# Module stage
-# Extract kernel release from the build
+# get kernel name:
 KERNEL_RELEASE=$(cat $HOME/src/linux/include/config/kernel.release 2>/dev/null || echo "unknown")
 
-if [[ "$KERNEL_RELEASE" == "unknown" ]]; then
-    echo "Error: Could not determine kernel release" >&2
+
+if [[ "$KERNEL_RELEASE" = "unknown" ]]; then
+    echo "Cannot find KERNEL_RELEASE for this build, unable to continue." >&2
     exit 1
 fi
 
-echo "Kernel release: $KERNEL_RELEASE"
+./compile_modules.sh $KERNEL_RELEASE $CPU_ARCH
 
-echo "Make the modules:"
-cd "$HOME/src/linux"
+# check created tar exists and has appropriate size
+TAR="$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz"
+MIN_SIZE=$((90 * 1024 * 1024)) # 90 MiB
 
-# KERNEL_RELEASE="$(make -s kernelrelease)"
-STAGE="$(mktemp -d)"
+if [[ -f "$TAR" ]] && (( $(wc -c < "$TAR") > MIN_SIZE )); then
+    if ping -c 1 "$REMOTE_HOST" >/dev/null 2>&1; then
+        ./install_tar.sh "$KERNEL_RELEASE" "$REMOTE_HOST" "$CPU_ARCH"
+    else
+        echo "Unable to install: remote host is not reachable."
+        echo "Run ./install_tar.sh \"$KERNEL_RELEASE\" \"$REMOTE_HOST\" \"$CPU_ARCH\" when the machine is accessible."
+    fi
+else
+    echo "Likely an issue with the kernel compile. Tarball size:"
+    if [[ -f "$TAR" ]]; then
+        du -h "$TAR"
+    else
+        echo "Tarball not found: $TAR"
+    fi
+fi
 
-echo "Kernel release: $KERNEL_RELEASE"
-echo "Staging modules in: $STAGE/modules"
-
-make -C "$HOME/src/linux" -j"$(nproc)" modules
-make -C "$HOME/src/linux" modules_install \
-  INSTALL_MOD_PATH="$STAGE/modules" \
-  INSTALL_MOD_STRIP=1
-
-test -d "$STAGE/modules/lib/modules/$KERNEL_RELEASE"
-
-MODDIR="$STAGE/modules/lib/modules/$KERNEL_RELEASE"
-
-rm -f "$MODDIR/build" "$MODDIR/source"
-
-# Create distributable tar
-tar -czf "$HOME/src/linux/kernel-$KERNEL_RELEASE.tar.gz" \
-  -C "$HOME/src/linux" \
-  arch/x86/boot/bzImage \
-  System.map \
-  -C "$STAGE" \
-  modules
-
-# Install stage
-
-modules_size=$(du -sh "$STAGE/modules")
-read -p "MODULES BUILT, READY TO INSTALL - size of MODULES: $modules_size "
-./install_tar.sh
+if $(du -h "$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz" | # split string on M | # size compare) # should be greater than 90M; then
+    if # Check $REMOTE_HOST is accessible, ping?; then
+        ./install_tar.sh $KERNEL_RELEASE $REMOTE_HOST $CPU_ARCH
+    else
+        echo "Unable to install, remote host not accessible."
+        echo "Make sure to run ./install_tar.sh $KERNEL_RELEASE $REMOTE_HOST $CPU_ARCH when the machine is accesible"
+    fi
+else
+    echo "Likely an issue with the kernel compile, the size is:"
+    echo "$$(du -h "$HOME/tmp/kernel-$KERNEL_RELEASE-$CPU_ARCHARCH.tar.gz" | # split string on M | # size compare)"
+fi

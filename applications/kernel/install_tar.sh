@@ -6,8 +6,9 @@ if [ $# -lt 2 ]; then
   exit 1
 fi
 
-REMOTE_HOST=$1   # REQUIRED
-KERNEL_RELEASE=$2 # REQUIRED
+KERNEL_RELEASE=$1 # REQUIRED
+REMOTE_HOST=$2
+ARCH=$3
 
 INSTALL_SCRIPT="$(mktemp)"
 
@@ -16,9 +17,10 @@ cat > "$INSTALL_SCRIPT" <<'SCRIPT'
 set -euo pipefail
 
 KERNEL_RELEASE="$1"
+ARCH="$2"
 echo "Installing ${KERNEL_RELEASE}"
 cd /tmp
-tar -xzf "kernel-${KERNEL_RELEASE}.tar.gz"
+tar -xzf "kernel-${KERNEL_RELEASE}-${ARCH}.tar.gz"
 
 test -f "arch/x86/boot/bzImage"
 test -f "System.map"
@@ -55,7 +57,8 @@ SCRIPT
 # If remote host specified, push and install
 if [[ -n "$REMOTE_HOST" ]]; then
     echo "Pushing kernel to $REMOTE_HOST..."
-    scp "$HOME/src/linux/kernel-$KERNEL_RELEASE.tar.gz" "$REMOTE_HOST:/tmp/" || {
+
+    scp "$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz" "$REMOTE_HOST:/tmp/" || {
         echo "SCP failed to copy kernel tar.gz" >&2
         exit 1
     }
@@ -63,14 +66,36 @@ if [[ -n "$REMOTE_HOST" ]]; then
         echo "SCP failed to copy install script" >&2
         exit 1
     }
+
     ssh -tt "$REMOTE_HOST" \
-        "sudo bash /tmp/install-kernel.sh '$KERNEL_RELEASE'; status=\$?; rm -f /tmp/install-kernel.sh; exit \$status"
+        "sudo bash /tmp/install-kernel.sh '$KERNEL_RELEASE' '$ARCH'
+         status=\$?
+
+         if [ \$status -eq 0 ]; then
+             if sudo grep -R -F -q '$KERNEL_RELEASE' \
+                 /boot/grub/grub.cfg \
+                 /boot/grub2/grub.cfg \
+                 /boot/loader/entries 2>/dev/null; then
+                 echo 'Verified: boot configuration contains $KERNEL_RELEASE'
+             else
+                 echo 'Install script succeeded, but no boot entry for $KERNEL_RELEASE was found' >&2
+                 status=1
+             fi
+         fi
+
+         rm -f /tmp/install-kernel.sh
+         exit \$status" || {
+        status=$?
+        rm -f "$INSTALL_SCRIPT"
+        echo "Installation or boot-entry verification failed on $REMOTE_HOST (status $status)" >&2
+        exit "$status"
+    }
 
     rm -f "$INSTALL_SCRIPT"
-    echo "Done. Kernel installed on $REMOTE_HOST"
+    echo "Done. Kernel installed and boot entry verified on $REMOTE_HOST"
 else
-    echo "Kernel tarball created: $HOME/src/kernel-$KERNEL_RELEASE.tar.gz"
+    echo "Kernel tarball created: $HOME/tmp-$KERNEL_RELEASE-$ARCH.tar.gz"
     echo "To install on remote system:"
-    echo "  scp $HOME/src/kernel-$KERNEL_RELEASE.tar.gz user@server.lan:/tmp/"
-    echo "  ssh user@server.lan 'cd /tmp && tar -xzf kernel-$KERNEL_RELEASE.tar.gz && sudo make modules_install && ...'"
+    echo "  scp $HOME/src/kernel-$KERNEL_RELEASE-$ARCH.tar.gz user@server.lan:/tmp/"
+    echo "  ssh user@server.lan 'cd /tmp && tar -xzf kernel-$KERNEL_RELEASE-$ARCH.tar.gz && sudo make modules_install && ...'"
 fi
