@@ -1,5 +1,7 @@
 -- Helper Functions
 
+local toJson = require("tojson")
+
 local function send_shortcut_once(mods, key)
     return function()
         hl.dispatch(hl.dsp.send_key_state({
@@ -65,9 +67,8 @@ local function bindWithDescription(keyBinding, action, description, options)
 
     table.insert(_commandRegistry, {
         key = keyBinding,
-        action = action,
         description = description,
-        options = options
+        options = options,
     })
 
     -- Bind with optional config
@@ -174,3 +175,13 @@ bindWithDescription(mainMod .. " + slash", send_shortcut_once("CTRL", "slash"), 
 bindWithDescription(mainMod .. " + ALT + q", hl.dsp.window.kill(), "Force kill application")
 bindWithDescription(mainMod .. " + ALT + escape", hl.dsp.window.kill(), "Force kill application")
 bindWithDescription(mainMod .. " + CTRL + l", hl.dsp.exec_cmd("noctalia msg session lock"), "Lock screen")
+
+-- Write Binds to file for helper app to read
+-- local cjson = require("cjson")
+
+local path = os.getenv("HOME") .. "/.config/hypr/binds.json"
+local file, err = io.open(path, "w")
+assert(file, "Cannot open " .. path .. ": " .. tostring(err))
+
+file:write(toJson(_commandRegistry), "\n")
+file:close()

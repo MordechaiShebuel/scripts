@@ -5,6 +5,7 @@
 # First backup shell config
 ../../../bin/./backup_shell_config.sh
 
+# CHECK for the wallpapers before downloading them again
 echo "Get some wallpapers"
 # Change background?
 ./get_stock_wp.sh
@@ -37,3 +38,5 @@ cp -r noctalia "$HOME/.config/"
 
 echo "Modifying zshrc for QT theme fix"
 ./modify_zshrc.sh
+
+hyprctl reload # Not sure this works from SSH
