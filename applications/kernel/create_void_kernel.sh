@@ -62,7 +62,9 @@ require_space_gib() {
     fi
 }
 
-mkdir -p "$SRC"
+echo "REMOVING $LINUX_SRC"
+rm -rf $LINUX_SRC
+
 require_space_gib "$SRC" 16 # 25 is recommended amount of space free
 
 ## Download and Apply Patches
@@ -79,30 +81,32 @@ if [[ "$CONTAINER_BUILD" == "false" ]]; then
         base-devel git bc kmod elfutils-devel bash cpio xz lz4 zstd \
         flex bison openssl-devel curl pahole tar python3 patch wget rsync \
         dracut grub -y
-
 fi
+
+echo "Making ${LINUX_SRC}"
+mkdir -p "${LINUX_SRC}"
+cd "${LINUX_SRC}"
+
 # Clone kernel source
 if [ ! -d "$LINUX_SRC/.git" ]; then
-    echo "Fetching Linux $LINUX_VERSION into $SRC"
-
-    mkdir -p "$LINUX_SRC"
-    cd "$LINUX_SRC"
-
+    echo "Initialize git for ${LINUX_SRC}"
     git init
     git remote add origin \
     https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
 
+    echo "Fetching Linux $LINUX_VERSION into $LINUX_SRC"
     git fetch \
         --depth=1 \
         origin \
-        "refs/tags/$LINUX_VERSION:refs/tags/$LINUX_VERSION"
+        "refs/tags/${LINUX_VERSION}:refs/tags/${LINUX_VERSION}"
 
-    git checkout --detach "$LINUX_VERSION"
+    git checkout --detach "${LINUX_VERSION}"
+else
+    echo "${LINUX_SRC} was not properly removed/reset"
+    exit 1
 fi
 
-cd "$LINUX_SRC"
-
-# clean prior potential builds
+# clean prior potential builds (SHOULDN'T REALLY BE NECESSARY WITH THE FOLDER DELETE AT TOP OF FILE
 git reset --hard "$LINUX_VERSION"
 git clean -fdx
 

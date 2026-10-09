@@ -110,7 +110,7 @@ bindWithDescription(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
 bindWithDescription(mainMod .. " + mouse:272", hl.dsp.window.drag(), "Left Click to drag window with mouse", { mouse = true })
-bindWithDescription(mainMod .. " + mouse:273", hl.dsp.window.drag(), "Right Click to resize window with mouse", { mouse = true })
+bindWithDescription(mainMod .. " + mouse:273", hl.dsp.window.resize(), "Right Click to resize window with mouse", { mouse = true })
 
 -- Move focus with arrow keys
 bindWithDescription(mainMod .. " + TAB", hl.dsp.exec_cmd(ipc .. "window-switcher hold"), "Window switcher")
