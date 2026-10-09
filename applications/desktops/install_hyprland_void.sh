@@ -2,16 +2,21 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.5.0 - Official Beta
+# VERSION 0.5.1 - Official Beta
 # General cleanup after installing it on two other computers
+# Some more cleanup
+# Changed keybind viewer to use output from LUA load. (JSON)
 
 # Current Feature Requests:\
 # 1. Needs to have per user setup copies, for multi-user systems
 #   Implemented, need to test - seems to work
+#   Hyprland has nasty habit of requiring full reboot.
+#   Potential fix is in place
+#   Added hostname detection to monitor file, so it being copied again won't kill monitor output on my devices
 # 2. Give user more choice! Maybe they don't want Noctalia, or want different dock?
 # 3. Separate out hypr settings, look at Omacom as an example. This way making a change won't override all settings'
 #   Implemented, need to test - This also seems to be working
-#   Some of these are very system specific like Monitor
+#   Some of these are very system specific like Monitor (dealt with)
 
 # CURRENT BUGS:
 # Steam Big Picture is wonky, this is a known issue with Hyprland
