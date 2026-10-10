@@ -13,11 +13,17 @@ wallpapers=(
   ["$wallpaper_dir/wall3.png"]="https://wallpapercave.com/uwp/uwp4920179.jpeg"
   ["$wallpaper_dir/wall4.png"]="https://wallpapercave.com/wp/wp16495094.webp"
   ["$wallpaper_dir/wall5.png"]="https://wallpapercave.com/uwp/uwp4920180.jpeg"
+  ["$wallpaper_dir/void0.png"]="https://art.osowoso.org/assets/hires/052.png"
+  ["$wallpaper_dir/void1.png"]="https://art.osowoso.org/assets/hires/034.png"
+  ["$wallpaper_dir/void2.png"]="https://art.osowoso.org/assets/hires/007.png"
 )
 
 download_wallpaper() {
     url="$1"
     destination="$2"
+    if [[ -f $destination ]]; then
+        return
+    fi
 
     if wget -O "$destination" "$url"; then
         printf 'Wallpaper downloaded to: %s\n' "$destination"
@@ -36,9 +42,9 @@ case "$answer" in
     [yY]|[yY][eE][sS])
         printf 'Copying wallpapers to /usr/share/hypr...\n'
 
-        if sudo cp "$wallpaper_home0" /usr/share/hypr/wall0.png &&
-           sudo cp "$wallpaper_home1" /usr/share/hypr/wall1.png &&
-           sudo cp "$wallpaper_home2" /usr/share/hypr/wall2.png; then
+        if sudo cp -f "$wallpaper_home0" /usr/share/hypr/wall0.png &&
+           sudo cp -f "$wallpaper_home1" /usr/share/hypr/wall1.png &&
+           sudo cp -f "$wallpaper_home2" /usr/share/hypr/wall2.png; then
             printf 'Wallpapers copied to /usr/share/hypr.\n'
         else
             printf 'Failed to copy wallpapers to /usr/share/hypr.\n' >&2
