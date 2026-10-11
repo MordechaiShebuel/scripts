@@ -41,7 +41,6 @@ behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]
     timeout = 3600.0
 
 [location]
-address = "oxford, arkansas"
 
 [lockscreen]
 fingerprint = false

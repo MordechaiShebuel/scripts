@@ -132,7 +132,7 @@ FIXDEP_PATCH="fixdep-largefile.patch"
 wget -O "$FIXDEP_PATCH" \
     "https://github.com/void-linux/void-packages/raw/refs/heads/master/srcpkgs/linux$K_V/patches/fixdep-largefile.patch"
 
-# Locate matching Cachy patch directory
+# Locate matcLINUX_VERSIONhing Cachy patch directory
 echo "Applying patches from: ./patches"
 
 # Apply patches
