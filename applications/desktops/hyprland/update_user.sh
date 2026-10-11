@@ -32,9 +32,10 @@ cp -r hypr "$HOME/.config/"
 rm -rf "$HOME/.config/rio"
 cp -r rio "$HOME/.config/"
 
+# this is causing issues, removing until I have time to debug
 # Create/update Noctalia Config
-rm -rf "$HOME/.config/noctalia"
-cp -r noctalia "$HOME/.config/"
+#rm -rf "$HOME/.config/noctalia"
+#cp -r noctalia "$HOME/.config/"
 
 sudo cp -r noctalia-greeter/greeter.toml /var/lib/noctalia-greeter/noctalia-greeter.toml
 

@@ -882,7 +882,7 @@ tee "$HOME/.local/share/applications/nym-vpn.desktop" <<EOF
 Categories=Network;
 Comment=Decentralized, mixnet, and zero-knowledge VPN
 Exec=env LOG_FILE=1 RUST_LOG=info,nym_vpn_app=debug "$LOCALBIN/nym-vpn" %U
-Icon=nym-vpn
+Icon=/usr/share/icons/hicolor/scalable/apps/nym-vpn.svg
 Name=NymVPN
 NoDisplay=false
 Path=
@@ -892,7 +892,7 @@ StartupWMClass=nym-vpn-app
 Terminal=false
 TerminalOptions=
 Type=Application
-Version=1.0
+Version=$app_version
 X-KDE-SubstituteUID=false
 X-KDE-Username=
 EOF

@@ -43,9 +43,9 @@ case "$answer" in
     [yY]|[yY][eE][sS])
         printf 'Copying wallpapers to /usr/share/hypr...\n'
 
-        if sudo cp -f "$wallpaper_dir/wall0" /usr/share/hypr/wall0.png &&
-           sudo cp -f "$wallpaper_dir/wall1" /usr/share/hypr/wall1.png &&
-           sudo cp -f "$wallpaper_dir/void0" /usr/share/hypr/wall2.png; then
+        if sudo cp -f "$wallpaper_dir/wall1.png" /usr/share/hypr/wall0.png &&
+           sudo cp -f "$wallpaper_dir/wall4.png" /usr/share/hypr/wall1.png &&
+           sudo cp -f "$wallpaper_dir/void0.png" /usr/share/hypr/wall2.png; then
             printf 'Wallpapers copied to /usr/share/hypr.\n'
         else
             printf 'Failed to copy wallpapers to /usr/share/hypr.\n' >&2

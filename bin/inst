@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Read distribution information.
 if [[ ! -r /etc/os-release ]]; then
     echo "Cannot determine the operating system." >&2
@@ -12,27 +14,27 @@ option=$2
 # Select the package manager based on /etc/os-release.
 case "$ID" in
     debian|peppermint|devuan)
-        echo Detected Debian-based system: "$ID"
-        sudo apt-get update
-        sudo apt-cache search "$pkg"
+        echo "Detected Debian-based system: $ID"
+
+        sudo apt-get install -y "$pkg"
         ;;
 
-    void|vostok|lazylinux)
+    void|vostok|lazylinux|noid)
         echo "Detected Void Linux"
 
-        sudo xbps-query -Rs "$pkg"
+        sudo xbps-install -S "$pkg"
         ;;
 
     artix|arch|manjaro)
         echo "Detected Artix Linux"
 
-        sudo pamac search "$pkg"
+        sudo pacman -S --noconfirm "$pkg"
         ;;
 
     openmandriva)
         echo "Detected OpenMandriva"
 
-        sudo dnf search "$pkg"
+        sudo dnf install -y "$pkg"
         ;;
 
     *)

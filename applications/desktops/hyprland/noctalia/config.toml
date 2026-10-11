@@ -41,6 +41,7 @@ behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]
     timeout = 3600.0
 
 [location]
+-- redacted
 
 [lockscreen]
 fingerprint = false

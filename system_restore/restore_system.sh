@@ -280,27 +280,6 @@ fi
 
     ./install_zeditor.sh
 
-    if xbps-query -p pkgver sddm >/dev/null 2>&1 &&
-    [ -L /var/service/sddm ] &&
-    sv status sddm >/dev/null 2>&1; then
-        log "$YELLOW SDDM is already installed and running. $NC"
-    else
-        sudo xbps-install -S sddm
-
-        if xbps-query -p pkgver lightdm >/dev/null 2>&1 &&
-        [ -L /var/service/lightdm ]; then
-            log "$YELLOW Stopping and disabling LightDM... $NC"
-            sudo sv down lightdm
-            sudo rm -f /var/service/lightdm
-        fi
-
-        if [ ! -e /var/service/sddm ]; then
-            sudo ln -s /etc/sv/sddm /var/service/sddm
-        fi
-
-        sudo sv up sddm
-    fi
-
     ./setup_cron_void.sh $GREEN $NC
 
     ./install_ente_auth.sh
@@ -413,13 +392,10 @@ esac
 
     ./setup_cron_void.sh $GREEN $NC
 
-    ./install_ente_auth.sh
-
-    ./install_avahi.sh
-
     ./enable_cups.sh
 
-    ./linux-cachyos-void-patch.sh
+    # Compiling my own kernel now
+    # ./linux-cachyos-void-patch.sh
 }
 
 install_packages_dnf() {
@@ -489,20 +465,20 @@ esac
 
 ./zsh_setup.sh $USER
 
->>>>>>> Stashed changes
-if ! command -v "pipenv" >/dev/null 2>&1; then
-    echo "pipenv not found, unable to install pipenv dependencies"
-else
-    # Install Python dependencies via pipenv from the base directory
-    pipenv install
-
-    # Application that setups up SSH and it's OpenRC Daemon
-    pipenv run python setup_remote_ssh.py
-
-    if ! command -v "nym-vpnd" >/dev/null 2>&1; then
-        echo "nym-vpnd not found, unable to install nym-vpnd"
-    fi
-fi
+# Need to think about how I want to approach this section
+# if ! command -v "pipenv" >/dev/null 2>&1; then
+#     echo "pipenv not found, unable to install pipenv dependencies"
+# else
+#     # Install Python dependencies via pipenv from the base directory
+#     pipenv install
+#
+#     # Application that setups up SSH and it's OpenRC Daemon
+#     pipenv run python setup_remote_ssh.py
+#
+#     if ! command -v "nym-vpnd" >/dev/null 2>&1; then
+#         echo "nym-vpnd not found, unable to install nym-vpnd"
+#     fi
+# fi
 
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
 ./bin_setup.sh
