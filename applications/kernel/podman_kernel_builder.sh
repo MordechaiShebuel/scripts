@@ -1,9 +1,9 @@
 #!/bin/bash
 #
 BUILD_CPU=${1:-prime}
-MODE=${3:-build} # Optional: if set to BUILD, will skip install stage
+MODE=${2:-build} # Optional: if set to BUILD, will skip install stage
 
-. "./.$BUILD_CPU"
+. "./.$BUILD_CPU" #expand build variables from associated dot file
 # Podman stage
 
 # Make sure podman is installed
@@ -33,7 +33,7 @@ if [[ "$KERNEL_RELEASE" = "unknown" ]]; then
     exit 1
 fi
 
-./compile_modules.sh $KERNEL_RELEASE $CPU_ARCH
+./compile_modules.sh $BUILD_CPU
 
 if [[ $MODE == "build" ]]; then
     echo "Kernel $KERNEL_RELEASE completed, ready for install."
@@ -42,7 +42,7 @@ if [[ $MODE == "build" ]]; then
 fi
 
 # check created tar exists and has appropriate size
-TAR="$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz"
+TAR="$HOME/tmp/kernel-$KERNEL_RELEASE-$CPU_ARCH.tar.gz"
 MIN_SIZE=$((90 * 1024 * 1024)) # 90 MiB
 
 if [[ -f "$TAR" ]] && (( $(wc -c < "$TAR") > MIN_SIZE )); then
@@ -63,10 +63,10 @@ fi
 
 if $(du -h "$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz" | # split string on M | # size compare) # should be greater than 90M; then
     if # Check $REMOTE_HOST is accessible, ping?; then
-        ./install_tar.sh $KERNEL_RELEASE $REMOTE_HOST $CPU_ARCH
+        ./install_tar.sh $BUILD_CPU
     else
         echo "Unable to install, remote host not accessible."
-        echo "Make sure to run ./install_tar.sh $KERNEL_RELEASE $REMOTE_HOST $CPU_ARCH when the machine is accesible"
+        echo "Make sure to run ./install_tar.sh $BUILD_CPU when the machine is accesible"
     fi
 else
     echo "Likely an issue with the kernel compile, the size is:"

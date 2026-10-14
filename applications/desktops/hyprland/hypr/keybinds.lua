@@ -80,7 +80,8 @@ local function bindWithDescription(keyBinding, action, description, options)
 end
 
 -- Constants
-local mainMod   = "SUPER"
+local mainMod = "SUPER"
+local home = os.getenv("HOME")
 local ipc = "noctalia msg "
 
 -- KEY BINDS
@@ -155,7 +156,8 @@ bindWithDescription(mainMod .. " + CTRL + SHIFT + 3", hl.dsp.exec_cmd(ipc .. "sc
 bindWithDescription(mainMod .. " + ALT + L", hl.dsp.exec_cmd(ipc .. "panel-toggle session"), "Lock screen")
 
 -- Shortcut help screen
-bindWithDescription(mainMod .. " + h", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/keybind_viewer $HOME/.config/hypr/keybinds.lua"), "Show keybind help")
+local help_cmd = string.format("%s/.config/hypr/keybind_viewer %s/.config/hypr/binds.json", home, home)
+bindWithDescription(mainMod .. " + h", hl.dsp.exec_cmd(help_cmd), "Show keybind help")
 
 -- Reload Hyprland config
 bindWithDescription(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"), "Reload Hyprland config")

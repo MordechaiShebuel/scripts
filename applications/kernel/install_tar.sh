@@ -1,26 +1,26 @@
 #!/bin/bash
 
-# Guard: require both arguments
-if [ $# -lt 2 ]; then
-  echo "Usage: $0 <REMOTE_HOST> <KERNEL_RELEASE>" >&2
+BUILD_CPU="${1:-prime}"
+
+# Guard: require correct arguments
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <BUILD_CPU>" >&2
   exit 1
 fi
 
-BUILD_CPU="${1:-prime}"
-
 . "./.$BUILD_CPU"
+
+echo "Installing $KERNEL_RELEASE to $REMOTE_HOST for $CPU_ARCH"
 
 INSTALL_SCRIPT="$(mktemp)"
 
-cat > "$INSTALL_SCRIPT" <<'SCRIPT'
+cat > "$INSTALL_SCRIPT" <<SCRIPT
 #!/usr/bin/env bash
 set -euo pipefail
 
-KERNEL_RELEASE="$1"
-ARCH="$2"
 echo "Installing ${KERNEL_RELEASE}"
 cd /tmp
-tar -xzf "kernel-${KERNEL_RELEASE}-${ARCH}.tar.gz"
+tar -xzf "kernel-${KERNEL_RELEASE}-${CPU_ARCH}.tar.gz"
 
 test -f "arch/x86/boot/bzImage"
 test -f "System.map"
@@ -58,7 +58,7 @@ SCRIPT
 if [[ -n "$REMOTE_HOST" ]]; then
     echo "Pushing kernel to $REMOTE_HOST..."
 
-    scp "$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz" "$REMOTE_HOST:/tmp/" || {
+    scp "$HOME/tmp/kernel-$KERNEL_RELEASE-$CPU_ARCH.tar.gz" "$REMOTE_HOST:/tmp/" || {
         echo "SCP failed to copy kernel tar.gz" >&2
         exit 1
     }
@@ -68,27 +68,30 @@ if [[ -n "$REMOTE_HOST" ]]; then
     }
 
     ssh -tt "$REMOTE_HOST" \
-        "sudo bash /tmp/install-kernel.sh '$KERNEL_RELEASE' '$ARCH'
-         status=\$?
+    ssh -tt "$REMOTE_HOST" \
+        "sudo bash -c '
+             bash /tmp/install-kernel.sh \"$KERNEL_RELEASE\" \"$CPU_ARCH\"
+             rc=\$?
 
-         if [ \$status -eq 0 ]; then
-             if sudo grep -R -F -q '$KERNEL_RELEASE' \
-                 /boot/grub/grub.cfg \
-                 /boot/grub2/grub.cfg \
-                 /boot/loader/entries 2>/dev/null; then
-                 echo 'Verified: boot configuration contains $KERNEL_RELEASE'
-             else
-                 echo 'Install script succeeded, but no boot entry for $KERNEL_RELEASE was found' >&2
-                 status=1
+             if [ \$rc -eq 0 ]; then
+                 if grep -R -F -q \"$KERNEL_RELEASE\" \
+                     /boot/grub/grub.cfg \
+                     /boot/grub2/grub.cfg \
+                     /boot/loader/entries 2>/dev/null; then
+                     echo \"Verified: boot configuration contains $KERNEL_RELEASE\"
+                 else
+                     echo \"Install script succeeded, but no boot entry for $KERNEL_RELEASE was found\" >&2
+                     rc=1
+                 fi
              fi
-         fi
 
-         rm -f /tmp/install-kernel.sh
-         exit \$status" || {
-        status=$?
+             rm -f /tmp/install-kernel.sh
+             exit \$rc
+         '" || {
+        rc=$?
         rm -f "$INSTALL_SCRIPT"
-        echo "Installation or boot-entry verification failed on $REMOTE_HOST (status $status)" >&2
-        exit "$status"
+        echo "Installation or boot-entry verification failed on $REMOTE_HOST (status $rc)" >&2
+        exit "$rc"
     }
 
     rm -f "$INSTALL_SCRIPT"

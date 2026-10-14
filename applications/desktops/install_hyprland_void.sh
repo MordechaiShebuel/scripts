@@ -2,10 +2,11 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.5.1 - Official Beta
+# VERSION 0.5.2 - Official Beta
 # General cleanup after installing it on two other computers
-# Some more cleanup
+# Some more cleanup, with settings
 # Changed keybind viewer to use output from LUA load. (JSON)
+# Set font to Inter, much nicer looking than Noto and will allow removing that Gulag cruft
 
 # Current Feature Requests:\
 # 1. Needs to have per user setup copies, for multi-user systems
@@ -19,8 +20,10 @@
 #   Some of these are very system specific like Monitor (dealt with)
 
 # CURRENT BUGS:
+# Resolved: Help screen bug introduced by changing keybind_viewer.
 # Steam Big Picture is wonky, this is a known issue with Hyprland
 #  Trying some window rule improvements to see if I can resolve
+#  Some more attemps to resolve this in place
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -54,7 +57,8 @@ sudo xbps-install -S \
      blueman gnome-keyring papirus-icon-theme \
      qt6ct hyprland-qt-support \
      xorg-server-xwayland xorg-fonts \
-     noctalia ttf-jetbrains-mono font-awesome
+     noctalia ttf-jetbrains-mono font-awesome \
+     font-inter font-inter-variable
 
 # update user configs
 ./hyperland/./update_user.sh

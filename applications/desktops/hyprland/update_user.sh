@@ -37,7 +37,7 @@ cp -r rio "$HOME/.config/"
 #rm -rf "$HOME/.config/noctalia"
 #cp -r noctalia "$HOME/.config/"
 
-sudo cp -r noctalia-greeter/greeter.toml /var/lib/noctalia-greeter/noctalia-greeter.toml
+sudo cp -r noctalia-greeter/greeter.toml /var/lib/noctalia-greeter/greeter.toml
 
 echo "Modifying zshrc for QT theme fix"
 ./modify_zshrc.sh

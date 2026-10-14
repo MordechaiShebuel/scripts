@@ -57,4 +57,7 @@ hl.config({
             "workspaces, 1, 5, smooth",
         },
     },
+    misc = {
+        exit_window_retains_fullscreen = true,
+    },
 })

@@ -17,6 +17,7 @@ password_style = "random"
 power_buttons_position = "bottom-right"
 scheme_selector_position = "top-right"
 theme_mode = "dark"
+font_family = "Inter"
 
     [appearance.palette]
     error = "#FD4663"
@@ -60,4 +61,4 @@ numlock = true
 default = "hyrland"
 
 [user]
-default = "nezmahb"
+default = ""

@@ -2,13 +2,15 @@
 #
 # Module stage
 # Extract kernel release from the build
-KERNEL_RELEASE=$1
-ARCH=$2
+BUILD_CPU="${1:-prime}"
 
-if [[ "$KERNEL_RELEASE" == "unknown" ]]; then
-    echo "Error: Could not determine kernel release" >&2
-    exit 1
+# Guard: require correct arguments
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <BUILD_CPU>" >&2
+  exit 1
 fi
+
+. "./.$BUILD_CPU"
 
 echo "Kernel release: $KERNEL_RELEASE"
 
@@ -35,7 +37,7 @@ rm -f "$MODDIR/build" "$MODDIR/source"
 mkdir -p "$HOME/tmp"
 
 # Create distributable tar
-tar -czf "$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz" \
+tar -czf "$HOME/tmp/kernel-$KERNEL_RELEASE-$CPU_ARCH.tar.gz" \
   -C "$HOME/src/linux" \
   arch/x86/boot/bzImage \
   System.map \
@@ -45,4 +47,7 @@ tar -czf "$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz" \
 # Install stage
 
 modules_size=$(du -sh "$STAGE/modules")
-read -p "MODULES BUILT, READY TO INSTALL - size of MODULES: $modules_size "
+tar_size=$(du -sh "$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz")
+echo "MODULES BUILT, READY TO INSTALL"
+echo "size of MODULES: $modules_size"
+echo size of TAR: $tar_size
