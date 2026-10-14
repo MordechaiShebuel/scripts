@@ -6,9 +6,9 @@ if [ $# -lt 2 ]; then
   exit 1
 fi
 
-KERNEL_RELEASE=$1 # REQUIRED
-REMOTE_HOST=$2
-ARCH=$3
+BUILD_CPU="${1:-prime}"
+
+. "./.$BUILD_CPU"
 
 INSTALL_SCRIPT="$(mktemp)"
 

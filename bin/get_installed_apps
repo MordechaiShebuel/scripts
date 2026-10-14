@@ -24,7 +24,7 @@ case "$ID" in
         dpkg-query -W -f='${Package}\n' > "$OUTPUT_DIR/installed_apps.txt"
         ;;
 
-    void|vostok|lazylinux)
+    void|vostok|lazylinux|noid)
         echo "Detected Void Linux"
 
         xbps-query --list-manual-pkgs > "$OUTPUT_DIR/installed_apps.txt"

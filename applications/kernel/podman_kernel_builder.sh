@@ -1,8 +1,9 @@
 #!/bin/bash
 #
-CPU_ARCH=${1:-ZEN3}
-REMOTE_HOST=${2:-}  # Optional: user@server.lan
+BUILD_CPU=${1:-prime}
+MODE=${3:-build} # Optional: if set to BUILD, will skip install stage
 
+. "./.$BUILD_CPU"
 # Podman stage
 
 # Make sure podman is installed
@@ -25,7 +26,7 @@ podman run --rm -it \
 
 # get kernel name:
 KERNEL_RELEASE=$(cat $HOME/src/linux/include/config/kernel.release 2>/dev/null || echo "unknown")
-
+sed -i "s/^KERNEL_RELEASE=.*/KERNEL_RELEASE=$KERNEL_RELEASE/" "./.$BUILD_CPU"
 
 if [[ "$KERNEL_RELEASE" = "unknown" ]]; then
     echo "Cannot find KERNEL_RELEASE for this build, unable to continue." >&2
@@ -34,13 +35,19 @@ fi
 
 ./compile_modules.sh $KERNEL_RELEASE $CPU_ARCH
 
+if [[ $MODE == "build" ]]; then
+    echo "Kernel $KERNEL_RELEASE completed, ready for install."
+    echo "Run installer, .install_tar.sh $BUILD_CPU"
+    exit 0
+fi
+
 # check created tar exists and has appropriate size
 TAR="$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz"
 MIN_SIZE=$((90 * 1024 * 1024)) # 90 MiB
 
 if [[ -f "$TAR" ]] && (( $(wc -c < "$TAR") > MIN_SIZE )); then
     if ping -c 1 "$REMOTE_HOST" >/dev/null 2>&1; then
-        ./install_tar.sh "$KERNEL_RELEASE" "$REMOTE_HOST" "$CPU_ARCH"
+        ./install_tar.sh "$BUILD_CPU"
     else
         echo "Unable to install: remote host is not reachable."
         echo "Run ./install_tar.sh \"$KERNEL_RELEASE\" \"$REMOTE_HOST\" \"$CPU_ARCH\" when the machine is accessible."

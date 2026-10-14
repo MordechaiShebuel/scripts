@@ -5,7 +5,7 @@ SRC="$HOME/src"
 LINUX_SRC="$SRC/linux"
 CACHY_PATCH_SRC="$SRC/cachy-patches"
 
-LINUX_VERSION="v7.2.7"
+LINUX_VERSION="v7.2.10"
 OLD_KERNEL="$(uname -r)"
 
 KVER="${LINUX_VERSION#v}"

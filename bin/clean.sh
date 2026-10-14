@@ -18,7 +18,7 @@ case "$ID" in
         sudo apt clean
         ;;
 
-    void|vostok|lazylinux)
+    void|vostok|lazylinux|noid)
         echo "Detected Void Linux"
 
         sudo xbps-remove -yO

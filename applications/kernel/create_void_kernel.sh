@@ -31,7 +31,7 @@ echo "Build user: $(id -un)"
 LINUX_SRC="$SRC/linux"
 CACHY_PATCH_SRC="$SRC/cachy-patches"
 
-LINUX_VERSION="v7.2.9"
+LINUX_VERSION="v7.2.10"
 OLD_KERNEL="$(uname -r)"
 
 KVER="${LINUX_VERSION#v}"
@@ -243,15 +243,15 @@ echo "Building kernel: $KERNEL_RELEASE"
 make clean
 make -j$(($(nproc)/2)) bzImage modules
 
-# NEED TO PAUSE HERE WAIT FOR HUMAN
-read -p "Compile portion completed, Press [Enter] key to continue with kernel install..."
-
 # Install modules
 # # ONLY DO INSTALL LOCALLY!
 if [[ "$CONTAINER_BUILD" == "TRUE" ]]; then
     echo "CONTAINER BUILD COMPLETED!"
     exit 0
 fi
+
+# NEED TO PAUSE HERE WAIT FOR HUMAN
+read -p "Compile portion completed, Press [Enter] key to continue with kernel install..."
 
 # THESE COMMANDS SHOULD NOT RUN IN CONTAINER
 sudo -v
