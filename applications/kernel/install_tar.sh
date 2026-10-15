@@ -69,25 +69,24 @@ if [[ -n "$REMOTE_HOST" ]]; then
 
     ssh -tt "$REMOTE_HOST" \
     ssh -tt "$REMOTE_HOST" \
-        "sudo bash -c '
-             bash /tmp/install-kernel.sh \"$KERNEL_RELEASE\" \"$CPU_ARCH\"
-             rc=\$?
+        "sudo bash /tmp/install-kernel.sh \"$KERNEL_RELEASE\";
+            rc=$?;
+            rm -f /tmp/install-kernel.sh;
 
-             if [ \$rc -eq 0 ]; then
-                 if grep -R -F -q \"$KERNEL_RELEASE\" \
-                     /boot/grub/grub.cfg \
-                     /boot/grub2/grub.cfg \
-                     /boot/loader/entries 2>/dev/null; then
-                     echo \"Verified: boot configuration contains $KERNEL_RELEASE\"
-                 else
-                     echo \"Install script succeeded, but no boot entry for $KERNEL_RELEASE was found\" >&2
-                     rc=1
-                 fi
-             fi
+            if [[ -z $KERNEL_RELEASE ]]; then
+                echo "KERNEL_RELEASE is empty; cannot verify boot entry" >&2
+                rc=1
+            elif sudo grep -Fq -- "$KERNEL_RELEASE" /boot/grub/grub.cfg; then
+                echo "Verified: boot configuration contains $KERNEL_RELEASE"
+                rc=0
+            else
+                echo "No boot entry found for $KERNEL_RELEASE" >&2
+                rc=1
+            fi
 
              rm -f /tmp/install-kernel.sh
              exit \$rc
-         '" || {
+        " || {
         rc=$?
         rm -f "$INSTALL_SCRIPT"
         echo "Installation or boot-entry verification failed on $REMOTE_HOST (status $rc)" >&2

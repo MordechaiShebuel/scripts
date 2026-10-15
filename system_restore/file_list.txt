@@ -1,0 +1,12 @@
+zed
+zen-browser
+brave-browser
+steam
+git
+zsh
+cronie
+curl
+wget
+nano
+nfs-utils
+

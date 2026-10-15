@@ -1,0 +1,20 @@
+#!/bin/bash
+# Usage: oxwm-mac-keys <normal-keys> <terminal-keys>
+# Example: oxwm-mac-keys "ctrl+c" "ctrl+shift+c"
+
+NORMAL="$1"
+TERMINAL="$2"
+
+# Get active window class
+CLASS=$(xprop -id "$(xdotool getactivewindow)" WM_CLASS 2>/dev/null | \
+        awk -F'"' '{print $4}')
+
+# Terminals you want to treat specially (add more as needed)
+case "$CLASS" in
+    rio|Rio|ghostty|Ghostty|Alacritty|kitty|st|xterm|urxvt|foot)
+        xdotool key --clearmodifiers "$TERMINAL"
+        ;;
+    *)
+        xdotool key --clearmodifiers "$NORMAL"
+        ;;
+esac

@@ -57,7 +57,7 @@ sudo xbps-install -S \
      blueman gnome-keyring papirus-icon-theme \
      qt6ct hyprland-qt-support \
      xorg-server-xwayland xorg-fonts \
-     noctalia ttf-jetbrains-mono font-awesome \
+     noctalia font-awesome \
      font-inter font-inter-variable
 
 # update user configs

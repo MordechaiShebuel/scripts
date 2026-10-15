@@ -68,6 +68,7 @@ local function bindWithDescription(keyBinding, action, description, options)
     table.insert(_commandRegistry, {
         key = keyBinding,
         description = description,
+        --action = action,
         options = options,
     })
 
@@ -80,9 +81,9 @@ local function bindWithDescription(keyBinding, action, description, options)
 end
 
 -- Constants
-local mainMod = "SUPER"
-local home = os.getenv("HOME")
+local mainMod   = "SUPER"
 local ipc = "noctalia msg "
+local home = os.getenv("HOME")
 
 -- KEY BINDS
 -- Terminal
@@ -93,7 +94,7 @@ bindWithDescription(mainMod .. " + D", hl.dsp.exec_cmd(ipc .. "panel-toggle laun
 bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")
 
 -- Launch file explorer
-bindWithDescription(mainMod .. " + E", hl.dsp.exec_cmd("Thunar"), "Open Application Launcher")
+bindWithDescription(mainMod .. " + E", hl.dsp.exec_cmd("Thunar"), "Open File Manager")
 
 -- Close window
 bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")-- hl.bind(mainMod .. " + Q", hl.dsp.window.close())
@@ -140,14 +141,12 @@ bindWithDescription("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set +1
 bindWithDescription("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 10%-"), "Decrease brightness", { locked = true, repeating = true })
 
 -- macOS-style screenshots (secondMod ≈ Cmd)
--- ⌘⇧3  full screen (focused output)
-bindWithDescription(mainMod .. " + SHIFT + 3", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen"), "Screenshot focused monitor")
 
 -- ⌘⇧4  region
 bindWithDescription(mainMod .. " + CTRL + SHIFT + 4", hl.dsp.exec_cmd(ipc .. "screenshot-region"), "Screenshot region")
 
 -- Multi-monitor: picker (≈ "choose display")
-bindWithDescription(mainMod .. " + SHIFT + 5", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen pick"), "Screenshot with monitor picker")
+bindWithDescription(mainMod .. " + CTRL + SHIFT + 5", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen pick"), "Screenshot with monitor picker")
 
 -- All monitors as one image
 bindWithDescription(mainMod .. " + CTRL + SHIFT + 3", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen all"), "Screenshot all monitors")
@@ -156,7 +155,7 @@ bindWithDescription(mainMod .. " + CTRL + SHIFT + 3", hl.dsp.exec_cmd(ipc .. "sc
 bindWithDescription(mainMod .. " + ALT + L", hl.dsp.exec_cmd(ipc .. "panel-toggle session"), "Lock screen")
 
 -- Shortcut help screen
-local help_cmd = string.format("%s/.config/hypr/keybind_viewer %s/.config/hypr/binds.json", home, home)
+local help_cmd = string.format("%s/.config/hypr/./keybind_viewer %s/.config/hypr/binds.json", home, home)
 bindWithDescription(mainMod .. " + h", hl.dsp.exec_cmd(help_cmd), "Show keybind help")
 
 -- Reload Hyprland config

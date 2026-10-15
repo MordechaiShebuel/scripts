@@ -288,10 +288,11 @@ fi
 
     ./enable_cups.sh
 
-    ./linux-cachyos-void-patch.sh
+    # Not using this kernel anymore
+    # ./linux-cachyos-void-patch.sh
 
-    # VOSTOK FIX
-    sudo rm /etc/sddm.conf.d/vostok.conf
+    # VOSTOK FIX - Using Noid to install, way smaller footprint
+    # sudo rm /etc/sddm.conf.d/vostok.conf
 
 }
 
@@ -317,7 +318,7 @@ case "$ID" in
         install_brave_debian
         ;;
 
-    void|vostok|lazylinux)
+    void|vostok|lazylinux|noid)
         echo "Detected Void Linux"
 
         install_packages_xbps
@@ -360,12 +361,12 @@ case $mode in
         ;;
 esac
 
-./zsh_setup.sh $USER
+    ./zsh_setup.sh $USER
 
-=======
-        printf '%s %s %s\n ' "$RED" "${failed[@]}" "                $NC" >&2
-        exit 1
-    fi
+    # Need to rummage Git for the line that got deleted here.
+    #     printf '%s %s %s\n ' "$RED" "${failed[@]}" "                $NC" >&2
+    #     exit 1
+    # fi
 
     ./install_zeditor.sh
 
@@ -396,7 +397,7 @@ esac
 
     # Compiling my own kernel now
     # ./linux-cachyos-void-patch.sh
-}
+} # What did this go to?
 
 install_packages_dnf() {
     sudo dnf install -y "${pkg_list[@]}"
@@ -420,7 +421,7 @@ case "$ID" in
         install_brave_debian
         ;;
 
-    void|vostok)
+    void|vostok|noid)
         echo "Detected Void Linux"
 
         install_packages_xbps
