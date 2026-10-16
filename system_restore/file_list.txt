@@ -2,6 +2,7 @@ zed
 zen-browser
 brave-browser
 steam
+steam-udev-rules
 git
 zsh
 cronie
@@ -9,4 +10,11 @@ curl
 wget
 nano
 nfs-utils
-
+libgcc-32bit
+libstdc++-32bit
+libdrm-32bit
+libglvnd-32bit
+libva-32bit
+pipewire-32bit
+alsa-pipewire-32bit
+gamescope

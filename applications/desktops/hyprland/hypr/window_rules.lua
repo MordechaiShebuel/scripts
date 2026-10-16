@@ -11,25 +11,18 @@ hl.window_rule({
 })
 
 hl.window_rule({
-    match = {
-        title = "^()$",
-        class = "^steam$",
-    },
-    stay_focused = true,
+    match = { class = "^steam$" },
+    no_initial_focus = true,
+    -- workspace = "5 silent",   -- optional
 })
 
 hl.window_rule({
-    match = {
-        title = "^()$",
-        class = "^steam$",
-    },
-    min_size = "1 1",
-})
-hl.window_rule({
-    name = "steam-big-picture-fullscreen",
-    match = {
-        class = "^steam$",
-        title = "^Steam Big Picture Mode$",
-    },
+    match = { class = "^steam$", title = "^Steam Big Picture Mode$" },
     fullscreen = true,
+})
+
+-- Optional but useful for actual games
+hl.window_rule({
+    match = { class = "^steam_app_.*" },
+    idle_inhibit = "fullscreen",   -- Hyprland-side inhibit as extra safety
 })

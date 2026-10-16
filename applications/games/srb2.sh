@@ -170,7 +170,7 @@ else
     fi
 
     log INFO "Cloning SRB2 source code."
-    git clone https://git.do.srb2.org/STJr/SRB2.git "$SRB2_DIR"
+    git clone https://github.com/STJr/SRB2.git "$SRB2_DIR"
 fi
 
 log OK "SRB2 source code is ready."
@@ -196,7 +196,7 @@ log INFO "Initializing Git LFS."
 git lfs install
 
 # Clone or update the assets branch
-ASSETS_BRANCH="SRB2_2.2"
+ASSETS_BRANCH="SRB2_release_2.2.0"
 
 if [[ -d "$ASSETS_DIR/.git" ]]; then
     log INFO "Assets repository already exists. Updating it."
@@ -215,7 +215,7 @@ else
     git clone \
         --branch "$ASSETS_BRANCH" \
         --single-branch \
-        https://git.do.srb2.org/STJr/srb2assets-public.git \
+        https://git.do.srb2.org/Lorsoen/srb2assets-public.git \
         "$ASSETS_DIR"
 fi
 
