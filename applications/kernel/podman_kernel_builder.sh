@@ -26,7 +26,13 @@ podman run --rm -it \
 
 # get kernel name:
 KERNEL_RELEASE=$(cat $HOME/src/linux/include/config/kernel.release 2>/dev/null || echo "unknown")
-sed -i "s/^KERNEL_RELEASE=.*/KERNEL_RELEASE=$KERNEL_RELEASE/" "./.$BUILD_CPU"
+
+cat > "$BUILD_FILE" <<EOF
+REMOTE_HOST="$REMOTE_HOST"
+CPU="$CPU_ARCH"
+CPU_ARCH="$CPU_ARCH"0
+KERNEL_RELEASE="$KERNEL_RELEASE"
+EOF
 
 if [[ "$KERNEL_RELEASE" = "unknown" ]]; then
     echo "Cannot find KERNEL_RELEASE for this build, unable to continue." >&2

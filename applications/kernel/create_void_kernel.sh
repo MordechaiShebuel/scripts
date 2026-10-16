@@ -31,7 +31,7 @@ echo "Build user: $(id -un)"
 LINUX_SRC="$SRC/linux"
 CACHY_PATCH_SRC="$SRC/cachy-patches"
 
-LINUX_VERSION="v7.2.10"
+LINUX_VERSION="v7.2.11"
 OLD_KERNEL="$(uname -r)"
 
 KVER="${LINUX_VERSION#v}"
@@ -69,9 +69,9 @@ require_space_gib "$SRC" 16 # 25 is recommended amount of space free
 
 ## Download and Apply Patches
 declare -A PATCHES=(
-    [cachyos-fixes-patches-v9]="0001-cachyos-fixes-patches.patch"
+    [cachyos-fixes-patches-v10]="0001-cachyos-fixes-patches.patch"
     [cpu-cachyos-patches]="0001-CACHY-Add-x86_64-ISA-and-Zen4-compiler-optimizations.patch"
-    [bore-patches]="0001-linux7.2-bore6.8.0.patch"
+    [bore-patches-v2]="0001-linux7.2-bore7.0.0.patch"
     # [gaming-sched-patches-v2]="your-patch-file.patch"
 )
 
