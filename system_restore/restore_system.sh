@@ -7,12 +7,8 @@
 
 set -Eeuo pipefail
 
-# Color output
-RED="\033[0;31m"
-GREEN="\033[0;32m"
-YELLOW="\033[1;33m"
-BLUE="\033[0;34m"
-NC="\033[0m" # No Color
+# Get color support
+. ./support/./colors.sh
 
 mode="${1:-}"
 gpu="${2:-}"
@@ -62,105 +58,6 @@ if ((${#pkg_list[@]} == 0)); then
 fi
 
 log "${GREEN}Loaded ${#pkg_list[@]} packages.${NC}"
-
-browser_installed() {
-    local browser
-
-    for browser in "$@"; do
-        if command -v "$browser" >/dev/null 2>&1; then
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-install_zen() {
-    if browser_installed zen zen-browser; then
-        echo "Zen Browser is already installed."
-        return 0
-    fi
-
-    echo "Installing Zen Browser..."
-
-    if ! command -v curl >/dev/null 2>&1; then
-        echo "curl is required to install Zen Browser." >&2
-        return 1
-    fi
-
-    bash <(curl -fsSL \
-        https://raw.githubusercontent.com/MalikHw/zb-installer-script/main/install-zen.sh)
-
-    if browser_installed zen zen-browser; then
-        log "${GREEN}Zen Browser installed!${NC}"
-    else
-        echo "${YELLOW}Zen Browser installation failed.${NC}" >&2
-        return 1
-    fi
-}
-
-install_brave_debian() {
-    if browser_installed brave brave-browser; then
-        echo "Brave Browser is already installed."
-        return 0
-    fi
-
-    echo "Installing Brave Browser on Debian..."
-
-    sudo apt-get update
-    sudo apt-get install -y curl ca-certificates
-
-    sudo curl -fsSLo \
-        /usr/share/keyrings/brave-browser-archive-keyring.gpg \
-        https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-
-    sudo curl -fsSLo \
-        /etc/apt/sources.list.d/brave-browser-release.sources \
-        https://brave-browser-apt-release.s3.brave.com/brave-browser.sources
-
-    sudo apt-get update
-    sudo apt-get install -y brave-browser
-
-    if browser_installed brave brave-browser; then
-        log "${GREEN}Brave Browser installed!${NC}"
-    else
-        log "${RED}Brave Browser installation failed.${NC}" >&2
-        return 1
-    fi
-}
-
-install_brave_pacman() {
-    if browser_installed brave brave-browser; then
-        log "${YELLOW}Brave Browser is already installed.${NC}"
-        return 0
-    fi
-
-    log "Checking for a ${GREEN}Brave${NC} package in the configured repositories..."
-
-    local brave_package=""
-
-    if pacman -Si brave >/dev/null 2>&1; then
-        brave_package="brave"
-    elif pacman -Si brave-bin >/dev/null 2>&1; then
-        brave_package="brave-bin"
-    fi
-
-    if [[ -z "$brave_package" ]]; then
-        log "Brave Browser was not found in the configured pacman repositories."
-        log "Install a compatible Brave package manually, for example through an"
-        log "AUR helper, then run this script again."
-        return 1
-    fi
-
-    sudo pacman -Syu --needed "$brave_package"
-
-    if browser_installed brave brave-browser; then
-        echo "Brave Browser installed!"
-    else
-        echo "Brave Browser installation failed." >&2
-        return 1
-    fi
-}
 
 install_packages_apt() {
     local package
@@ -222,32 +119,7 @@ install_packages_xbps() {
 
 # Configure third-party repositories and install the required repository packages
 # only if this has not already been done.
-if ! {
-    test -f /etc/xbps.d/noid-xbps-repo.conf &&
-    test -f /etc/xbps.d/linuxnauta.conf &&
-    test -f /etc/xbps.d/voiders-dev-repo.conf &&
-    test -f /etc/xbps.d/neko-void.conf &&
-    sudo xbps-query -p pkgver void-repo-nonfree >/dev/null 2>&1 &&
-    sudo xbps-query -p pkgver void-repo-multilib >/dev/null 2>&1
-}; then
-    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" |
-        sudo tee /etc/xbps.d/noid-xbps-repo.conf >/dev/null
-
-    echo "repository=https://voidrepo.linuxnauta.com" |
-        sudo tee /etc/xbps.d/linuxnauta.conf >/dev/null
-
-    echo "repository=https://repo.voiders.dev" |
-        sudo tee /etc/xbps.d/voiders-dev-repo.conf >/dev/null
-
-    echo "repository=https://sourceforge.net/projects/neko-void/files/repo" |
-        sudo tee /etc/xbps.d/neko-void.conf >/dev/null
-
-    sudo xbps-install -Syu void-repo-nonfree void-repo-multilib
-fi
-
-    sudo xbps-install -Syu
-
-    sudo xbps-install -Su
+    ./support/./enable_void_repo.sh
 
     case $gpu in
     amd)
@@ -278,21 +150,15 @@ fi
         # exit 0 # Need a determination here not to hard fail.
     fi
 
-    ./install_zeditor.sh
+    ./support/./install_zeditor.sh
 
-    ./setup_cron_void.sh $GREEN $NC
+    ./support/./setup_cron_void.sh $GREEN $NC
 
-    ./install_ente_auth.sh
+    ./support/./install_ente_auth.sh
 
-    ./install_avahi.sh
+    ./support/./install_avahi.sh
 
-    ./enable_cups.sh
-
-    # Not using this kernel anymore
-    # ./linux-cachyos-void-patch.sh
-
-    # VOSTOK FIX - Using Noid to install, way smaller footprint
-    # sudo rm /etc/sddm.conf.d/vostok.conf
+    ./support/./enable_cups.sh
 
 }
 
@@ -314,8 +180,8 @@ case "$ID" in
             sudo dpkg-reconfigure sddm
         fi
 
-        install_zen
-        install_brave_debian
+        ./support/./zen_browser_installer.sh
+        ./support/./brave_debian_installer.sh
         ;;
 
     void|vostok|lazylinux|noid)
@@ -333,8 +199,8 @@ case "$ID" in
         echo "Detected Artix Linux"
 
         install_packages_pacman
-        install_zen
-        install_brave_pacman || true
+        ./support/./zen_browser_installer.sh
+        ./support/./brave_arch_installer.sh || true
         ;;
 
     openmandriva)
@@ -354,14 +220,14 @@ esac
 
 case $mode in
     server)
-        ./server_setup.sh
+        ./support/./server_setup.sh
         ;;
     client)
-        ./client_setup.sh $USER
+        ./support/./client_setup.sh $USER
         ;;
 esac
 
-./zsh_setup.sh $USER
+./support/./zsh_setup.sh $USER
 
 # Need to think about how I want to approach this section
 # if ! command -v "pipenv" >/dev/null 2>&1; then
@@ -379,7 +245,7 @@ esac
 # fi
 
 # copy setup files you want on this system, for example local scripts, ssh pub file, etc
-./bin_setup.sh
+./support/./bin_setup.sh
 
 echo "Restore script completed."
 

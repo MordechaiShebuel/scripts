@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+set -Eeuo pipefail
 
 BUILD_CPU="${1:-prime}"
 
@@ -67,33 +69,43 @@ if [[ -n "$REMOTE_HOST" ]]; then
         exit 1
     }
 
-    ssh -tt "$REMOTE_HOST" \
-    ssh -tt "$REMOTE_HOST" \
-        "sudo bash /tmp/install-kernel.sh \"$KERNEL_RELEASE\";
-            rc=$?;
-            rm -f /tmp/install-kernel.sh;
+    # Create the remote installation script
+    REMOTE_INSTALL_SCRIPT="$(mktemp)"
+    cat > "$REMOTE_INSTALL_SCRIPT" <<'REMOTE'
+#!/bin/bash
+release=$1
+sudo -v
 
-            if [[ -z $KERNEL_RELEASE ]]; then
-                echo "KERNEL_RELEASE is empty; cannot verify boot entry" >&2
-                rc=1
-            elif sudo grep -Fq -- "$KERNEL_RELEASE" /boot/grub/grub.cfg; then
-                echo "Verified: boot configuration contains $KERNEL_RELEASE"
-                rc=0
-            else
-                echo "No boot entry found for $KERNEL_RELEASE" >&2
-                rc=1
-            fi
+if ! sudo bash /tmp/install-kernel.sh; then
+    echo "Kernel installation failed" >&2
+    rm -f /tmp/install-kernel.sh
+    exit 1
+fi
 
-             rm -f /tmp/install-kernel.sh
-             exit \$rc
-        " || {
+sudo rm -f /tmp/install-kernel.sh
+
+if ! sudo grep -Fq -- "$release" /boot/grub/grub.cfg; then
+    echo "No boot entry found for $release" >&2
+    exit 1
+fi
+
+echo "Verified: boot configuration contains $release"
+REMOTE
+
+    # Execute the remote script via SSH
+    if ! scp "$REMOTE_INSTALL_SCRIPT" "$REMOTE_HOST":/tmp/install-kern-mgr.sh; then
+        echo "Failed to copy script to $REMOTE_HOST" >&2
+        exit 1
+    fi
+
+    if ! ssh -t "$REMOTE_HOST" "sudo bash /tmp/install-kern-mgr.sh '$KERNEL_RELEASE'"; then
         rc=$?
-        rm -f "$INSTALL_SCRIPT"
+        rm -f "$INSTALL_SCRIPT" "$REMOTE_INSTALL_SCRIPT"
         echo "Installation or boot-entry verification failed on $REMOTE_HOST (status $rc)" >&2
         exit "$rc"
-    }
+    fi
 
-    rm -f "$INSTALL_SCRIPT"
+    rm -f "$INSTALL_SCRIPT" "$REMOTE_INSTALL_SCRIPT"
     echo "Done. Kernel installed and boot entry verified on $REMOTE_HOST"
 else
     echo "Kernel tarball created: $HOME/tmp-$KERNEL_RELEASE-$ARCH.tar.gz"
