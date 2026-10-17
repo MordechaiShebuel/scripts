@@ -216,7 +216,7 @@ set_cpu_arch "${1:-ZEN3}"
 
 # Strongly recommended for size + boot reliability
 ./scripts/config -e CONFIG_MODULES          # keep modules support
-scripts/config --disable CONFIG_DEBUG_INFO \
+./scripts/config --disable CONFIG_DEBUG_INFO \
                          --disable CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT \
                          --disable CONFIG_DEBUG_INFO_REDUCED \
                          --disable CONFIG_DEBUG_INFO_BTF \

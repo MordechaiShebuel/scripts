@@ -27,10 +27,10 @@ podman run --rm -it \
 # get kernel name:
 KERNEL_RELEASE=$(cat $HOME/src/linux/include/config/kernel.release 2>/dev/null || echo "unknown")
 
-cat > "$BUILD_FILE" <<EOF
+cat > ".$BUILD_FILE" <<EOF
 REMOTE_HOST="$REMOTE_HOST"
 CPU="$CPU_ARCH"
-CPU_ARCH="$CPU_ARCH"0
+CPU_ARCH="$CPU_ARCH"
 KERNEL_RELEASE="$KERNEL_RELEASE"
 EOF
 

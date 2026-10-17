@@ -26,3 +26,17 @@ hl.window_rule({
     match = { class = "^steam_app_.*" },
     idle_inhibit = "fullscreen",   -- Hyprland-side inhibit as extra safety
 })
+
+-- Rule for galculator
+hl.window_rule({
+    match = {
+        class = "[q|g]alculat.*",
+    },
+    -- allowedOverFullscreen = true,
+    -- floating = true,
+    monitor = 0,
+    float  = true,
+    center = true,
+    -- at = "1550,46",
+    size = "359 380"
+})

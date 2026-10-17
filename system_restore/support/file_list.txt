@@ -17,4 +17,5 @@ libglvnd-32bit
 libva-32bit
 pipewire-32bit
 alsa-pipewire-32bit
-gamescope
+gamescope # This acts weird in Hyprland
+netcat

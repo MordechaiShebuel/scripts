@@ -71,7 +71,7 @@ CRON_LINE="*/2 * * * * /bin/sh -c 'exec /usr/local/sbin/check-shared-mount'"
 # Create the mount-check script if it does not exist
 if [ ! -e "$SCRIPT" ]; then
     tee "$SCRIPT" >/dev/null <<'EOF'
-#!/bin/sh
+#!/bin/bash
 
 LOGFILE="/var/log/check-shared-mount.log"
 LOCKFILE="/run/check-shared-mount.lock"
@@ -83,12 +83,13 @@ log() {
 }
 
 # Use a lock file instead of directory
-if ! touch "$LOCKFILE" 2>/dev/null; then
-    log "Cannot create lock file"
+exec 9>/run/check-shared-mount.lock || {
+    log "Cannot open lock file"
     exit 1
+}
+if ! /usr/bin/flock -n 9; then
+    exit 0
 fi
-
-trap 'rm -f "$LOCKFILE"' EXIT INT TERM
 
 log "Lock acquired"
 

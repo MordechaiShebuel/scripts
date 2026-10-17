@@ -17,16 +17,22 @@ if ! {
         sudo tee /etc/xbps.d/linuxnauta.conf >/dev/null
 
     # Voiders
-    echo "repository=https://repo.voiders.dev" |
-        sudo tee /etc/xbps.d/voiders-dev-repo.conf >/dev/null
-
-    # Neko Linux
-    echo "repository=https://github.com/lazylinuxos/lazy-repo" |
-        sudo tee /etc/xbps.d/lazy-repo.conf >/dev/null
+    # echo "repository=https://repo.voiders.dev" |
+    #     sudo tee /etc/xbps.d/voiders-dev-repo.conf >/dev/null
 
     # Lazy Linux
+    echo "repository=https://github.com/lazylinuxos/lazy-repo/releases/latest/download/" |
+        sudo tee /etc/xbps.d/lazy-repo.conf >/dev/null
+
+    # Neko Linux
     echo "repository=https://sourceforge.net/projects/neko-void/files/repo" |
         sudo tee /etc/xbps.d/neko-void.conf >/dev/null
+
+    # Blackhole Linux
+    echo "repository=https://github.com/Event-Horizon-VL/blackhole-vl" |
+    sudo tee /etc/xbps.d/blowhole-void.conf >/dev/null
+    # Hyprland specific
+    # echo "repository=https://raw.githubusercontent.com/sofijacom/hyprland-void/repository-x86_64-glibc" | sudo tee /etc/xbps.d/hyprland-void.conf
 
     sudo xbps-install -Syu void-repo-nonfree void-repo-multilib
 fi

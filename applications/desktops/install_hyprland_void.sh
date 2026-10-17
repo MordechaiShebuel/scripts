@@ -80,9 +80,9 @@ sudo ln -sf /etc/sv/NetworkManager /var/service/ 2>/dev/null
 sudo ln -sf /etc/sv/blueman /var/service/ 2>/dev/null
 
 # Create .xinitrc if it doesn't exist
-if [[ ! -f ~/.xinitrc ]]; then
-    echo "exec Hyprland" > ~/.xinitrc
-fi
+# if [[ ! -f ~/.xinitrc ]]; then
+#     echo "exec Hyprland" > ~/.xinitrc
+# fi
 
 echo "Apply fix to dbus-session"
 hyprland/./fix_dbus.sh
