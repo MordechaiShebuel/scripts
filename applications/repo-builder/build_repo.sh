@@ -29,11 +29,11 @@ podman build -t void-repo-builder -f Containerfile .
 
 echo "==> Start Container :"
 podman run --rm -it \
-    --userns=keep-id \
-    -v "$SRC_HOST:/src:z" \
-    -v "$REPO_HOST:$REPO_HOST:z" \
-    -v "$HOME/private.pem:/home/builder/private.pem:ro" \
-    -e SRC=/src \
-    -e HOME=/home/builder \
-    void-repo-builder \
-    bash -c "exec /home/builder/repo_builder.sh '$CPU_ARCH' TRUE"
+  --userns=keep-id \
+  -v "$HOME/src:/src:z" \
+  -v "/home/media/shared/Users/mshalom/repos/repository:/home/media/shared/Users/mshalom/repos/repository:z" \
+  -v "$HOME/private.pem:/home/builder/private.pem:ro" \
+  -e SRC=/src \
+  -e HOME=/home/builder \
+  void-repo-builder \
+  bash -c 'exec /home/builder/repo_builder.sh x86_64 TRUE'

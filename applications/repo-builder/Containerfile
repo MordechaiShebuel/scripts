@@ -41,7 +41,8 @@ WORKDIR /home/builder
 
 # Scripts and optional default config
 COPY repo_builder.sh /home/builder/
-COPY serve_repo.sh   /home/builder/          # optional helper
+# Optional Server
+COPY serve_repo.sh   /home/builder/
 RUN chmod +x /home/builder/*.sh
 
 # Optional: pre-seed a kernel .config if you always use the same one

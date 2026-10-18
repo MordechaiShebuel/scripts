@@ -1,91 +1,148 @@
 #!/bin/bash
 set -euo pipefail
 
-# Arguments coming from the podman run line
-CPU_ARCH="${1:-x86_64}"          # e.g. x86_64, aarch64, x86_64-musl …
-SIGN="${2:-FALSE}"               # TRUE → sign the repo (requires key)
+CPU_ARCH="${1:-x86_64}"
+SIGN="${2:-FALSE}"
 
-# Paths inside the container
+# Paths
 SRC_DIR="${SRC:-/src}"
-REPO_SRC="/home/media/shared/Users/mshalom/repos/repository"   # host path – will be mounted
-OUT_DIR="${SRC_DIR}/binpkgs"                                   # where finished packages land
+VOID_PKGS="${SRC_DIR}/void-packages"
+PKG_SRC="/home/media/shared/Users/mshalom/repos/repository/pkgs"
+SHLIBS="/home/media/shared/Users/mshalom/repos/repository/common/shlibs"
+OUT_DIR="${SRC_DIR}/binpkgs"
 HOSTDIR="${SRC_DIR}/hostdir"
 
+# Package recipes to copy and build
+PKGS=(
+    hyprland-protocols
+    hyprwayland-scanner
+    hyprutils
+    hyprgraphics
+    hyprlang
+    hyprcursor
+    hyprpicker
+    aquamarine
+    hyprwire
+    hyprland-guiutils
+    hyprtoolkit
+    glaze
+    hyprland
+    hyprland-qt-support
+    hyprland-qtutils
+    xdg-desktop-portal-hyprland
+    freesmlauncher
+    brave-browser
+    brave-origin
+    linux-cachy-bore
+    noctalia
+    noctalia-greeter
+)
+
 echo "==> Architecture : $CPU_ARCH"
-echo "==> Source tree  : $REPO_SRC"
+echo "==> void-packages: $VOID_PKGS"
+echo "==> Custom pkgs  : $PKG_SRC"
 echo "==> Output       : $OUT_DIR"
 
 mkdir -p "$OUT_DIR" "$HOSTDIR"
 
-# ------------------------------------------------------------------
-# 1. Make sure we have a void-packages tree
-# ------------------------------------------------------------------
-if [[ ! -d "$REPO_SRC/xbps-src" ]]; then
-    echo "No void-packages tree found – cloning a shallow copy…"
-    git clone --depth=1 https://github.com/void-linux/void-packages.git "$REPO_SRC"
+# 1. Ensure we have a void-packages tree
+if [[ ! -x "$VOID_PKGS/xbps-src" ]]; then
+    echo "==> Cloning void-packages (shallow)…"
+    git clone --depth=1 https://github.com/void-linux/void-packages.git "$VOID_PKGS"
 fi
 
-cd "$REPO_SRC"
-
-# Optional: pull latest templates
-# git pull --ff-only || true
+cd "$VOID_PKGS"
 
 # ------------------------------------------------------------------
-# 2. Bootstrap the masterdir (only needed once per architecture)
+# Update common/shlibs
 # ------------------------------------------------------------------
-if [[ ! -d "masterdir-${CPU_ARCH}" ]]; then
-    echo "==> Bootstrapping masterdir for $CPU_ARCH"
-    ./xbps-src -a "$CPU_ARCH" -m "masterdir-${CPU_ARCH}" binary-bootstrap
-fi
+echo "==> Updating common/shlibs"
 
-# ------------------------------------------------------------------
-# 3. Build the packages you care about
-#    Edit the list below, or pass them as extra arguments.
-# ------------------------------------------------------------------
-PKGS=(
-    # example: linux6.12          # custom kernel
-    # example: my-custom-app
-)
+# Make sure we start from the official file
+git checkout -- common/shlibs 2>/dev/null || true
 
-# If you pass extra args after the two positional ones they are treated as packages
-shift 2 || true
-PKGS+=("$@")
+# Remove any old versions of the libraries we are overriding
+sed -i \
+    -e '/libhyprutils\.so\./d' \
+    -e '/libhyprlang\.so\./d' \
+    -e '/libhyprgraphics\.so\./d' \
+    -e '/libhyprtoolkit\.so\./d' \
+    -e '/libaquamarine\.so\./d' \
+    -e '/libhyprcursor\.so\./d' \
+    -e '/libhyprwire\.so\./d' \
+    -e '/libbge\.so\./d' \
+    -e '/libmalcontent/d' \
+    -e '/pam_malcontent/d' \
+    -e '/libgsystemservice/d' \
+    -e '/libglib-testing/d' \
+    common/shlibs
 
-if [[ ${#PKGS[@]} -eq 0 ]]; then
-    echo "No packages specified – nothing to build."
-    echo "Usage: repo_builder.sh <arch> <SIGN:TRUE|FALSE> [pkg1 pkg2 …]"
-    exit 0
-fi
+# Append your custom mappings
+cat >> common/shlibs << EOF
+libbge.so.0 bazaar-0.8.1_1
+libmalcontent-0.so.0 malcontent-0.14_1
+pam_malcontent.so malcontent-0.14_1
+libmalcontent-ui-1.so.1 malcontent-0.14_1
+libnss_malcontent.so.2 malcontent-0.14_1
+libgsystemservice-0.so.0 libgsystemservice-0.3.0_1
+libglib-testing-0.so.0 libglib-testing-0.2.0_1
+libhyprutils.so.13 hyprutils-0.14.2_1
+libhyprlang.so.2 hyprlang-0.6.8_2
+libhyprgraphics.so.4 hyprgraphics-0.5.1_2
+libhyprtoolkit.so.6 hyprtoolkit-0.6.0_1
+libaquamarine.so.14 aquamarine-0.15.0_1
+libhyprcursor.so.0 hyprcursor-0.1.13_2
+libhyprwire.so.3 hyprwire-0.3.1_2
+EOF
 
+# 2. Copy / update your custom packages into srcpkgs/
+echo "==> Syncing custom packages…"
 for pkg in "${PKGS[@]}"; do
-    echo "==> Building $pkg ($CPU_ARCH)"
-    ./xbps-src -a "$CPU_ARCH" -m "masterdir-${CPU_ARCH}" \
-        -H "$HOSTDIR" \
-        pkg "$pkg"
+    if [[ -d "$PKG_SRC/$pkg" ]]; then
+        rm -rf "srcpkgs/$pkg"
+        cp -a "$PKG_SRC/$pkg" "srcpkgs/"
+        # Create devel symlink if the template defines a -devel subpackage
+        if grep -q "${pkg}-devel_package()" "srcpkgs/$pkg/template" 2>/dev/null; then
+            ln -sfn "$pkg" "srcpkgs/${pkg}-devel"
+        fi
+    else
+        echo "WARNING: $pkg not found in $PKG_SRC"
+    fi
 done
 
-# ------------------------------------------------------------------
-# 4. Collect binary packages into a clean repository layout
-# ------------------------------------------------------------------
-# void-packages puts them under hostdir/binpkgs (and subdirs for nonfree, etc.)
+# 3. Bootstrap masterdir if needed
+MASTERDIR="masterdir-${CPU_ARCH}"
+
+if [[ ! -d "$MASTERDIR" ]]; then
+    echo "==> Bootstrapping masterdir for $CPU_ARCH"
+    if [[ "$CPU_ARCH" == "x86_64" ]]; then
+        ./xbps-src -m "$MASTERDIR" binary-bootstrap
+    else
+        # Enable cross build
+        ./xbps-src -a "$CPU_ARCH" -m "$MASTERDIR" binary-bootstrap
+    fi
+fi
+
+# 4. Build the packages
+for pkg in "${PKGS[@]}"; do
+    echo "==> Building $pkg ($CPU_ARCH)"
+    if [[ "$CPU_ARCH" == "x86_64" ]]; then
+        ./xbps-src -m "$MASTERDIR" -H "$HOSTDIR" pkg "$pkg"
+    else
+        ./xbps-src -a "$CPU_ARCH" -m "$MASTERDIR" -H "$HOSTDIR" pkg "$pkg"
+    fi
+done
+
+# 5. Collect + index + sign (same as before)
+echo "==> Collecting packages…"
 find "$HOSTDIR/binpkgs" -name '*.xbps' -exec cp -av {} "$OUT_DIR/" \;
 
 cd "$OUT_DIR"
+xbps-rindex -a ./*.xbps || true
 
-# ------------------------------------------------------------------
-# 5. Index the repository
-# ------------------------------------------------------------------
-echo "==> Indexing repository"
-xbps-rindex -a ./*.xbps
-
-# ------------------------------------------------------------------
-# 6. Optional signing (required for any remote/HTTP repository)
-# ------------------------------------------------------------------
 if [[ "$SIGN" == "TRUE" ]]; then
     if [[ ! -f "$HOME/private.pem" ]]; then
-        echo "ERROR: signing requested but $HOME/private.pem not found."
-        echo "Generate one with:"
-        echo "  ssh-keygen -t rsa -b 4096 -m PEM -f ~/private.pem"
+        echo "ERROR: $HOME/private.pem not found"
         exit 1
     fi
     echo "==> Signing repository"
@@ -95,5 +152,5 @@ if [[ "$SIGN" == "TRUE" ]]; then
     xbps-rindex --privkey "$HOME/private.pem" --sign-pkg ./*.xbps
 fi
 
-echo "==> Done. Packages are in $OUT_DIR"
+echo "==> Done"
 ls -l
