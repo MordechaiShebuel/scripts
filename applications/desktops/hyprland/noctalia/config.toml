@@ -625,7 +625,7 @@ umbriel_overview_type_to_launch_enabled = false
     close_on_save = true
     confirm_region = true
     copy_to_clipboard = true
-    directory = "/home/mshalom/Pictures/Screenshots"
+    directory = "/home/$USER/Pictures/Screenshots"
     filename_pattern = ""
     freeze_screen = true
     pipe_command = ""
@@ -753,7 +753,7 @@ wallpaper_scheme = "m3-rainbow"
     enable_community_templates = true
 
 [wallpaper]
-directory = "/home/mshalom/Pictures/wallpapers"
+directory = "/home/$USER/Pictures/wallpapers"
 directory_dark = ""
 directory_light = ""
 edge_smoothness = 0.30000001192092896

@@ -4,7 +4,7 @@ BACKUP_DIR="/home/backup/timeshift"
 #
 # Goals:
 # 1. Install timeshift
-../bin/./inst.sh timeshift
+../../bin/./inst.sh timeshift
 
 # before continuing, need to make sure timeshift is installed
 if ! command -v timeshift &> /dev/null; then

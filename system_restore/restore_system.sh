@@ -119,7 +119,7 @@ install_packages_xbps() {
 
 # Configure third-party repositories and install the required repository packages
 # only if this has not already been done.
-    ./support/./enable_void_repo.sh
+    ./support/./enable_void_repos.sh
 
     case $gpu in
     amd)

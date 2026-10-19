@@ -16,21 +16,29 @@ if ! {
     echo "repository=https://voidrepo.linuxnauta.com" |
         sudo tee /etc/xbps.d/linuxnauta.conf >/dev/null
 
-    # Voiders
-    # echo "repository=https://repo.voiders.dev" |
-    #     sudo tee /etc/xbps.d/voiders-dev-repo.conf >/dev/null
+    # d77 main
+    echo "repository=https://sourceforge.net/projects/d77void/files/d77void-repo" |
+        sudo tee /etc/xbps.d/d77void.conf > /dev/null
+
+   # d77 hypr
+   echo "repository=https://sourceforge.net/projects/d77void/files/hypr-d77" |
+        sudo tee /etc/xbps.d/hypr-d77void.conf > /dev/null
+
+    #Voiders
+    echo "repository=https://repo.voiders.dev" |
+        sudo tee /etc/xbps.d/voiders-dev-repo.conf >/dev/null
 
     # Lazy Linux
-    echo "repository=https://github.com/lazylinuxos/lazy-repo/releases/latest/download/" |
-        sudo tee /etc/xbps.d/lazy-repo.conf >/dev/null
+    # echo "repository=https://github.com/lazylinuxos/lazy-repo/releases/latest/download/" |
+    #     sudo tee /etc/xbps.d/lazy-repo.conf >/dev/null
 
     # Neko Linux
     echo "repository=https://sourceforge.net/projects/neko-void/files/repo" |
         sudo tee /etc/xbps.d/neko-void.conf >/dev/null
 
     # Blackhole Linux
-    echo "repository=https://github.com/Event-Horizon-VL/blackhole-vl" |
-    sudo tee /etc/xbps.d/blowhole-void.conf >/dev/null
+    # echo "repository=https://github.com/Event-Horizon-VL/blackhole-vl" |
+    # sudo tee /etc/xbps.d/blowhole-void.conf >/dev/null
     # Hyprland specific
     # echo "repository=https://raw.githubusercontent.com/sofijacom/hyprland-void/repository-x86_64-glibc" | sudo tee /etc/xbps.d/hyprland-void.conf
 

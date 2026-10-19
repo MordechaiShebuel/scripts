@@ -50,7 +50,7 @@ cat > "$CONFIG" <<EOF
 
     "logo": {
         "type": "kitty-direct",
-        "source": "/home/mshalom/.config/fastfetch/images/void-linux-logo.png",
+        "source": "/home/$USER/.config/fastfetch/images/void-linux-logo.png",
         "width": 30,
         "height": 15,
         "padding": {

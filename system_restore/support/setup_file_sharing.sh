@@ -102,9 +102,9 @@ vpn_active() {
 if vpn_active; then
     log "VPN active; disconnecting NFS share"
     # Kill any processes accessing the mount
-    fuser -km "/home/mshalom/shared/local-server" 2>/dev/null || true
+    fuser -km "/home/$USER/shared/local-server" 2>/dev/null || true
     sleep 1
-    timeout 5 /usr/bin/umount -fl "/home/mshalom/shared/local-server" 2>/dev/null
+    timeout 5 /usr/bin/umount -fl "/home/$USER/shared/local-server" 2>/dev/null
     log "Lazy unmount completed"
     exit 0
 fi
@@ -114,15 +114,15 @@ fi
 log "VPN not active; checking NFS share"
 
 # If it is mounted, check if it's responding.
-if timeout 2 /usr/bin/mountpoint -q "/home/mshalom/shared/local-server" 2>/dev/null; then
-    if timeout 5 /usr/bin/stat "/home/mshalom/shared/local-server/." \
+if timeout 2 /usr/bin/mountpoint -q "/home/$USER/shared/local-server" 2>/dev/null; then
+    if timeout 5 /usr/bin/stat "/home/$USER/shared/local-server/." \
         >/dev/null 2>&1; then
         log "NFS mount is healthy and responding"
         exit 0
     else
         # Mount is stale; unmount it before retrying
         log "NFS mount is stale; lazily unmounting"
-        /usr/bin/umount -l "/home/mshalom/shared/local-server" >> "$LOGFILE" 2>&1
+        /usr/bin/umount -l "/home/$USER/shared/local-server" >> "$LOGFILE" 2>&1
         sleep 2
     fi
 fi
@@ -135,10 +135,10 @@ if ! /usr/bin/timeout 5 /usr/bin/nc -z "$SERVER" 2049 \
 fi
 
 # Mount it
-if ! timeout 2 /usr/bin/mountpoint -q "/home/mshalom/shared/local-server" 2>/dev/null; then
+if ! timeout 2 /usr/bin/mountpoint -q "/home/$USER/shared/local-server" 2>/dev/null; then
     log "NFS share is not mounted; attempting to mount it"
 
-    if /usr/bin/timeout -k 2 20 /usr/bin/mount "/home/mshalom/shared/local-server" \
+    if /usr/bin/timeout -k 2 20 /usr/bin/mount "/home/$USER/shared/local-server" \
         >> "$LOGFILE" 2>&1; then
         log "Mount succeeded"
     else

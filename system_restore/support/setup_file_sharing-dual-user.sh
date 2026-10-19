@@ -1,7 +1,7 @@
 #!/bin/sh
 
-MOUNTPOINT_M="/home/mshalom/shared/local-server"
-MOUNTPOINT_N="/home/nezmahb/shared/local-server"
+MOUNTPOINT_M="/home/$USER_1/shared/local-server"
+MOUNTPOINT_N="/home/$USER_2/shared/local-server"
 LOGFILE="/var/log/check-shared-mount.log"
 LOCKDIR="/run/check-shared-mount.lock"
 SERVER="10.0.0.147"

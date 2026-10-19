@@ -15,7 +15,7 @@ die() {
 # Install Avahi if necessary
 if ! xbps-query -p pkgver avahi >/dev/null 2>&1; then
     SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-    INSTALLER="$SCRIPT_DIR/../bin/inst.sh"
+    INSTALLER="$SCRIPT_DIR/../../bin/inst.sh"
 
     [ -x "$INSTALLER" ] ||
         die "Installer not found or not executable: $INSTALLER"

@@ -2,11 +2,12 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.5.2 - Official Beta
+# VERSION 0.5.3 - Official Beta
 # General cleanup after installing it on two other computers
 # Some more cleanup, with settings
 # Changed keybind viewer to use output from LUA load. (JSON)
 # Set font to Inter, much nicer looking than Noto and will allow removing that Gulag cruft
+# setting up account images, included two stock images
 
 # Current Feature Requests:\
 # 1. Needs to have per user setup copies, for multi-user systems
@@ -55,7 +56,7 @@ sudo xbps-install -S \
      xdg-desktop-portal-gtk $TERMINAL Thunar \
      brightnessctl playerctl pamixer \
      blueman gnome-keyring papirus-icon-theme \
-     qt6ct hyprland-qt-support \
+     qt6ct hyprland-qt-support accountsservice\
      xorg-server-xwayland xorg-fonts \
      noctalia font-awesome \
      font-inter font-inter-variable

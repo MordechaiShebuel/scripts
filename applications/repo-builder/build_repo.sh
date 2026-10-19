@@ -7,7 +7,7 @@ if ! command -v podman >/dev/null; then
 fi
 
 # Host paths
-REPO_HOST="/home/media/shared/Users/mshalom/repos/repository"
+REPO_HOST="/home/media/shared/Users/$USER/repos/repository"
 SRC_HOST="$HOME/src"
 mkdir -p "$SRC_HOST"
 
@@ -31,7 +31,7 @@ echo "==> Start Container :"
 podman run --rm -it \
   --userns=keep-id \
   -v "$HOME/src:/src:z" \
-  -v "/home/media/shared/Users/mshalom/repos/repository:/home/media/shared/Users/mshalom/repos/repository:z" \
+  -v "/home/media/shared/Users/$USER/repos/repository:/home/media/shared/Users/mshalom/repos/repository:z" \
   -v "$HOME/private.pem:/home/builder/private.pem:ro" \
   -e SRC=/src \
   -e HOME=/home/builder \

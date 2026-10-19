@@ -9,6 +9,8 @@ cronie
 curl
 wget
 nano
+font-inter
+font-inter-variable
 nfs-utils
 libgcc-32bit
 libstdc++-32bit
@@ -17,5 +19,11 @@ libglvnd-32bit
 libva-32bit
 pipewire-32bit
 alsa-pipewire-32bit
+mesa-32bit
+glu-32bit
+mesa
+glu
 gamescope # This acts weird in Hyprland
 netcat
+the_silver_searcher
+cowsay

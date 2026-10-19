@@ -7,8 +7,8 @@ SIGN="${2:-FALSE}"
 # Paths
 SRC_DIR="${SRC:-/src}"
 VOID_PKGS="${SRC_DIR}/void-packages"
-PKG_SRC="/home/media/shared/Users/mshalom/repos/repository/pkgs"
-SHLIBS="/home/media/shared/Users/mshalom/repos/repository/common/shlibs"
+PKG_SRC="/home/media/shared/Users/$USER/repos/repository/pkgs"
+SHLIBS="/home/media/shared/Users/$USER/repos/repository/common/shlibs"
 OUT_DIR="${SRC_DIR}/binpkgs"
 HOSTDIR="${SRC_DIR}/hostdir"
 

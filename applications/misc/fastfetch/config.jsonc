@@ -3,7 +3,7 @@
 
     "logo": {
         "type": "kitty-direct",
-        "source": "/home/mshalom/.config/fastfetch/images/void.png",
+        "source": "/home/$USER/.config/fastfetch/images/void.png",
         "width": 30,
         "height": 15,
         "padding": {

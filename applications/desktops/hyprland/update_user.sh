@@ -36,8 +36,28 @@ cp -r rio "$HOME/.config/"
 # Create/update Noctalia Config
 #rm -rf "$HOME/.config/noctalia"
 #cp -r noctalia "$HOME/.config/"
+#
 
+sudo mkdir -p /var/lib/noctalia-greeter
 sudo cp -r noctalia-greeter/greeter.toml /var/lib/noctalia-greeter/greeter.toml
+
+sudo xbps-install -Syu accountsservice
+
+sudo mkdir -p /etc/sv/accounts-daemon
+sudo tee /etc/sv/accounts-daemon/run > /dev/null << 'EOF'
+#!/bin/sh
+exec 2>&1
+exec chpst -u root /usr/libexec/accounts-daemon
+EOF
+sudo chmod +x /etc/sv/accounts-daemon/run
+
+IMAGE="staff-wisdom.jpg"
+echo "Setting up account image"
+chmod 644 "greeter-images/$IMAGE"
+sudo cp "greeter-images/$IMAGE" "/var/lib/AccountsService/icons/$USER_NAME"
+sudo chmod 644 "/var/lib/AccountsService/icons/$USER_NAME"
+
+sudo ln -s /etc/sv/accounts-daemon /var/service/
 
 echo "Modifying zshrc for QT theme fix"
 ./modify_zshrc.sh
