@@ -6,33 +6,19 @@ SIGN="${2:-FALSE}"
 
 # Paths
 SRC_DIR="${SRC:-/src}"
+BUILDDIR="$SRC_DIR/builddir"
 VOID_PKGS="${SRC_DIR}/void-packages"
 PKG_SRC="/home/media/shared/Users/$USER/repos/repository/pkgs"
 SHLIBS="/home/media/shared/Users/$USER/repos/repository/common/shlibs"
 OUT_DIR="${SRC_DIR}/binpkgs"
 HOSTDIR="${SRC_DIR}/hostdir"
 
+echo "Clear out old build."
+rm -rf "$BUILDDIR"
+mkdir -p "$BUILDDIR"
+
 # Package recipes to copy and build
 PKGS=(
-    hyprland-protocols
-    hyprwayland-scanner
-    hyprutils
-    hyprgraphics
-    hyprlang
-    hyprcursor
-    hyprpicker
-    aquamarine
-    hyprwire
-    hyprland-guiutils
-    hyprtoolkit
-    glaze
-    hyprland
-    hyprland-qt-support
-    hyprland-qtutils
-    xdg-desktop-portal-hyprland
-    freesmlauncher
-    brave-browser
-    brave-origin
     linux-cachy-bore
     noctalia
     noctalia-greeter

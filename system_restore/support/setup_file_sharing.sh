@@ -76,14 +76,15 @@ if [ ! -e "$SCRIPT" ]; then
 LOGFILE="/var/log/check-shared-mount.log"
 LOCKFILE="/run/check-shared-mount.lock"
 SERVER="10.0.0.147"
+MOUNT_POINT="/home/$USER/shared/local-server"
 
 log() {
     printf '%s: %s\n' \
         "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOGFILE"
 }
 
-# Use a lock file instead of directory
-exec 9>/run/check-shared-mount.lock || {
+# Lock to prevent concurrent execution
+exec 9>"$LOCKFILE" || {
     log "Cannot open lock file"
     exit 1
 }
@@ -93,65 +94,55 @@ fi
 
 log "Lock acquired"
 
-vpn_active() {
-    /usr/bin/ip link show tun0 >/dev/null 2>&1 ||
-    /usr/bin/ip link show tun1 >/dev/null 2>&1
-}
-
-# DISCONNECT when VPN is active
-if vpn_active; then
-    log "VPN active; disconnecting NFS share"
-    # Kill any processes accessing the mount
-    fuser -km "/home/$USER/shared/local-server" 2>/dev/null || true
+# Check if server is reachable via ping
+if ! timeout 2 /usr/bin/ping -c 1 "$SERVER" >/dev/null 2>&1; then
+    log "Server $SERVER is unreachable; unmounting NFS share"
+    /usr/bin/fuser -km "$MOUNT_POINT" 2>/dev/null || true
     sleep 1
-    timeout 5 /usr/bin/umount -fl "/home/$USER/shared/local-server" 2>/dev/null
+    timeout 5 /usr/bin/umount -fl "$MOUNT_POINT" 2>/dev/null
     log "Lazy unmount completed"
     exit 0
 fi
 
-# VPN is NOT active — proceed with mount checks
+log "Server $SERVER is reachable"
 
-log "VPN not active; checking NFS share"
-
-# If it is mounted, check if it's responding.
-if timeout 2 /usr/bin/mountpoint -q "/home/$USER/shared/local-server" 2>/dev/null; then
-    if timeout 5 /usr/bin/stat "/home/$USER/shared/local-server/." \
-        >/dev/null 2>&1; then
-        log "NFS mount is healthy and responding"
-        exit 0
-    else
-        # Mount is stale; unmount it before retrying
-        log "NFS mount is stale; lazily unmounting"
-        /usr/bin/umount -l "/home/$USER/shared/local-server" >> "$LOGFILE" 2>&1
-        sleep 2
-    fi
-fi
-
-# Do not mount unless TCP/2049 is accepting connections.
-if ! /usr/bin/timeout 5 /usr/bin/nc -z "$SERVER" 2049 \
-    >/dev/null 2>&1; then
-    log "NFS port 2049 is unavailable; skipping mount"
+# Check if NFS port is accepting connections
+if ! timeout 5 /usr/bin/nc -z "$SERVER" 2049 >/dev/null 2>&1; then
+    log "NFS port 2049 is unavailable; unmounting NFS share"
+    /usr/bin/fuser -km "$MOUNT_POINT" 2>/dev/null || true
+    sleep 1
+    timeout 5 /usr/bin/umount -fl "$MOUNT_POINT" 2>/dev/null
+    log "Lazy unmount completed"
     exit 0
 fi
 
-# Mount it
-if ! timeout 2 /usr/bin/mountpoint -q "/home/$USER/shared/local-server" 2>/dev/null; then
-    log "NFS share is not mounted; attempting to mount it"
+log "NFS port 2049 is available"
 
-    if /usr/bin/timeout -k 2 20 /usr/bin/mount "/home/$USER/shared/local-server" \
-        >> "$LOGFILE" 2>&1; then
-        log "Mount succeeded"
-    else
-        log "Mount failed or timed out"
+# Check if already mounted and healthy
+if timeout 2 /usr/bin/mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
+    if timeout 5 /usr/bin/stat "$MOUNT_POINT/." >/dev/null 2>&1; then
+        log "NFS mount is already mounted and responding"
+        exit 0
     fi
+    # Mount is stale; unmount before retrying
+    log "NFS mount is stale; lazily unmounting"
+    /usr/bin/umount -l "$MOUNT_POINT" >> "$LOGFILE" 2>&1
+    sleep 2
+fi
+
+# Mount the share
+log "Attempting to mount NFS share"
+if timeout -k 2 20 /usr/bin/mount "$MOUNT_POINT" >> "$LOGFILE" 2>&1; then
+    log "Mount succeeded"
 else
-    log "NFS share is already mounted"
+    log "Mount failed or timed out"
 fi
 EOF
 
-    chmod 755 "$SCRIPT"
-    touch /var/log/check-shared-mount.log
-    chmod 644 /var/log/check-shared-mount.log
+    sudo -v
+    sudo chmod 755 "$SCRIPT"
+    sudo touch /var/log/check-shared-mount.log
+    sudo chmod 644 /var/log/check-shared-mount.log
     echo "Created: $SCRIPT"
 else
     echo "$SCRIPT already exists; leaving it unchanged"

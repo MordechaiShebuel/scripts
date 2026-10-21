@@ -14,4 +14,4 @@ echo server.lan | sudo tee /etc/sane.d/net.conf
 
 # Setup file-sharing client access:
 echo "Setting up file share."
-sudo ./setup_file_sharing.sh $USERNAME
+sudo $(pwd)/support/./setup_file_sharing.sh $USERNAME

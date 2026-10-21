@@ -36,7 +36,10 @@ echo "Updating System before beginning"
 # Update repos and system first
 sudo xbps-install -Syu
 
-TERMINAL="rio" # can be manually set
+# can be manually set
+TERMINAL="rio"
+FILE_MANAGER="caja"
+SHELL="noctalia"
 
 # Setup hyprland repo if necessary
 if ! {
@@ -53,12 +56,12 @@ sudo xbps-install -S \
      hyprland hyprland-guiutils \
      kvantum wl-clipboard wlr-randr \
      xdg-desktop-portal-hyprland xdg-desktop-portal \
-     xdg-desktop-portal-gtk $TERMINAL Thunar \
+     xdg-desktop-portal-gtk $TERMINAL $FILE_MANAGER \
      brightnessctl playerctl pamixer \
      blueman gnome-keyring papirus-icon-theme \
-     qt6ct hyprland-qt-support accountsservice\
+     qt6ct hyprland-qt-support accountsservice \
      xorg-server-xwayland xorg-fonts \
-     noctalia font-awesome \
+     $SHELL font-awesome \
      font-inter font-inter-variable
 
 # update user configs

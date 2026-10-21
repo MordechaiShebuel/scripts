@@ -6,7 +6,7 @@ if not hostname then
     if pipe then pipe:close() end
 end
 
-if hostname == "prime" then
+if hostname == "gamma" then
     hl.monitor({
         output = "DP-3",
         mode = "1920x1080@100",

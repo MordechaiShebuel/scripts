@@ -317,7 +317,7 @@ up = [ "Up" ]
 validate = [ "Return", "KP_Enter", "space" ]
 
 [location]
-[redacted]
+-- redacted
 
 [lockscreen]
 allow_empty_password = false

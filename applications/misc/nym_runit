@@ -760,7 +760,12 @@ _uninstall_raw() {
   fi
 
   log "  ${B_GRN}Removing$RS installed files"
-  sudo sv stop nym-vpnd
+  if sudo sv status nym-vpnd > /dev/null 2>&1; then
+      sudo sv stop nym-vpnd
+  else
+      echo "Service nym-vpnd does not exist or is not running"
+  fi
+
   remove_file_set 'files'
 
   if [ "$_app" == 0 ]; then

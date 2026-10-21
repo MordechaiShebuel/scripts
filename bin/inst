@@ -22,7 +22,7 @@ case "$ID" in
     void|vostok|lazylinux|noid)
         echo "Detected Void Linux"
 
-        sudo xbps-install -S "$pkg"
+        sudo xbps-install -Sy "$pkg"
         ;;
 
     artix|arch|manjaro)
