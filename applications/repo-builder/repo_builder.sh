@@ -13,10 +13,6 @@ SHLIBS="/home/media/shared/Users/$USER/repos/repository/common/shlibs"
 OUT_DIR="${SRC_DIR}/binpkgs"
 HOSTDIR="${SRC_DIR}/hostdir"
 
-echo "Clear out old build."
-rm -rf "$BUILDDIR"
-mkdir -p "$BUILDDIR"
-
 # Package recipes to copy and build
 PKGS=(
     linux-cachy-bore
@@ -104,10 +100,21 @@ if [[ ! -d "$MASTERDIR" ]]; then
     if [[ "$CPU_ARCH" == "x86_64" ]]; then
         ./xbps-src -m "$MASTERDIR" binary-bootstrap
     else
-        # Enable cross build
         ./xbps-src -a "$CPU_ARCH" -m "$MASTERDIR" binary-bootstrap
     fi
 fi
+
+# Clean previous build state for the packages we are about to build
+echo "==> Cleaning previous builds"
+for pkg in "${PKGS[@]}"; do
+    if [[ "$CPU_ARCH" == "x86_64" ]]; then
+        ./xbps-src -m "$MASTERDIR" clean "$pkg" || true
+    else
+        ./xbps-src -a "$CPU_ARCH" -m "$MASTERDIR" clean "$pkg" || true
+    fi
+done
+# Optional nuclear option if things are still weird:
+# ./xbps-src -m "$MASTERDIR" clean
 
 # 4. Build the packages
 for pkg in "${PKGS[@]}"; do
