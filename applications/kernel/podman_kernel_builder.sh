@@ -1,7 +1,25 @@
 #!/bin/bash
 #
-BUILD_CPU=${1:-prime}
-MODE=${2:-build} # Optional: if set to BUILD, will skip install stage
+BUILD_CPU=$1
+MODE=$2 # Optional: if set to BUILD, will skip install stage
+
+if [[ -z "$BUILD_CPU" || -z "$MODE" ]]; then
+    echo "Usage: $0 <build_cpu> <mode>"
+    echo "build_cpu: file name with build parameters; "
+    echo "REMOTE_HOST=\"user@host.lan\""
+    echo " CPU=INTEL"
+    echo " CPU_ARCH=INTEL"
+    echo " KERNEL_RELEASE=\"7.2.12-cachy_1+\""
+    echo "The Kernel line is optional, the script will overwrite that with the new version when it completes."
+    echo "mode: build/install - if build only builds up to tar. If install will attempt to connect to remote host and install."
+    exit 1
+fi
+
+# Read distribution information.
+if [[ ! -r "./.$BUILD_CPU" ]]; then
+    echo "BUILD CPU MATCHES NO EXISTING FILE." >&2
+    exit 1
+fi
 
 . "./.$BUILD_CPU" #expand build variables from associated dot file
 # Podman stage
