@@ -11,8 +11,8 @@
 spawn-at-startup "pipewire"
 spawn-at-startup "pipewire" "-c" "pipewire-pulse.conf"
 spawn-at-startup "noctalia"
-spawn-at-startup "~/.local/bin/scripts/game-caffeine.sh"
-spawn-at-startup "sh" "-c" "nohup steam -silent >/dev/null 2>&1 &"
+// spawn-at-startup "~/.local/bin/scripts/game-caffeine.sh" // Needs to be refactored for Niri
+spawn-at-startup "sh" "-c" "nohup steam -silent >/dev/null 2>&1 &" // Doesn't launch in Niri
 spawn-at-startup "octoxbps-notifier"
 spawn-at-startup "sh" "-c" "nohup $HOME/bin/nym-vpn >/dev/null 2>&1 &"
 spawn-at-startup "sh" "-c" "$HOME/.config/niri/keybind_viewer $HOME/.config/niri/keybinds.toml"
@@ -152,7 +152,7 @@ layout {
         // off
 
         // How many logical pixels the ring extends out from the windows.
-        width 4
+        width 2
 
         // Colors can be set in a variety of ways:
         // - CSS named colors: "red"
@@ -175,13 +175,13 @@ layout {
         // You can use any CSS linear-gradient tool on the web to set these up.
         // Changing the color space is also supported, check the wiki for more info.
         //
-        // active-gradient from="#80c8ff" to="#c7ff7f" angle=45
+        active-gradient from="#80c8ff" to="#c7ff7f" angle=45
 
         // You can also color the gradient relative to the entire view
         // of the workspace, rather than relative to just the window itself.
         // To do that, set relative-to="workspace-view".
         //
-        // inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
+        inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
     }
 
     // You can also add a border. It's similar to the focus ring, but always visible.
@@ -190,12 +190,12 @@ layout {
         // If you enable the border, you probably want to disable the focus ring.
         off
 
-        width 4
-        active-color "#ffc87f"
-        inactive-color "#505050"
+        // width 4
+        // active-color "#ffc87f"
+        // inactive-color "#505050"
 
         // Color of the border around windows that request your attention.
-        urgent-color "#9b0000"
+        // urgent-color "#9b0000"
 
         // Gradients can use a few different interpolation color spaces.
         // For example, this is a pastel rainbow gradient via in="oklch longer hue".
@@ -365,60 +365,60 @@ binds {
 
     // Terminal
     Mod+Return { spawn "rio"; }
-    
+
     // App launcher
     Mod+D { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
     Alt+Space { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
-    
+
     // File manager
     Mod+E { spawn "caja"; }
-    
+
     // Window management
     Mod+Q { close-window; }
     Mod+W { close-window; }
     Mod+Shift+F { maximize-column; }
     // Mod+Alt+Space { toggle-floating; }
-    
+
     // Focus navigation
     Mod+Left { focus-column-left; }
     Mod+Right { focus-column-right; }
     Mod+Up { focus-window-up; }
     Mod+Down { focus-window-down; }
     Mod+Tab { spawn "noctalia" "msg" "window-switcher" "hold"; }
-    
+
     // Workspaces
     Mod+1 { focus-workspace 1; }
     Mod+2 { focus-workspace 2; }
     Mod+3 { focus-workspace 3; }
     Mod+4 { focus-workspace 4; }
     Mod+5 { focus-workspace 5; }
-    
+
     // Move window to workspace
     Mod+Shift+1 { move-column-to-workspace 1; }
     Mod+Shift+2 { move-column-to-workspace 2; }
     Mod+Shift+3 { move-column-to-workspace 3; }
     Mod+Shift+4 { move-column-to-workspace 4; }
     Mod+Shift+5 { move-column-to-workspace 5; }
-    
+
     // Media keys
     XF86AudioRaiseVolume { spawn "pamixer" "-i" "5"; }
     XF86AudioLowerVolume { spawn "pamixer" "-d" "5"; }
     XF86AudioMute { spawn "pamixer" "-t"; }
-    
+
     // Brightness
     XF86MonBrightnessUp { spawn "brightnessctl" "set" "+10%"; }
     XF86MonBrightnessDown { spawn "brightnessctl" "set" "10%-"; }
-    
+
     // Screenshots
     Super+Ctrl+Shift+3 { spawn "noctalia" "msg" "screenshot-fullscreen" "all"; }
     Super+Ctrl+Shift+4 { spawn "noctalia" "msg" "screenshot-region"; }
     Super+Ctrl+Shift+5 { spawn "noctalia" "msg" "screenshot-fullscreen" "pick"; }
-    
+
     // Power and lock
     XF86PowerOff { spawn "noctalia" "msg" "panel-toggle" "session"; }
     Super+Alt+L { spawn "noctalia" "msg" "panel-toggle" "session"; }
     Super+Ctrl+L { spawn "noctalia" "msg" "session" "lock"; }
-    
+
     // macOS-style shortcuts
     Super+C { spawn "sh" "-c" "$HOME/.config/niri/scripts/clipboard-copy.sh"; }
     Super+V { spawn "sh" "-c" "$HOME/.config/niri/scripts/clipboard-paste.sh"; }
@@ -431,11 +431,11 @@ binds {
     Super+T { spawn "sh" "-c" "xdotool key ctrl+t"; }
     Super+P { spawn "sh" "-c" "xdotool key ctrl+p"; }
     // Super+Slash { spawn "sh" "-c" "xdotool key ctrl+slash"; }
-    
-    // Kill a non-responsive window	
+
+    // Kill a non-responsive window
     // Super+Alt+Q { kill-window; }
     Super+Alt+Escape { spawn "sh" "-c" "kill -9 $(niri msg focused-window|grep PID|awk '{print $2}')"; }
-    
+
     // Reload config
     // Super+Shift+R { request-backend-reload; }
 

@@ -12,7 +12,7 @@ fi
 
 . "./.$BUILD_CPU"
 
-echo "Kernel release: $KERNEL_RELEASE"
+echo " ===> Creating Modules to install for $KERNEL_RELEASE"
 
 echo "Make the modules:"
 cd "$HOME/src/linux"
@@ -36,6 +36,8 @@ rm -f "$MODDIR/build" "$MODDIR/source"
 
 mkdir -p "$HOME/tmp"
 
+echo "===> Compressing Kernel image for $CPU_ARCH and $KERNEL_RELEASE"
+
 # Create distributable tar
 tar -czf "$HOME/tmp/kernel-$KERNEL_RELEASE-$CPU_ARCH.tar.gz" \
   -C "$HOME/src/linux" \
@@ -47,7 +49,7 @@ tar -czf "$HOME/tmp/kernel-$KERNEL_RELEASE-$CPU_ARCH.tar.gz" \
 # Install stage
 
 modules_size=$(du -sh "$STAGE/modules")
-tar_size=$(du -sh "$HOME/tmp/kernel-$KERNEL_RELEASE-$ARCH.tar.gz")
+tar_size=$(du -sh "$HOME/tmp/kernel-$KERNEL_RELEASE-$CPU_ARCH.tar.gz")
 echo "MODULES BUILT, READY TO INSTALL"
 echo "size of MODULES: $modules_size"
-echo size of TAR: $tar_size
+echo "size of TAR: $tar_size"
