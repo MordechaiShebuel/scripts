@@ -31,9 +31,9 @@ RUN xbps-install -y \
     patch \
     cpio \
     bash \
-    dracut \
-    grub \
-    xtools
+    xtools \
+    tar \
+    perl
 
 # Non-root builder user
 RUN useradd -m -s /bin/bash -u 1000 builder   # match a typical host UID

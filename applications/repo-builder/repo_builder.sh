@@ -93,7 +93,7 @@ for pkg in "${PKGS[@]}"; do
 done
 
 # 3. Bootstrap masterdir if needed
-MASTERDIR="masterdir-${CPU_ARCH}"
+MASTERDIR="${SRC_DIR}/masterdir"
 
 if [[ ! -d "$MASTERDIR" ]]; then
     echo "==> Bootstrapping masterdir for $CPU_ARCH"
