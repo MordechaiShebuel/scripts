@@ -58,7 +58,7 @@ layout = "us"
 numlock = true
 
 [session]
-default = "hyrland"
+default = "hyprland"
 
 [user]
 default = ""

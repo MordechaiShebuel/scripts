@@ -33,6 +33,7 @@ podman run --rm -it \
   -v "$HOME/src:/src:z" \
   -v "/home/media/shared/Users/$USER/repos/repository:/home/media/shared/Users/mshalom/repos/repository:z" \
   -v "$HOME/private.pem:/home/builder/private.pem:ro" \
+  -v "$HOME/src/void-packages:/void-packages:z" \
   -e SRC=/src \
   -e HOME=/home/builder \
   void-repo-builder \

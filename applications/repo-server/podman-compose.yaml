@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  repo-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: localhost/void-repo-server:latest
+    container_name: void-repo-server
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount your custom package recipes
+      - ./pkgs:/home/builder/repos/pkgs:ro
+      # Persist built packages on the host
+      - ./binpkgs:/home/builder/src/binpkgs
+      # Persist build cache (optional, speeds up rebuilds)
+      - ./hostdir:/home/builder/src/hostdir
+      # Share SSH keys for git if pulling from private repos
+      - ~/.ssh:/home/builder/.ssh:ro
+    environment:
+      # Allow builder to access git repos
+      - GIT_AUTHOR_NAME=Builder
+      - GIT_AUTHOR_EMAIL=builder@localhost
+    # Keep container running for interactive access
+    stdin_open: true
+    tty: true

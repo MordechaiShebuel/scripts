@@ -75,6 +75,12 @@ declare -A PATCHES=(
     # [gaming-sched-patches-v2]="your-patch-file.patch"
 )
 
+declare -A REN_PATCHES=(
+    [0001-cachyos-fixes-patches.patch]="0002-cachyos-fixes-patches.patch"
+    [0001-CACHY-Add-x86_64-ISA-and-Zen4-compiler-optimizations.patch]="0003-CACHY-Add-x86_64-ISA-and-Zen4-compiler-optimizations.patch"
+    [0001-linux7.2-bore7.0.0.patch]="0001-linux7.2-bore7.0.0.patch"
+)
+
 if [[ "$CONTAINER_BUILD" == "false" ]]; then
     # Dependencies
     "${SUDO[@]}" xbps-install -Syu \
@@ -118,7 +124,7 @@ for PATCH_GROUP in "${!PATCHES[@]}"; do
     PATCH_FILE=${PATCHES[$PATCH_GROUP]}
 
     echo "Downloading $PATCH_FILE from $PATCH_GROUP..."
-    wget -O "patches/$PATCH_FILE" \
+    wget -O "patches/${REN_PATCHES[$PATCH_FILE]}" \
         "https://github.com/sirlucjan/kernel-patches/raw/refs/heads/master/$K_V/$PATCH_GROUP/$PATCH_FILE" ||
         echo "Failed to download: $PATCH_FILE from $PATCH_GROUP" >&2
 done
@@ -127,7 +133,7 @@ done
 sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = -cachy/' Makefile
 
 # Apply Void's fixdep patch
-FIXDEP_PATCH="fixdep-largefile.patch"
+FIXDEP_PATCH="0000-fixdep-largefile.patch"
 
 wget -O "$FIXDEP_PATCH" \
     "https://github.com/void-linux/void-packages/raw/refs/heads/master/srcpkgs/linux$K_V/patches/fixdep-largefile.patch"

@@ -601,53 +601,52 @@ install_app_appimage() {
 
   log "  ${B_GRN}Create EGL fix for Nym-Vpn-Client{$RS}"
   tee "$LOCALBIN/nym-vpn" <<'EOF'
-  #!/bin/bash
+#!/bin/bash
+set -e
+EXTRACT_DIR="$HOME/.cache/nym-vpn-appimage"
+APPIMAGE="/usr/bin/NymVPN.AppImage"
+ROOT="$EXTRACT_DIR/squashfs-root"
 
-  set -e
+if [ ! -x "$ROOT/AppRun" ]; then
+   rm -rf "$ROOT"
+   mkdir -p "$EXTRACT_DIR"
+   (
+       cd "$EXTRACT_DIR"
+       "$APPIMAGE" --appimage-extract
+   )
 
-  EXTRACT_DIR="$HOME/.cache/nym-vpn-appimage"
-  APPIMAGE="/usr/bin/NymVPN.AppImage"
-  ROOT="$EXTRACT_DIR/squashfs-root"
+   rm -f "$ROOT/usr/lib/libwayland-"*.so*
+   rm -f "$ROOT/usr/lib/libEGL"*.so*
+   rm -f "$ROOT/usr/lib/libGL"*.so*
+fi
 
-  if [ ! -x "$ROOT/AppRun" ]; then
-      rm -rf "$ROOT"
-      mkdir -p "$EXTRACT_DIR"
+exec "$ROOT/AppRun" "$@"
+EOF
 
-      (
-          cd "$EXTRACT_DIR"
-          "$APPIMAGE" --appimage-extract
-      )
-
-      rm -f "$ROOT/usr/lib/libwayland-"*.so*
-      rm -f "$ROOT/usr/lib/libEGL"*.so*
-      rm -f "$ROOT/usr/lib/libGL"*.so*
-  fi
-
-  exec "$ROOT/AppRun" "$@"
-  EOF
   chmod +x "$LOCALBIN/nym-vpn"
 
   log " ${B_GRN} Creating desktop shortcut for Nym-Vpn App ${RS}"
   # create desktop entry
   tee "$HOME/.local/share/applications/nym-vpn.desktop" <<EOF
-  [Desktop Entry]
-  Categories=Network;
-  Comment=Decentralized, mixnet, and zero-knowledge VPN
-  Exec=env LOG_FILE=1 RUST_LOG=info,nym_vpn_app=debug "$LOCALBIN/nym-vpn" %U
-  Icon=/usr/share/icons/hicolor/scalable/apps/nym-vpn.svg
-  Name=NymVPN
-  NoDisplay=false
-  Path=
-  PrefersNonDefaultGPU=false
-  StartupNotify=true
-  StartupWMClass=nym-vpn-app
-  Terminal=false
-  TerminalOptions=
-  Type=Application
-  Version=$app_version
-  X-KDE-SubstituteUID=false
-  X-KDE-Username=
-  EOF
+[Desktop Entry]
+Categories=Network;
+Comment=Decentralized, mixnet, and zero-knowledge VPN
+Exec=env LOG_FILE=1 RUST_LOG=info,nym_vpn_app=debug "$LOCALBIN/nym-vpn" %U
+Icon=/usr/share/icons/hicolor/scalable/apps/nym-vpn.svg
+Name=NymVPN
+NoDisplay=false
+Path=
+PrefersNonDefaultGPU=false
+StartupNotify=true
+StartupWMClass=nym-vpn-app
+Terminal=false
+TerminalOptions=
+Type=Application
+Version=$app_version
+X-KDE-SubstituteUID=false
+X-KDE-Username=
+EOF
+
 }
 
 install_app_deb() {
@@ -821,6 +820,8 @@ _uninstall_raw() {
       echo "Service nym-vpnd does not exist or is not running"
   fi
 
+  # sudo pkill -9 nym-vpn
+
   remove_file_set 'files'
 
   if [ "$_app" == 0 ]; then
@@ -899,5 +900,5 @@ if [ "$1" == uninstall ]; then
 fi
 
 log "$ITL${BI_GRY}nym$RS${BI_GRN}VPN$RS ${BI}installer$RS\n"
-[[ "$BUILD_CHANNEL" = "dev" ]] && dev_setup
 _install
+

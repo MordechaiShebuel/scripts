@@ -1,0 +1,69 @@
+FROM docker.io/voidlinux/voidlinux:latest
+
+# Prefer the official main repo
+RUN mkdir -p /etc/xbps.d && \
+    printf '%s\n' \
+      'repository=https://repo-default.voidlinux.org/current' \
+      > /etc/xbps.d/00-repository-main.conf
+
+# Keep XBPS itself current
+RUN xbps-install -Suy xbps && \
+    xbps-install -Syu
+
+# Build toolchain + kernel deps + tools needed by xbps-src / repo management
+RUN xbps-install -y \
+    base-devel \
+    git \
+    curl \
+    wget \
+    rsync \
+    xz \
+    lz4 \
+    zstd \
+    bc \
+    kmod \
+    elfutils-devel \
+    flex \
+    bison \
+    openssl-devel \
+    pahole \
+    python3 \
+    patch \
+    cpio \
+    bash \
+    xtools \
+    tar \
+    perl \
+    # Additional HTTP server for serving binpkgs
+    python3-pip
+
+# Install a lightweight HTTP server
+RUN pip3 install --no-cache-dir pyftpd
+
+# Create builder user
+RUN useradd -m -s /bin/bash -u 1000 builder
+WORKDIR /home/builder
+
+# Create directories for build artifacts and repository
+RUN mkdir -p /home/builder/src/binpkgs \
+             /home/builder/src/hostdir \
+             /home/builder/repos \
+    && chown -R builder:builder /home/builder
+
+# Copy your build script
+COPY --chown=builder:builder build-repo.sh /home/builder/
+RUN chmod +x /home/builder/build-repo.sh
+
+# Copy custom package recipes (optional)
+# COPY --chown=builder:builder pkgs /home/builder/repos/pkgs
+
+USER builder
+ENV HOME=/home/builder \
+    SRC=/home/builder/src \
+    PATH="/home/builder/.local/bin:$PATH"
+
+# Expose port for serving the repository
+EXPOSE 8000
+
+# Default: build packages, then serve them
+CMD ["/bin/bash", "-c", "cd /home/builder && ./build-repo.sh && echo '==> Starting HTTP server on port 8000' && python3 -m http.server 8000 --directory /home/builder/src/binpkgs"]
