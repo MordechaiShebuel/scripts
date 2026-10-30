@@ -66,76 +66,69 @@ fi
 echo "Creating cron job for shared mount check"
 # Create Chron job to mount if lost
 SCRIPT="/usr/local/sbin/check-shared-mount"
-CRON_LINE="*/2 * * * * /bin/sh -c 'exec /usr/local/sbin/check-shared-mount'"
+CRON_LINE="*/5 * * * * /bin/sh -c 'exec /usr/local/sbin/check-shared-mount'"
 
 # Create the mount-check script if it does not exist
 if [ ! -e "$SCRIPT" ]; then
     tee "$SCRIPT" >/dev/null <<'EOF'
 #!/bin/bash
+set -u
 
-LOGFILE="/var/log/check-shared-mount.log"
+MOUNT_POINT="/home/USERNAME/shared/local-server"
+VPN_INTERFACES=(wg0 tun0)
+
 LOCKFILE="/run/check-shared-mount.lock"
-SERVER="10.0.0.147"
-MOUNT_POINT="/home/$USER/shared/local-server"
+LOGFILE="/var/log/check-shared-mount.log"
+
+exec 9>"$LOCKFILE" || exit 1
+/usr/bin/flock -n 9 || exit 0
 
 log() {
-    printf '%s: %s\n' \
-        "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOGFILE"
+    printf '%s: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOGFILE"
 }
 
-# Lock to prevent concurrent execution
-exec 9>"$LOCKFILE" || {
-    log "Cannot open lock file"
-    exit 1
+is_mounted() {
+    /usr/bin/findmnt -rn -M "$MOUNT_POINT" >/dev/null 2>&1
 }
-if ! /usr/bin/flock -n 9; then
-    exit 0
-fi
 
-log "Lock acquired"
+VPN_INTERFACES=(tun0 tun1)
 
-# Check if server is reachable via ping
-if ! timeout 2 /usr/bin/ping -c 1 "$SERVER" >/dev/null 2>&1; then
-    log "Server $SERVER is unreachable; unmounting NFS share"
-    /usr/bin/fuser -km "$MOUNT_POINT" 2>/dev/null || true
-    sleep 1
-    timeout 5 /usr/bin/umount -fl "$MOUNT_POINT" 2>/dev/null
-    log "Lazy unmount completed"
-    exit 0
-fi
+vpn_is_up() {
+    local iface flags
+    for iface in "${VPN_INTERFACES[@]}"; do
+        [[ -r "/sys/class/net/$iface/flags" ]] || continue
+        flags=$(<"/sys/class/net/$iface/flags")
+        (( flags & 1 )) && return 0  # IFF_UP
+    done
+    return 1
+}
 
-log "Server $SERVER is reachable"
-
-# Check if NFS port is accepting connections
-if ! timeout 5 /usr/bin/nc -z "$SERVER" 2049 >/dev/null 2>&1; then
-    log "NFS port 2049 is unavailable; unmounting NFS share"
-    /usr/bin/fuser -km "$MOUNT_POINT" 2>/dev/null || true
-    sleep 1
-    timeout 5 /usr/bin/umount -fl "$MOUNT_POINT" 2>/dev/null
-    log "Lazy unmount completed"
-    exit 0
-fi
-
-log "NFS port 2049 is available"
-
-# Check if already mounted and healthy
-if timeout 2 /usr/bin/mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
-    if timeout 5 /usr/bin/stat "$MOUNT_POINT/." >/dev/null 2>&1; then
-        log "NFS mount is already mounted and responding"
-        exit 0
+if vpn_is_up; then
+    if is_mounted; then
+        log "VPN interface is up; lazily detaching NFS mount"
+        if /usr/bin/timeout -k 2 5 /usr/bin/umount -l -- "$MOUNT_POINT"; then
+            log "Lazy unmount completed"
+        else
+            log "Lazy unmount failed or timed out"
+        fi
+    else
+        log "VPN interface is up; NFS mount is not listed as mounted"
     fi
-    # Mount is stale; unmount before retrying
-    log "NFS mount is stale; lazily unmounting"
-    /usr/bin/umount -l "$MOUNT_POINT" >> "$LOGFILE" 2>&1
-    sleep 2
+    exit 0
 fi
 
-# Mount the share
-log "Attempting to mount NFS share"
-if timeout -k 2 20 /usr/bin/mount "$MOUNT_POINT" >> "$LOGFILE" 2>&1; then
+if is_mounted; then
+    log "VPN interface is down; NFS mount is already listed as mounted"
+    exit 0
+fi
+
+log "VPN interface is down; attempting NFS mount"
+if /usr/bin/timeout -k 2 20 /usr/bin/mount -- "$MOUNT_POINT" >>"$LOGFILE" 2>&1; then
     log "Mount succeeded"
 else
-    log "Mount failed or timed out"
+    status=$?
+    log "Mount failed or timed out (status $status)"
+    exit "$status"
 fi
 EOF
 
