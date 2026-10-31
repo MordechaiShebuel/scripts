@@ -94,7 +94,7 @@ bindWithDescription(mainMod .. " + D", hl.dsp.exec_cmd(ipc .. "panel-toggle laun
 bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")
 
 -- Launch file explorer
-bindWithDescription(mainMod .. " + E", hl.dsp.exec_cmd("caja"), "Open File Manager")
+bindWithDescription(mainMod .. " + E", hl.dsp.exec_cmd("nemo"), "Open File Manager")
 
 -- Close window
 bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")-- hl.bind(mainMod .. " + Q", hl.dsp.window.close())

@@ -34,8 +34,8 @@ cp -r rio "$HOME/.config/"
 
 # this is causing issues, removing until I have time to debug
 # Create/update Noctalia Config
-#rm -rf "$HOME/.config/noctalia"
-#cp -r noctalia "$HOME/.config/"
+rm -rf "$HOME/.config/noctalia"
+cp -r noctalia "$HOME/.config/"
 #
 
 sudo mkdir -p /var/lib/noctalia-greeter

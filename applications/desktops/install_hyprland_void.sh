@@ -2,12 +2,13 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.5.3 - Official Beta
+# VERSION 0.5.4 - Official Beta
 # General cleanup after installing it on two other computers
 # Some more cleanup, with settings
 # Changed keybind viewer to use output from LUA load. (JSON)
 # Set font to Inter, much nicer looking than Noto and will allow removing that Gulag cruft
 # setting up account images, included two stock images
+# Trying different terminal
 
 # Current Feature Requests:\
 # 1. Needs to have per user setup copies, for multi-user systems
@@ -16,6 +17,7 @@
 #   Potential fix is in place
 #   Added hostname detection to monitor file, so it being copied again won't kill monitor output on my devices
 # 2. Give user more choice! Maybe they don't want Noctalia, or want different dock?
+#   Have some of this setup in the install_hyperland_void script, needs menus and propagation
 # 3. Separate out hypr settings, look at Omacom as an example. This way making a change won't override all settings'
 #   Implemented, need to test - This also seems to be working
 #   Some of these are very system specific like Monitor (dealt with)
@@ -38,7 +40,7 @@ sudo xbps-install -Syu
 
 # can be manually set
 TERMINAL="rio"
-FILE_MANAGER="caja"
+FILE_MANAGER="nemo"
 SHELL="noctalia"
 
 # Setup hyprland repo if necessary

@@ -19,11 +19,11 @@ order = [ "default", "Dock" ]
     [bar.Dock]
     auto_hide = true
     background_opacity = 0.71999996900558472
-    border = "outline"
+    border = "outline_variant"
     border_width = 2.5
     capsule = false
     capsule_border_width = 1.0
-    capsule_fill = "surface_variant"
+    capsule_fill = "surface_container"
     capsule_group = []
     capsule_opacity = 1.0
     capsule_padding = 6.0
@@ -63,11 +63,11 @@ order = [ "default", "Dock" ]
     [bar.default]
     auto_hide = false
     background_opacity = 1.0
-    border = "outline"
+    border = "outline_variant"
     border_width = 0.0
     capsule = false
     capsule_border_width = 1.0
-    capsule_fill = "surface_variant"
+    capsule_fill = "surface_container"
     capsule_group = []
     capsule_opacity = 1.0
     capsule_padding = 6.0
@@ -202,7 +202,7 @@ active_opacity = 1.0
 active_scale = 1.0
 auto_hide = false
 background_opacity = 0.87999999523162842
-border = "outline"
+border = "outline_variant"
 border_width = 0.0
 concave_edge_corners = true
 cross_axis_padding = 8
@@ -317,7 +317,7 @@ up = [ "Up" ]
 validate = [ "Return", "KP_Enter", "space" ]
 
 [location]
--- redacted
+# redacted
 
 [lockscreen]
 allow_empty_password = false
@@ -445,7 +445,7 @@ temperature_night = 4000
 [notification]
 background_opacity = 0.97000002861022949
 border = true
-border_color = "outline"
+border_color = "outline_variant"
 border_width = 1.0
 collapse_on_dismiss = true
 enable_daemon = true
@@ -466,7 +466,7 @@ width = 360
 [osd]
 background_opacity = 0.97000002861022949
 border = true
-border_color = "outline"
+border_color = "outline_variant"
 border_width = 1.0
 enabled = true
 follow_focused_output = false

@@ -40,3 +40,18 @@ hl.window_rule({
     -- at = "1550,46",
     size = "359 380"
 })
+
+-- Rule for Nym VPN
+hl.window_rule({
+    match = {
+        class = "nym-vpn-app",
+        title = "NymVPN"
+    },
+    -- allowedOverFullscreen = true,
+    -- floating = true,
+    monitor = 0,
+    float  = true,
+    center = true,
+    -- at = "1550,46",
+    size = "370 710"
+})
