@@ -9,8 +9,8 @@ if ! {
     sudo xbps-query -p pkgver void-repo-multilib >/dev/null 2>&1
 }; then
     # Noid Repo
-    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" |
-        sudo tee /etc/xbps.d/noid-xbps-repo.conf >/dev/null
+    # echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" |
+    #     sudo tee /etc/xbps.d/noid-xbps-repo.conf >/dev/null
 
     # Linux Nauta
     echo "repository=https://voidrepo.linuxnauta.com" |
@@ -29,8 +29,8 @@ if ! {
         sudo tee /etc/xbps.d/voiders-dev-repo.conf >/dev/null
 
     # Lazy Linux
-    # echo "repository=https://github.com/lazylinuxos/lazy-repo/releases/latest/download/" |
-    #     sudo tee /etc/xbps.d/lazy-repo.conf >/dev/null
+    echo "repository=https://github.com/lazylinuxos/lazy-repo/releases/latest/download/" |
+        sudo tee /etc/xbps.d/lazy-repo.conf >/dev/null
 
     # Neko Linux
     echo "repository=https://sourceforge.net/projects/neko-void/files/repo" |

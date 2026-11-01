@@ -1,0 +1,31 @@
+{
+  "lockfileVersion": 1,
+  "plugins": {
+    "dankGifSearch": {
+      "repo": "https://github.com/duxlabs-dev/dux-plugins",
+      "path": "DankGifSearch",
+      "commit": "a55bb40da2f70640600a520ea05eac9c3540f1af"
+    },
+    "dankHyprlandWindows": {
+      "repo": "https://github.com/duxlabs-dev/dux-plugins",
+      "path": "DankHyprlandWindows",
+      "commit": "a55bb40da2f70640600a520ea05eac9c3540f1af"
+    },
+    "dmsThemeSync": {
+      "repo": "https://github.com/arqueon/dms-theme-sync",
+      "commit": "2d696a0d4799c83b17d195d38c8c8cf9c3d4f263"
+    },
+    "emojiLauncher": {
+      "repo": "https://github.com/devnullvoid/dms-emoji-launcher",
+      "commit": "fc385900e6df292f0a7e5bdda4e3e37169897d7c"
+    },
+    "screenshotPlus": {
+      "repo": "https://github.com/pcmid/dms-screenshot-plus",
+      "commit": "cae3cf1b820d430e6b76bb8a99066f013074e6af"
+    },
+    "wallpaperCarousel": {
+      "repo": "https://github.com/motor-dev/wallpaperCarousel",
+      "commit": "761ecd1b7f347beee9f17909f8334d987c935a1a"
+    }
+  }
+}

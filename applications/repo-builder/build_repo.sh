@@ -31,7 +31,7 @@ echo "==> Start Container :"
 podman run --rm -it \
   --userns=keep-id \
   -v "$HOME/src:/src:z" \
-  -v "/home/media/shared/Users/$USER/repos/repository:/home/media/shared/Users/mshalom/repos/repository:z" \
+  -v "/home/media/shared/Users/$USER/repos/repository:/home/media/shared/Users/$USER/repos/repository:z" \
   -v "$HOME/private.pem:/home/builder/private.pem:ro" \
   -v "$HOME/src/void-packages:/void-packages:z" \
   -e SRC=/src \

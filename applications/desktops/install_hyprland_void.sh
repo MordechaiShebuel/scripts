@@ -2,7 +2,7 @@
 # Hyprland on Void?! (Inspired by DHH and Hyprland)
 # HELL YES!
 # Backup current .zshrc
-# VERSION 0.5.4 - Official Beta
+# VERSION 0.5.5 - Official Beta
 # General cleanup after installing it on two other computers
 # Some more cleanup, with settings
 # Changed keybind viewer to use output from LUA load. (JSON)
@@ -41,7 +41,7 @@ sudo xbps-install -Syu
 # can be manually set
 TERMINAL="rio"
 FILE_MANAGER="nemo"
-SHELL="noctalia"
+SHELL="dux-shell"
 
 # Setup hyprland repo if necessary
 if ! {

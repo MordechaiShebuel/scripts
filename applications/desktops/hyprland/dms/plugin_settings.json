@@ -1,0 +1,28 @@
+{
+  "dankHyprlandWindows": {
+    "enabled": true
+  },
+  "dmsThemeSync": {
+    "enabled": true,
+    "folderColorBaseThemeDark": "Papirus-Dark",
+    "folderColorBaseThemeLight": "",
+    "folderColorBaseTheme": "",
+    "syncTerminalFonts": true,
+    "syncKvantum": true,
+    "syncFolderColor": true,
+    "syncCursorColor": true
+  },
+  "screenshotPlus": {
+    "enabled": true,
+    "saveToFile": true
+  },
+  "dankGifSearch": {
+    "enabled": true
+  },
+  "emojiLauncher": {
+    "enabled": true
+  },
+  "wallpaperCarousel": {
+    "enabled": true
+  }
+}

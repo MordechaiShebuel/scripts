@@ -82,7 +82,7 @@ end
 
 -- Constants
 local mainMod   = "SUPER"
-local ipc = "noctalia msg "
+local ipc = "dms ipc "
 local home = os.getenv("HOME")
 
 -- KEY BINDS
@@ -90,14 +90,13 @@ local home = os.getenv("HOME")
 bindWithDescription(mainMod .. " + Return", hl.dsp.exec_cmd("rio"), "Open Terminal Window")
 
 -- App Launcher
-bindWithDescription(mainMod .. " + D", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")
-bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")
+bindWithDescription(mainMod .. " + D", hl.dsp.exec_cmd(ipc .. "launcher toggle"), "Open Application Launcher")
+bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "spotlight-bar toggle"), "Open Application Launcher")
 
 -- Launch file explorer
-bindWithDescription(mainMod .. " + E", hl.dsp.exec_cmd("nemo"), "Open File Manager")
+bindWithDescription(mainMod .. " + E", hl.dsp.exec_cmd("dfiles"), "Open File Manager")
 
 -- Close window
-bindWithDescription(mainMod .. " + SPACE", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"), "Open Application Launcher")-- hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 bindWithDescription(mainMod .. " + Q", hl.dsp.window.close(), "Close the current window")
 bindWithDescription(mainMod .. " + W", hl.dsp.window.close(), "Close the current window")
 
@@ -105,7 +104,7 @@ bindWithDescription(mainMod .. " + W", hl.dsp.window.close(), "Close the current
 bindWithDescription(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = 1 }), "Toggle Fullscreen for Window")
 
 -- Toggle floating
-bindWithDescription(mainMod .. " + ALT + SPACE", hl.dsp.window.float({ action = "toggle" }), "Toggle Float for Window")
+bindWithDescription(mainMod .. " + ALT + F", hl.dsp.window.float({ action = "toggle" }), "Toggle Float for Window")
 
 -- Scroll through existing workspaces with mainMod + scroll
 bindWithDescription(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), "Cycle through open windows forward")
@@ -113,7 +112,11 @@ bindWithDescription(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
 bindWithDescription(mainMod .. " + mouse:272", hl.dsp.window.drag(), "Left Click to drag window with mouse", { mouse = true })
-bindWithDescription(mainMod .. " + mouse:273", hl.dsp.window.resize(), "Right Click to resize window with mouse", { mouse = true })
+bindWithDescription(mainMod .. " + mouse:273", hl.dsp.window.resize(), "Right Click to resize window with mouse",
+    { mouse = true })
+
+-- Cycle sound output
+bindWithDescription(mainMod .. " + O", hl.dsp.exec_cmd(ipc .. "audio cycleoutput"), "Cycle audio ouput to other sources")
 
 -- Move focus with arrow keys
 bindWithDescription(mainMod .. " + TAB", hl.dsp.exec_cmd(ipc .. "window-switcher hold"), "Window switcher")
@@ -129,7 +132,7 @@ for i = 1, 5 do
 end
 
 -- Intercept Power button
-bindWithDescription("XF86PowerOff", hl.dsp.exec_cmd("noctalia msg panel-toggle session"), "Toggle session panel", { locked = true })
+bindWithDescription("XF86PowerOff", hl.dsp.exec_cmd(ipc .. "powermenu toggle"), "Toggle session panel", { locked = true })
 
 -- Volume
 bindWithDescription("XF86AudioRaiseVolume", hl.dsp.exec_cmd("pamixer -i 5"), "Increase volume", { locked = true, repeating = true })
@@ -143,16 +146,18 @@ bindWithDescription("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 
 -- macOS-style screenshots (secondMod ≈ Cmd)
 
 -- ⌘⇧4  region
-bindWithDescription(mainMod .. " + CTRL + SHIFT + 4", hl.dsp.exec_cmd(ipc .. "screenshot-region"), "Screenshot region")
-
+-- This is a temporary solution, until I find something a little more fleshed out like Noctalia has. Only the first works with dms
+bindWithDescription(mainMod .. " + CTRL + SHIFT + 4", hl.dsp.exec_cmd(ipc .. "call screenshotPlus capture"), "Screenshot region")
 -- Multi-monitor: picker (≈ "choose display")
-bindWithDescription(mainMod .. " + CTRL + SHIFT + 5", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen pick"), "Screenshot with monitor picker")
-
+-- bindWithDescription(mainMod .. " + CTRL + SHIFT + 5", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen pick"), "Screenshot with monitor picker")
 -- All monitors as one image
-bindWithDescription(mainMod .. " + CTRL + SHIFT + 3", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen all"), "Screenshot all monitors")
+-- bindWithDescription(mainMod .. " + CTRL + SHIFT + 3", hl.dsp.exec_cmd(ipc .. "screenshot-fullscreen all"), "Screenshot all monitors")
 
 -- Lock screen
-bindWithDescription(mainMod .. " + ALT + L", hl.dsp.exec_cmd(ipc .. "panel-toggle session"), "Lock screen")
+bindWithDescription(mainMod .. " + ALT + L", hl.dsp.exec_cmd(ipc .. "powermenu toggle"), "Display toggle for log out / reboot")
+
+-- Load notepad
+bindWithDescription(mainMod .. " + ALT + N", hl.dsp.exec_cmd(ipc .. "notepad toggle"), "Toggle Notepad")
 
 -- Shortcut help screen
 local help_cmd = string.format("%s/.config/hypr/./keybind_viewer %s/.config/hypr/binds.json", home, home)
@@ -175,7 +180,7 @@ bindWithDescription(mainMod .. " + a", send_shortcut_once("CTRL", "a"), "Select 
 bindWithDescription(mainMod .. " + slash", send_shortcut_once("CTRL", "slash"), "Toggle comment (code editors)")
 bindWithDescription(mainMod .. " + ALT + q", hl.dsp.window.kill(), "Force kill application")
 bindWithDescription(mainMod .. " + ALT + escape", hl.dsp.window.kill(), "Force kill application")
-bindWithDescription(mainMod .. " + CTRL + l", hl.dsp.exec_cmd("noctalia msg session lock"), "Lock screen")
+bindWithDescription(mainMod .. " + CTRL + l", hl.dsp.exec_cmd(ipc .. "lock lock"), "Lock screen")
 
 -- Write Binds to file for helper app to read
 -- local cjson = require("cjson")
