@@ -35,7 +35,7 @@ case "$ID" in
         sudo apt-get install -y "${pkg_array[@]}"
         ;;
 
-    void|vostok|lazylinux|noid)
+    void|vostok|lazylinux|noid|d77void)
         echo "Detected Void Linux"
         sudo xbps-install -Sy "${pkg_array[@]}"
         ;;

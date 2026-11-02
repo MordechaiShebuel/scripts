@@ -42,7 +42,7 @@ PRIMARY_GID=$(id -g "$EXISTING_USER")
 
 # Get all group names for the existing user
 ALL_GROUPS=$(id -Gn "$EXISTING_USER")
-GROUP_ARRAY=(${(f)"$(echo "$ALL_GROUPS" | tr ' ' '\n')"})
+GROUP_ARRAY=($ALL_GROUPS)
 
 echo "DEBUG: PRIMARY_GID = '$PRIMARY_GID'"
 echo "DEBUG: ALL_GROUPS:"
@@ -50,7 +50,7 @@ echo "$GROUP_ARRAY"
 
 # Add each group to the new user, skipping the primary group
 for group in "${GROUP_ARRAY[@]}"; do
-    echo "Testing $group"
+    # echo "Testing $group"
     if [[ "$group" != "$PRIMARY_GROUP" ]]; then
         echo "Adding group: $group"
         sudo usermod -a -G "$group" "$NEW_USER"

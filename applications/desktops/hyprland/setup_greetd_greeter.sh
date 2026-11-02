@@ -8,6 +8,27 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+function setup_greetd() {
+    sudo xbps-install -Sy greetd
+}
+
+function setup_greeter() {
+    echo "Setup greeter user"
+    if ! id greeter >/dev/null 2>&1; then
+        useradd -r -s /bin/nologin -d /var/lib/greeter -m greeter
+        usermod -aG video greeter
+    fi
+
+    # Verify greeter user
+    echo "[*] Checking greeter user..."
+    if id greeter &>/dev/null; then
+        echo "[+] greeter user exists"
+    else
+        echo "[-] greeter user not found. Please create it manually."
+        exit 1
+    fi
+}
+
 echo "=== Setting up greeter ==="
 
 # Configure greetd
@@ -15,6 +36,7 @@ echo "[*] Configuring greetd..."
 
 echo ""
 echo "Available greeters:"
+echo "0) Dux Greeter (DMS themed)"
 echo "1) noctalia-greeter (Noctalia-themed)"
 echo "2) tuigreet (TUI, lightweight)"
 echo "3) gtkgreet (GTK-based, traditional)"
@@ -25,7 +47,25 @@ echo ""
 
 read -p "Select greeter (1-6): " greeter_choice
 
+setup_greetd
+setup_greeter
+
 case $greeter_choice in
+    0)
+        echo 'repository=https://void.duxlabs.dev/dux-repo/current' | sudo tee /etc/xbps.d/dux.conf
+        sudo xbps-install -Sy dux-greeter seatd
+        sudo tee /etc/greetd/hypr.lua > /dev/null << 'EOF'
+hl.env("DMS_RUN_GREETER", "1")
+
+hl.config({
+    misc = {
+        disable_hyprland_logo = true
+    }
+})
+EOF
+        dms-greeter enable
+        exit
+        ;;
     1)
         greeter_cmd="noctalia-greeter-session"
         greeter_pkg="noctalia-greeter"
@@ -56,22 +96,7 @@ case $greeter_choice in
         ;;
 esac
 echo "[*] Installing greetd and $greeter_pkg..."
-xbps-install -Sy greetd $greeter_pkg
-
-echo "Setup greeter user"
-if ! id greeter >/dev/null 2>&1; then
-    useradd -r -s /bin/nologin -d /var/lib/greeter -m greeter
-fi
-usermod -aG video greeter
-
-# Verify greeter user
-echo "[*] Checking greeter user..."
-if id greeter &>/dev/null; then
-    echo "[+] greeter user exists"
-else
-    echo "[-] greeter user not found. Please create it manually."
-    exit 1
-fi
+xbps-install -Sy $greeter_pkg
 
 # Disable SDDM if running
 if [[ -L /var/service/sddm ]]; then

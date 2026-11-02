@@ -41,7 +41,7 @@ sudo xbps-install -Syu
 # can be manually set
 TERMINAL="rio"
 FILE_MANAGER="nemo"
-SHELL="dux-shell"
+SHELL="dux"
 
 # Setup hyprland repo if necessary
 if ! {
@@ -62,9 +62,11 @@ sudo xbps-install -S \
      brightnessctl playerctl pamixer \
      blueman gnome-keyring papirus-icon-theme \
      qt6ct hyprland-qt-support accountsservice \
-     xorg-server-xwayland xorg-fonts \
-     $SHELL font-awesome \
+     xorg-server-xwayland xorg-fonts font-awesome \
      font-inter font-inter-variable
+
+# Install chosen shell
+"shells/./${SHELL}.sh"
 
 # update user configs
 ./hyperland/./update_user.sh

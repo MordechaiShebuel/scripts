@@ -115,6 +115,9 @@ bindWithDescription(mainMod .. " + mouse:272", hl.dsp.window.drag(), "Left Click
 bindWithDescription(mainMod .. " + mouse:273", hl.dsp.window.resize(), "Right Click to resize window with mouse",
     { mouse = true })
 
+-- Wallpaper carousel
+bindWithDescription(mainMod .. " + ALT + P", hl.dsp.exec_cmd(ipc .. "wallpaperCarousel toggle"), "Toggle display of wallpaper carousel.")
+
 -- Cycle sound output
 bindWithDescription(mainMod .. " + O", hl.dsp.exec_cmd(ipc .. "audio cycleoutput"), "Cycle audio ouput to other sources")
 

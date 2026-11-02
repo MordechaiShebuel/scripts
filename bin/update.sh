@@ -18,7 +18,7 @@ case "$ID" in
         sudo apt-get upgrade
         ;;
 
-    void|vostok|lazylinux|noid)
+    void|vostok|lazylinux|noid|d77void)
         echo "Detected Void Linux"
 
         sudo xbps-install -Su

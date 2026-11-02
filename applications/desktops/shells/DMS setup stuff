@@ -4,3 +4,8 @@ Try to setup greeter when Void repos are working:
 https://github.com/duxlabs-dev/dux-greeter
 
 WIN+V shortcut doesn't map in this screen
+
+need to deal with this on server.lan, podman lock file:
+ERRO[0000] Refreshing container fec56cfdac65c417bb616d7f88037d70407266aa619df2b2803831e6a161fdfb: acquiring lock 0 for container fec56cfdac65c417bb616d7f88037d70407266aa619df2b2803831e6a161fdfb: file exists
+
+Need to copy repository to shared network space, then retry build

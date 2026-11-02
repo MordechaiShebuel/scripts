@@ -19,7 +19,7 @@ case "$ID" in
         sudo apt-get remove -y "$pkg"
         ;;
 
-    void|vostok|lazylinux|noid)
+    void|vostok|lazylinux|noid|d77void)
         echo "Detected Void Linux"
 
         sudo xbps-remove -R "$pkg"
