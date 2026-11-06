@@ -1,0 +1,11 @@
+#!/bin/sh
+rio_drift() {
+    RIO_CONFIG_HOME="$HOME/.config/rio-drift" rio -e drift &
+}
+
+hyprctl dispatch focusmonitor DP-3
+rio_drift
+sleep 0.3
+
+hyprctl dispatch focusmonitor HDMI-A-1
+rio_drift

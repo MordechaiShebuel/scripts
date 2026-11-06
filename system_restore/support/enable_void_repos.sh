@@ -2,23 +2,27 @@
 
 if ! {
     test -f /etc/xbps.d/noid-xbps-repo.conf &&
-    test -f /etc/xbps.d/linuxnauta.conf &&
+    # test -f /etc/xbps.d/linuxnauta.conf &&
     test -f /etc/xbps.d/voiders-dev-repo.conf &&
-    test -f /etc/xbps.d/neko-void.conf &&
+    # test -f /etc/xbps.d/neko-void.conf &&
     sudo xbps-query -p pkgver void-repo-nonfree >/dev/null 2>&1 &&
     sudo xbps-query -p pkgver void-repo-multilib >/dev/null 2>&1
 }; then
     # Noid Repo
-    # echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" |
-    #     sudo tee /etc/xbps.d/noid-xbps-repo.conf >/dev/null
+    echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" |
+        sudo tee /etc/xbps.d/noid-xbps-repo.conf >/dev/null
 
     # Linux Nauta
-    echo "repository=https://voidrepo.linuxnauta.com" |
-        sudo tee /etc/xbps.d/linuxnauta.conf >/dev/null
+    # echo "repository=https://voidrepo.linuxnauta.com" |
+    #     sudo tee /etc/xbps.d/linuxnauta.conf >/dev/null
 
     # d77 main
     echo "repository=https://sourceforge.net/projects/d77void/files/d77void-repo" |
         sudo tee /etc/xbps.d/d77void.conf > /dev/null
+
+    # dux-shell
+    echo "repository=https://void.duxlabs.dev/dux-repo/current" |
+        sudo tee /etc/xbps.d/dux-repo.conf > /dev/null
 
    # d77 hypr
    echo "repository=https://sourceforge.net/projects/d77void/files/hypr-d77" |
@@ -29,12 +33,12 @@ if ! {
         sudo tee /etc/xbps.d/voiders-dev-repo.conf >/dev/null
 
     # Lazy Linux
-    echo "repository=https://github.com/lazylinuxos/lazy-repo/releases/latest/download/" |
-        sudo tee /etc/xbps.d/lazy-repo.conf >/dev/null
+    # echo "repository=https://github.com/lazylinuxos/lazy-repo/releases/latest/download/" |
+    #     sudo tee /etc/xbps.d/lazy-repo.conf >/dev/null
 
     # Neko Linux
-    echo "repository=https://sourceforge.net/projects/neko-void/files/repo" |
-        sudo tee /etc/xbps.d/neko-void.conf >/dev/null
+    # echo "repository=https://sourceforge.net/projects/neko-void/files/repo" |
+    #     sudo tee /etc/xbps.d/neko-void.conf >/dev/null
 
     # Blackhole Linux
     # echo "repository=https://github.com/Event-Horizon-VL/blackhole-vl" |

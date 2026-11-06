@@ -1,0 +1,10 @@
+#!/bin/sh
+# ~/.local/bin/audio-start.sh
+# Wait for the session runtime dir, then start PipeWire only if it isn't running.
+while [ ! -S "$XDG_RUNTIME_DIR/pipewire-0" ] && [ "$i" -lt 50 ] 2>/dev/null; do
+    i=$((i+1)); sleep 0.2
+done
+
+pgrep -x pipewire >/dev/null || pipewire >>"$HOME/.cache/pipewire.log" 2>&1 &
+pgrep -x pipewire-pulse >/dev/null || pipewire-pulse >>"$HOME/.cache/pipewire-pulse.log" 2>&1 &
+# pgrep -x wireplumber >/dev/null || wireplumber >>"$HOME/.cache/wireplumber.log" 2>&1 &
