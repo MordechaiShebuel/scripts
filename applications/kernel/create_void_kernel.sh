@@ -132,12 +132,6 @@ done
 # Set local kernel suffix
 sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = -cachy/' Makefile
 
-# Apply Void's fixdep patch
-FIXDEP_PATCH="0000-fixdep-largefile.patch"
-
-wget -O "$FIXDEP_PATCH" \
-    "https://raw.githubusercontent.com/void-linux/void-packages/refs/heads/master/srcpkgs/linux$K_V/patches/fixdep-largefile.patch"
-
 # Locate matcLINUX_VERSIONhing Cachy patch directory
 echo "Applying patches from: ./patches"
 
