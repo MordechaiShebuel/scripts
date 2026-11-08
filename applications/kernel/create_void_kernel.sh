@@ -31,7 +31,7 @@ echo "Build user: $(id -un)"
 LINUX_SRC="$SRC/linux"
 CACHY_PATCH_SRC="$SRC/cachy-patches"
 
-LINUX_VERSION="v7.3.1"
+LINUX_VERSION="v7.3.3"
 OLD_KERNEL="$(uname -r)"
 
 KVER="${LINUX_VERSION#v}"
@@ -71,7 +71,7 @@ require_space_gib "$SRC" 16 # 25 is recommended amount of space free
 declare -A PATCHES=(
     [cachyos-fixes-patches-v2]="0001-cachyos-fixes-patches.patch"
     [cpu-cachyos-patches]="0001-CACHY-Add-x86_64-ISA-and-Zen4-compiler-optimizations.patch"
-    [bore-patches-v2]="0001-linux7.3-bore7.0.0.patch"
+    [bore-patches]="0001-linux7.3-bore7.0.0.patch"
     # [gaming-sched-patches-v2]="your-patch-file.patch"
 )
 
@@ -125,7 +125,7 @@ for PATCH_GROUP in "${!PATCHES[@]}"; do
 
     echo "Downloading $PATCH_FILE from $PATCH_GROUP..."
     wget -O "patches/${REN_PATCHES[$PATCH_FILE]}" \
-        "https://github.com/sirlucjan/kernel-patches/raw/refs/heads/master/$K_V/$PATCH_GROUP/$PATCH_FILE" ||
+        "https://raw.githubusercontent.com/sirlucjan/kernel-patches/raw/heads/master/$K_V/$PATCH_GROUP/$PATCH_FILE" ||
         echo "Failed to download: $PATCH_FILE from $PATCH_GROUP" >&2
 done
 
@@ -136,7 +136,7 @@ sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = -cachy/' Makefile
 FIXDEP_PATCH="0000-fixdep-largefile.patch"
 
 wget -O "$FIXDEP_PATCH" \
-    "https://github.com/void-linux/void-packages/raw/refs/heads/master/srcpkgs/linux$K_V/patches/fixdep-largefile.patch"
+    "https://raw.githubusercontent.com/void-linux/void-packages/refs/heads/master/srcpkgs/linux$K_V/patches/fixdep-largefile.patch"
 
 # Locate matcLINUX_VERSIONhing Cachy patch directory
 echo "Applying patches from: ./patches"

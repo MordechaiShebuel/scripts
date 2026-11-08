@@ -30,4 +30,4 @@ elseif shell == "dux" then
     require("dms/windowrules")
 else
     error("Unknown shell: " .. tostring(shell))
-end-- ~/.config/hypr/hyprland.lua
+end
