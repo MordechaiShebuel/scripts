@@ -2,8 +2,8 @@
 
 sudo apt-get install build-essential libncurses-dev bison flex libssl-dev libelf-dev
 
-OLD_VER="6.18.59"
-NEW_VER="6.18.60"
+OLD_VER="6.18.62"
+NEW_VER="6.18.64"
 
 rm -f "linux-${NEW_VER}.tar.xz"
 
