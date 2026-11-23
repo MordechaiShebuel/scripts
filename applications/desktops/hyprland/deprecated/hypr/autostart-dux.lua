@@ -5,7 +5,7 @@ hl.on("hyprland.start", function()
     -- Kesend_shortcut_onceep this list short while testing
     hl.exec_cmd("dms run")
     hl.exec_cmd("pipewire")
-    hl.exec_cmd("pipewire-pulse")
+    -- hl.exec_cmd("pipewire-pulse")
     -- hl.exec_cmd(home .. "./scripts/./audio-start")
     -- hl.exec_cmd("~/.local/bin/game-caffeine.sh")
     hl.exec_cmd("nohup steam -silent >/dev/null 2>&1 &")

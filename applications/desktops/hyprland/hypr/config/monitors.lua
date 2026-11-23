@@ -1,0 +1,81 @@
+-- Monitor wiki https://wiki.hypr.land/Configuring/Basics/Monitors/
+-- output can be found with hyprctl monitors. Edit variables.lua for the monitor
+-- outputs instead of here directly.
+--
+-- Nothing here is pinned to a particular machine. output comes from
+-- variables.lua (empty, so Hyprland picks whatever is connected), mode is
+-- "preferred" and position "auto" so any panel is placed by the compositor.
+--
+-- scale is set to 1.25 as a default comfortable for typical laptop/desktop
+-- panels. HiDPI users should raise it for their own output, e.g.
+--
+--     hl.monitor({ output = "eDP-1", scale = "2" })
+--
+-- Note that the skel is copied into a home the first time you log in on this
+-- desktop environment. Your own copy in $HOME is what Hyprland reads from then
+-- on, so editing it is what changes your session -- edits to /etc/skel only
+-- reach accounts (or images) that have not been populated yet. See
+-- ~/.config/hypr/docs.md.
+-- hl.monitor({
+--     output    = MONITOR1,
+--     mode      = "preferred",
+--     position = "auto",
+--     scale     = "auto",
+-- })
+
+local hostname = os.getenv("HOSTNAME")
+
+if not hostname then
+    local pipe = io.popen("hostname")
+    hostname = pipe and pipe:read("*l") or ""
+    if pipe then pipe:close() end
+end
+
+if hostname == "gamma" then
+    hl.monitor({
+        output = MONITOR1,
+        mode = "1920x1080@100",
+        position = "0x0",
+        scale = 1,
+    })
+    hl.monitor({
+        output = MONITOR2,
+        mode = "1920x1080@100",
+        position = "1920x0",
+        scale = 1,
+    })
+elseif hostname == "rome" then
+    hl.monitor({
+        output = MONITOR1,
+        mode = "1920x1080@60",
+        position = "0x0",
+        scale = 1,
+    })
+    hl.monitor({
+        output = MONITOR2,
+        mode = "1920x1080@60",
+        position = "0x0",
+        scale = 1,
+        mirror = "eDP-1",
+    })
+elseif hostname == "games" then
+    hl.monitor({
+        output = MONITOR1,
+        mode = "1920x1080@60",
+        position = "0x0",
+        scale = 1,
+    })
+elseif hostname == "server" then
+    hl.monitor({
+        output = MONITOR1,
+        mode = "1920x1080@60",
+        position = "0x0",
+        scale = 1,
+    })
+else
+    -- Default if the hostname is missing or unrecognized
+    hl.monitor({
+        output = "",
+        mode = "1920x1080@60",
+    })
+end

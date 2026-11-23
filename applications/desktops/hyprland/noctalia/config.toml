@@ -317,7 +317,7 @@ up = [ "Up" ]
 validate = [ "Return", "KP_Enter", "space" ]
 
 [location]
-# redacted
+# You should not upload this
 
 [lockscreen]
 allow_empty_password = false
@@ -515,7 +515,7 @@ enabled = []
     name = "community"
 
 [shell]
-app_icon_colorize = false
+colorize_icons = false
 avatar_path = ""
 button_borders = true
 card_borders = true

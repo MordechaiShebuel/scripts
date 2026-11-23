@@ -19,7 +19,7 @@ if hostname == "gamma" then
         position = "1920x0",
         scale = 1,
     })
-elseif hostname == "media" then
+elseif hostname == "rome" then
     hl.monitor({
         output = "eDP-1",
         mode = "1920x1080@60",
