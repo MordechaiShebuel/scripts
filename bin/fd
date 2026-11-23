@@ -25,13 +25,13 @@ case "$ID" in
         xbps-query -Rs "$pkg"
         ;;
 
-    artix)
+    artix|omarchy|arch)
         echo "Detected Artix Linux"
 
         pamac search "$pkg"
         ;;
 
-    openmandriva)
+    openmandriva|nobara|rakuos)
         echo "Detected OpenMandriva"
 
         dnf search "$pkg"

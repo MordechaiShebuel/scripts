@@ -31,7 +31,7 @@ case "$ID" in
         sudo pacman -R --noconfirm "$pkg"
         ;;
 
-    openmandriva)
+    openmandriva|rakuos|nobara)
         echo "Detected OpenMandriva"
 
         sudo dnf remove -y "$pkg"

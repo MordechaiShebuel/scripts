@@ -85,7 +85,7 @@ esac
 
 ## STABLE BUILDS #################################################
 # app artifacts
-app_version="${1:-2026.15.0}"
+app_version="${1:-2026.16.0}"
 app_tag=nym-vpn-v$app_version
 appimage_url="https://github.com/nymtech/nym-vpn-client/releases/download/$app_tag/NymVPN_${app_version}_${app_image_arch}.AppImage"
 app_deb_url="https://github.com/nymtech/nym-vpn-client/releases/download/$app_tag/nym-vpn-app_${app_version}_${deb_arch}.deb"

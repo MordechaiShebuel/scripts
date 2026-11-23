@@ -45,7 +45,7 @@ case "$ID" in
         sudo pacman -S --noconfirm "${pkg_array[@]}"
         ;;
 
-    openmandriva)
+    openmandriva|nobara|rakuos)
         echo "Detected OpenMandriva"
         sudo dnf install -y "${pkg_array[@]}"
         ;;
