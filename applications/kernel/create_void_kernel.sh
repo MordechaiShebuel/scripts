@@ -31,7 +31,7 @@ echo "Build user: $(id -un)"
 LINUX_SRC="$SRC/linux"
 CACHY_PATCH_SRC="$SRC/cachy-patches"
 
-LINUX_VERSION="v7.3.5"
+LINUX_VERSION="v7.3.6"
 OLD_KERNEL="$(uname -r)"
 
 KVER="${LINUX_VERSION#v}"

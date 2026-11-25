@@ -5,7 +5,7 @@ local shortcuts = require("keybind_helpers")
 -- ═══════════════════════════════════════════
 
 local M = "SUPER"
-local launchPrefix = "uwsm app -- " -- if you are not using UWSM, make this empty (e.g. "")
+local launchPrefix = LAUNCHER -- if you are not using UWSM, make this empty (e.g. "")
 
 -- ───────────────────────────────────────────
 -- Core

@@ -54,7 +54,7 @@ hl.bind(M .. " + CTRL + down", hl.dsp.focus({ workspace = "e+1" }), { descriptio
 -- ───────────────────────────────────────────
 hl.bind(M .. " + ALT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }), { description = "Toggle Fullscreen" })
 hl.bind(M .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }), { description = "Toggle Maximize Window" })
-hl.bind(M .. " + SHIFT + T", hl.dsp.window.float({ action = "toggle" }), { description = "Toggle Floating" })
+hl.bind(M .. " + ALT + T", hl.dsp.window.float({ action = "toggle" }), { description = "Toggle Floating" })
 hl.bind(M .. " + CTRL + T", function()
 	hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
 	hl.dispatch(hl.dsp.window.pin())
@@ -171,7 +171,7 @@ hl.bind("SHIFT + Print", hl.dsp.exec_cmd("noctalia msg screenshot-fullscreen"), 
 -- ───────────────────────────────────────────
 hl.bind(M .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, description = "Move window with mouse" })
 hl.bind(M .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Resize window with mouse" })
-hl.bind("mouse:274", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }), { mouse = true, description = "Toggle Maximize (middle click)" })
+hl.bind(M .. " + mouse:274", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }), { mouse = true, description = "Toggle Maximize (middle click)" })
 
 -- ───────────────────────────────────────────
 -- Scroll through workspaces (Super + Scroll)
@@ -216,7 +216,7 @@ hl.bind(M .. " + C", shortcuts.universal_clipboard_shortcut("CTRL", "C", "CTRL S
 hl.bind(M .. " + X", shortcuts.send_shortcut_once("CTRL", "x"), { description = "Cut Selection" })
 hl.bind(M .. " + V", shortcuts.universal_clipboard_shortcut("CTRL", "V", "CTRL SHIFT", "V"), { description = "Paste Selection" })
 hl.bind(M .. " + S", shortcuts.send_shortcut_once("CTRL", "s"), { description = "Save Document" })
-hl.bind(M .. " + T", shortcuts.send_shortcut_once("CTRL", "t"), { description = "New tab" })
+hl.bind(M .. " + T", shortcuts.universal_clipboard_shortcut("CTRL", "T", "CTRL SHIFT", "T"), { description = "New tab" })
 hl.bind(M .. " + P", shortcuts.send_shortcut_once("CTRL", "p"), { description = "Print" })
 hl.bind(M .. " + F", shortcuts.universal_clipboard_shortcut("CTRL", "F", "CTRL SHIFT", "F"), { description = "Find" })
 hl.bind(M .. " + Z", shortcuts.send_shortcut_once("CTRL", "z"), { description = "Undo" })

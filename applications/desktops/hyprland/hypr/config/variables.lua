@@ -27,6 +27,10 @@ elseif hostname == "rome" then
     MONITOR2 = "HDMI-A-1"
 elseif hostname == "games" then
     MONITOR1 = "DP-3"
+    MONITOR2 = ""
+elseif hostname == "server" then
+    MONITOR1 = "DP-1"
+    MONITOR2 = ""
 else
     --Monitors
     MONITOR1 = ""
