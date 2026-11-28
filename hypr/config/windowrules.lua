@@ -24,6 +24,9 @@ hl.window_rule({
 local gamingApps = "^(steam_app.*|gamescope)$"
 local gamingWorkspace = "name:gaming"
 
+-- List of apps that don't work well fullscreen
+local app_ids = { "steam_app_1677110", "steam_app_229890", "steam_app_2408820" } -- Add more IDs here that don't work fullsreen
+
 hl.window_rule({ match = { content = "game" }, workspace = gamingWorkspace })
 hl.window_rule({ match = { xdg_tag = "^(.*game.*)$" }, workspace = gamingWorkspace, fullscreen_state = 2, content = "game", sync_fullscreen = true })
 hl.window_rule({ match = { class = gamingApps }, workspace = gamingWorkspace })
@@ -53,6 +56,38 @@ hl.window_rule({
     workspace        = gamingWorkspace,
 })
 
+for _, id in ipairs(app_ids) do
+  local class = "steam_app_" .. id
+  local pipe = io.popen(
+    "hyprctl -j clients | jq -r --arg class " .. class ..
+    " '[.[] | select(.class == $class)][0].address // empty'"
+  )
+
+  local address = pipe:read("*l")
+  pipe:close()
+
+  if address and address ~= "" then
+    local workspace = 20 + tonumber(id)
+
+    run(("hyprctl dispatch movetoworkspacesilent %d,address:%s"):format(workspace, address))
+    run(("hyprctl dispatch fullscreen 0 address:%s"):format(address))
+
+    local floating_pipe = io.popen(
+      "hyprctl -j clients | jq -r --arg addr " .. address ..
+      " '.[] | select(.address == $addr) | .floating'"
+    )
+    local floating = floating_pipe:read("*l")
+    floating_pipe:close()
+
+    if floating ~= "true" then
+      run("hyprctl dispatch togglefloating address:" .. address)
+    end
+
+    run("hyprctl dispatch workspace " .. workspace)
+  else
+    io.stderr:write("No open window found for " .. class .. "\n")
+  end
+end
 -- Apps
 hl.window_rule({ match = { class = "^(.*\\.exe)$", float = true }, monitor = PRIMARY_MONITOR, center = true, fullscreen_state = 0 })
 hl.window_rule({ match = { class = "^(.*[Ll]auncher.*)$" }, float = true, monitor = PRIMARY_MONITOR })

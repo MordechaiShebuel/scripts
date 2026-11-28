@@ -150,15 +150,15 @@ install_packages_xbps() {
         # exit 0 # Need a determination here not to hard fail.
     fi
 
-    ./support/./install_zeditor.sh
+    # ./support/./install_app_zeditor.sh
 
-    ./support/./setup_cron_void.sh $GREEN $NC
+    ./support/./client_cron_void.sh $GREEN $NC
 
-    ./support/./install_ente_auth.sh
+    ./support/./install_app_ente_auth.sh
 
-    ./support/./install_avahi.sh
+    ./support/./client_avahi_void.sh
 
-    ./support/./enable_cups.sh
+    ./support/./client_setup_lp_cups_void.sh
 
 }
 
@@ -203,7 +203,7 @@ case "$ID" in
         ./support/./brave_arch_installer.sh || true
         ;;
 
-    openmandriva)
+    openmandriva|rakuos|nobara)
         echo "Detected OpenMandriva"
 
         install_packages_dnf

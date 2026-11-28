@@ -6,7 +6,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-SERVER="10.0.0.147"
+SERVER="server.lan"
 REMOTE_PATH="/home/media/shared"
 USERNAME="${1:?Usage: $0 username}"
 
